@@ -1,765 +1,567 @@
 """
-IBM Palette is taken from
-https://github.com/IBM-Design/colors/blob/master/source/colors.js
+Main Color Palette classes
 """
+import random
+import warnings
+
+from SecretColors._color_data import *
+from SecretColors.utils import *
+
+COLOR_MODE_RGB = "rgb"
+COLOR_MODE_HEX = "hex"
+COLOR_MODE_HSV = "hsv"
 
 
-def int_to_hex(num: int):
+def _warn(message: str, show_warning: bool = True) -> None:
     """
-    Converts integer to hex. Automatically rounds of the float
-    :param num: Integer to be converted
-    :return: Hex string
+    Simple function to generate warning
+    :param message: Message you want to send
+    :param show_warning: If False, warnings will be suppressed
     """
-    return hex(int(num)).rstrip("L").lstrip("0x")
+    if show_warning:
+        warnings.warn(message + " To suppress warning use " +
+                      "'show_warning=False' in constructor of palette")
 
 
-def rgb_to_hex(rgb_tuple):
+def _convert_color(color: str, color_mode: str, show_warning: bool):
     """
-    Converts RGB tuple to hex. Ignores alpha channel
-    :param rgb_tuple: RGB tuple .
-    :return: Hex color
+    General function to change color modes
+    :param color: Hex color
+    :param color_mode: Color Mode (rgb, hex, hsv)
+    :param show_warning: If False, warnings will be suppressed
+    :return: String (in case of hex) or tuple (in rgb and hsv) of color
     """
-    return "#" + int_to_hex(rgb_tuple[0]) + int_to_hex(rgb_tuple[1]) + \
-           int_to_hex(rgb_tuple[2])
-
-
-def rgb_to_hsv(rgb_tuple):
-    import numpy as np
-    """
-    Code from https://github.com/matplotlib/
-    matplotlib/blob/master/lib/matplotlib/colors.py
-    """
-    # make sure it is an ndarray
-    rgb_tuple = np.asarray(rgb_tuple)
-
-    # check length of the last dimension, should be _some_ sort of rgb
-    if rgb_tuple.shape[-1] != 3:
-        raise ValueError("Last dimension of input array must be 3; "
-                         "shape {} was found.".format(rgb_tuple.shape))
-
-    in_ndim = rgb_tuple.ndim
-    if rgb_tuple.ndim == 1:
-        rgb_tuple = np.array(rgb_tuple, ndmin=2)
-
-    # make sure we don't have an int image
-    rgb_tuple = rgb_tuple.astype(np.promote_types(rgb_tuple.dtype, np.float32))
-
-    out = np.zeros_like(rgb_tuple)
-    arr_max = rgb_tuple.max(-1)
-    ipos = arr_max > 0
-    delta = rgb_tuple.ptp(-1)
-    s = np.zeros_like(delta)
-    s[ipos] = delta[ipos] / arr_max[ipos]
-    ipos = delta > 0
-    # red is max
-    idx = (rgb_tuple[..., 0] == arr_max) & ipos
-    out[idx, 0] = (rgb_tuple[idx, 1] - rgb_tuple[idx, 2]) / delta[idx]
-    # green is max
-    idx = (rgb_tuple[..., 1] == arr_max) & ipos
-    out[idx, 0] = 2. + (rgb_tuple[idx, 2] - rgb_tuple[idx, 0]) / delta[idx]
-    # blue is max
-    idx = (rgb_tuple[..., 2] == arr_max) & ipos
-    out[idx, 0] = 4. + (rgb_tuple[idx, 0] - rgb_tuple[idx, 1]) / delta[idx]
-
-    out[..., 0] = (out[..., 0] / 6.0) % 1.0
-    out[..., 1] = s
-    out[..., 2] = arr_max
-
-    if in_ndim == 1:
-        out.shape = (3,)
-
-    return out[0], out[1], out[2]
-
-
-def hex_to_rgb(hex_color: str):
-    """
-    Converts hex color to RGB
-    :param hex_color: Color in Hex
-    :return: RGB tuple
-    """
-    if len(hex_color.replace("#", "")) == 8:
-        r, g, b, a = [hex_color.replace("#", "")[i:i + 2] for i in
-                      range(0, 8, 2)]
-
-        return int(r, 16), int(g, 16), int(b, 16), int(a)
-    elif len(hex_color.replace("#", "")) == 6:
-        r, g, b = [hex_color.replace("#", "")[i:i + 2] for i in
-                   range(0, 6, 2)]
-
-        return int(r, 16), int(g, 16), int(b, 16)
-    elif len(hex_color.replace("#", "")) == 3:
-        r, g, b = [x for x in hex_color.replace("#", "")]
-        return int(r + r, 16), int(g + g, 16), int(b + b, 16)
-
+    if color_mode == COLOR_MODE_HEX:
+        return color
+    elif color_mode == COLOR_MODE_RGB:
+        return hex_to_rgb(color)
+    elif color_mode == COLOR_MODE_HSV:
+        return hex_to_hsv(color)
     else:
-        raise Exception("Invalid Hex Code")
+        _warn("Invalid color_mode. Using default mode", show_warning)
+        return color
 
 
-def color_in_between(c1, c2, steps=2) -> list:
+class Grade:
     """
-    Creates color between two colors
-    :param c1: Hex of first color
-    :param c2: Hex of second color
-    :param steps: How many divisions in between? (Default :2)
-    :return: List of Colors between provided colors in RGB space
-    """
-    all_colors = []
-    r1, g1, b1 = hex_to_rgb(c1)
-    r2, g2, b2 = hex_to_rgb(c2)
-    rdelta, gdelta, bdelta = (r2 - r1) / steps, (g2 - g1) / steps, (
-            b2 - b1) / steps
-    for step in range(steps - 1):
-        r1 += rdelta
-        g1 += gdelta
-        b1 += bdelta
-        all_colors.append(rgb_to_hex((r1, g1, b1)))
-    return all_colors
+    Class to hold various grades of colors
+    Currently supports following grade range
 
+    for IBM Palette : [0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    for Material Palette: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 
-def hex_to_hsv(hex_color: str):
-    """
-    Converts hex to HSV value
-    :param hex_color: Hex color
-    :return: HSV tuple
-    """
-    return rgb_to_hsv(hex_to_rgb(hex_color))
+    Any value below minimum will be considered as minimum while any value
+    above maximum will be threshold to maximum. Any intermediate value will
+    be converted nearest highest value
+    e.g. value of 12 or 18 in IBM Palette will be considered as 20
 
-
-class IBMPalette:
-    """
-    Class for IBM color palette
     """
 
-    __name = "name"
-    __synonyms = "synonyms"
-    __core = "core"
-    __values = "values"
-    __grade = "grade"
-    __value = "value"
-
-    __ibm_palette = [
-        {
-            __name: 'ultramarine',
-            __synonyms: ['cool-blue'],
-            __core: '60',
-            __values: [
-                {__grade: '1', __value: 'e7e9f7'},
-                {__grade: '10', __value: 'd1d7f4'},
-                {__grade: '20', __value: 'b0bef3'},
-                {__grade: '30', __value: '89a2f6'},
-                {__grade: '40', __value: '648fff'},
-                {__grade: '50', __value: '3c6df0'},
-                {__grade: '60', __value: '3151b7'},
-                {__grade: '70', __value: '2e3f8f'},
-                {__grade: '80', __value: '252e6a'},
-                {__grade: '90', __value: '20214f'}
-            ]
-        },
-        {
-            __name: 'blue',
-            __core: '50',
-            __values: [
-                {__grade: '1', __value: 'e1ebf7'},
-                {__grade: '10', __value: 'c8daf4'},
-                {__grade: '20', __value: 'a8c0f3'},
-                {__grade: '30', __value: '79a6f6'},
-                {__grade: '40', __value: '5392ff'},
-                {__grade: '50', __value: '2d74da'},
-                {__grade: '60', __value: '1f57a4'},
-                {__grade: '70', __value: '25467a'},
-                {__grade: '80', __value: '1d3458'},
-                {__grade: '90', __value: '19273c'}
-            ]
-        },
-        {
-            __name: 'cerulean',
-            __synonyms: ['warm-blue'],
-            __core: '40',
-            __values: [
-                {__grade: '1', __value: 'deedf7'},
-                {__grade: '10', __value: 'c2dbf4'},
-                {__grade: '20', __value: '95c4f3'},
-                {__grade: '30', __value: '56acf2'},
-                {__grade: '40', __value: '009bef'},
-                {__grade: '50', __value: '047cc0'},
-                {__grade: '60', __value: '175d8d'},
-                {__grade: '70', __value: '1c496d'},
-                {__grade: '80', __value: '1d364d'},
-                {__grade: '90', __value: '1b2834'}
-            ]
-        },
-        {
-            __name: 'aqua',
-            __core: '30',
-            __values: [
-                {__grade: '1', __value: 'd1f0f7'},
-                {__grade: '10', __value: 'a0e3f0'},
-                {__grade: '20', __value: '71cddd'},
-                {__grade: '30', __value: '00b6cb'},
-                {__grade: '40', __value: '12a3b4'},
-                {__grade: '50', __value: '188291'},
-                {__grade: '60', __value: '17616b'},
-                {__grade: '70', __value: '164d56'},
-                {__grade: '80', __value: '13393e'},
-                {__grade: '90', __value: '122a2e'}
-            ]
-        },
-        {
-            __name: 'teal',
-            __core: '40',
-            __values: [
-                {__grade: '1', __value: 'c0f5e8'},
-                {__grade: '10', __value: '8ee9d4'},
-                {__grade: '20', __value: '40d5bb'},
-                {__grade: '30', __value: '00baa1'},
-                {__grade: '40', __value: '00a78f'},
-                {__grade: '50', __value: '008673'},
-                {__grade: '60', __value: '006456'},
-                {__grade: '70', __value: '124f44'},
-                {__grade: '80', __value: '133a32'},
-                {__grade: '90', __value: '122b26'}
-            ]
-        },
-        {
-            __name: 'green',
-            __core: '30',
-            __values: [
-                {__grade: '1', __value: 'cef3d1'},
-                {__grade: '10', __value: '89eda0'},
-                {__grade: '20', __value: '57d785'},
-                {__grade: '30', __value: '34bc6e'},
-                {__grade: '40', __value: '00aa5e'},
-                {__grade: '50', __value: '00884b'},
-                {__grade: '60', __value: '116639'},
-                {__grade: '70', __value: '12512e'},
-                {__grade: '80', __value: '123b22'},
-                {__grade: '90', __value: '112c1b'}
-            ]
-        },
-        {
-            __name: 'lime',
-            __core: '20',
-            __values: [
-                {__grade: '1', __value: 'd7f4bd'},
-                {__grade: '10', __value: 'b4e876'},
-                {__grade: '20', __value: '95d13c'},
-                {__grade: '30', __value: '81b532'},
-                {__grade: '40', __value: '73a22c'},
-                {__grade: '50', __value: '5b8121'},
-                {__grade: '60', __value: '426200'},
-                {__grade: '70', __value: '374c1a'},
-                {__grade: '80', __value: '283912'},
-                {__grade: '90', __value: '1f2a10'}
-            ]
-        },
-        {
-            __name: 'yellow',
-            __core: '10',
-            __values: [
-                {__grade: '1', __value: 'fbeaae'},
-                {__grade: '10', __value: 'fed500'},
-                {__grade: '20', __value: 'e3bc13'},
-                {__grade: '30', __value: 'c6a21a'},
-                {__grade: '40', __value: 'b3901f'},
-                {__grade: '50', __value: '91721f'},
-                {__grade: '60', __value: '70541b'},
-                {__grade: '70', __value: '5b421a'},
-                {__grade: '80', __value: '452f18'},
-                {__grade: '90', __value: '372118'}
-            ]
-        },
-        {
-            __name: 'gold',
-            __core: '20',
-            __values: [
-                {__grade: '1', __value: 'f5e8db'},
-                {__grade: '10', __value: 'ffd191'},
-                {__grade: '20', __value: 'ffb000'},
-                {__grade: '30', __value: 'e39d14'},
-                {__grade: '40', __value: 'c4881c'},
-                {__grade: '50', __value: '9c6d1e'},
-                {__grade: '60', __value: '74521b'},
-                {__grade: '70', __value: '5b421c'},
-                {__grade: '80', __value: '42301b'},
-                {__grade: '90', __value: '2f261c'}
-            ]
-        },
-        {
-            __name: 'orange',
-            __core: '30',
-            __values: [
-                {__grade: '1', __value: 'f5e8de'},
-                {__grade: '10', __value: 'fdcfad'},
-                {__grade: '20', __value: 'fcaf6d'},
-                {__grade: '30', __value: 'fe8500'},
-                {__grade: '40', __value: 'db7c00'},
-                {__grade: '50', __value: 'ad6418'},
-                {__grade: '60', __value: '814b19'},
-                {__grade: '70', __value: '653d1b'},
-                {__grade: '80', __value: '482e1a'},
-                {__grade: '90', __value: '33241c'}
-            ]
-        },
-        {
-            __name: 'peach',
-            __core: '40',
-            __values: [
-                {__grade: '1', __value: 'f7e7e2'},
-                {__grade: '10', __value: 'f8d0c3'},
-                {__grade: '20', __value: 'faad96'},
-                {__grade: '30', __value: 'fc835c'},
-                {__grade: '40', __value: 'fe6100'},
-                {__grade: '50', __value: 'c45433'},
-                {__grade: '60', __value: '993a1d'},
-                {__grade: '70', __value: '782f1c'},
-                {__grade: '80', __value: '56251a'},
-                {__grade: '90', __value: '3a201b'}
-            ]
-        },
-        {
-            __name: 'red',
-            __core: '50',
-            __values: [
-                {__grade: '1', __value: 'f7e6e6'},
-                {__grade: '10', __value: 'fccec7'},
-                {__grade: '20', __value: 'ffaa9d'},
-                {__grade: '30', __value: 'ff806c'},
-                {__grade: '40', __value: 'ff5c49'},
-                {__grade: '50', __value: 'e62325'},
-                {__grade: '60', __value: 'aa231f'},
-                {__grade: '70', __value: '83231e'},
-                {__grade: '80', __value: '5c1f1b'},
-                {__grade: '90', __value: '3e1d1b'}
-            ]
-        },
-        {
-            __name: 'magenta',
-            __core: '40',
-            __values: [
-                {__grade: '1', __value: 'f5e7eb'},
-                {__grade: '10', __value: 'f5cedb'},
-                {__grade: '20', __value: 'f7aac3'},
-                {__grade: '30', __value: 'f87eac'},
-                {__grade: '40', __value: 'ff509e'},
-                {__grade: '50', __value: 'dc267f'},
-                {__grade: '60', __value: 'a91560'},
-                {__grade: '70', __value: '831b4c'},
-                {__grade: '80', __value: '5d1a38'},
-                {__grade: '90', __value: '401a29'}
-            ]
-        },
-        {
-            __name: 'purple',
-            __core: '50',
-            __values: [
-                {__grade: '1', __value: 'f7e4fb'},
-                {__grade: '10', __value: 'efcef3'},
-                {__grade: '20', __value: 'e4adea'},
-                {__grade: '30', __value: 'd68adf'},
-                {__grade: '40', __value: 'cb71d7'},
-                {__grade: '50', __value: 'c22dd5'},
-                {__grade: '60', __value: '9320a2'},
-                {__grade: '70', __value: '71237c'},
-                {__grade: '80', __value: '501e58'},
-                {__grade: '90', __value: '3b1a40'}
-            ]
-        },
-        {
-            __name: 'violet',
-            __core: '60',
-            __values: [
-                {__grade: '1', __value: 'ece8f5'},
-                {__grade: '10', __value: 'e2d2f4'},
-                {__grade: '20', __value: 'd2b5f0'},
-                {__grade: '30', __value: 'bf93eb'},
-                {__grade: '40', __value: 'b07ce8'},
-                {__grade: '50', __value: '9753e1'},
-                {__grade: '60', __value: '7732bb'},
-                {__grade: '70', __value: '602797'},
-                {__grade: '80', __value: '44216a'},
-                {__grade: '90', __value: '321c4c'}
-            ]
-        },
-        {
-            __name: 'indigo',
-            __core: '70',
-            __values: [
-                {__grade: '1', __value: 'e9e8ff'},
-                {__grade: '10', __value: 'dcd4f7'},
-                {__grade: '20', __value: 'c7b6f7'},
-                {__grade: '30', __value: 'ae97f4'},
-                {__grade: '40', __value: '9b82f3'},
-                {__grade: '50', __value: '785ef0'},
-                {__grade: '60', __value: '5a3ec8'},
-                {__grade: '70', __value: '473793'},
-                {__grade: '80', __value: '352969'},
-                {__grade: '90', __value: '272149'}
-            ]
-        },
-        {
-            __name: 'gray',
-            __core: '50',
-            __values: [
-                {__grade: '1', __value: 'eaeaea'},
-                {__grade: '10', __value: 'd8d8d8'},
-                {__grade: '20', __value: 'c0bfc0'},
-                {__grade: '30', __value: 'a6a5a6'},
-                {__grade: '40', __value: '949394'},
-                {__grade: '50', __value: '777677'},
-                {__grade: '60', __value: '595859'},
-                {__grade: '70', __value: '464646'},
-                {__grade: '80', __value: '343334'},
-                {__grade: '90', __value: '272727'}
-            ]
-        },
-        {
-            __name: 'cool-gray',
-            __core: '50',
-            __values: [
-                {__grade: '1', __value: 'e3ecec'},
-                {__grade: '10', __value: 'd0dada'},
-                {__grade: '20', __value: 'b8c1c1'},
-                {__grade: '30', __value: '9fa7a7'},
-                {__grade: '40', __value: '8c9696'},
-                {__grade: '50', __value: '6f7878'},
-                {__grade: '60', __value: '535a5a'},
-                {__grade: '70', __value: '424747'},
-                {__grade: '80', __value: '343334'},
-                {__grade: '90', __value: '272727'}
-            ]
-        },
-        {
-            __name: 'warm-gray',
-            __core: '50',
-            __values: [
-                {__grade: '1', __value: 'efe9e9'},
-                {__grade: '10', __value: 'e2d5d5'},
-                {__grade: '20', __value: 'ccbcbc'},
-                {__grade: '30', __value: 'b4a1a1'},
-                {__grade: '40', __value: '9e9191'},
-                {__grade: '50', __value: '7d7373'},
-                {__grade: '60', __value: '5f5757'},
-                {__grade: '70', __value: '4b4545'},
-                {__grade: '80', __value: '373232'},
-                {__grade: '90', __value: '2a2626'}
-            ]
-        },
-        {
-            __name: 'neutral-white',
-            __core: '1',
-            __values: [
-                {__grade: '1', __value: 'fcfcfc'},
-                {__grade: '2', __value: 'f9f9f9'},
-                {__grade: '3', __value: 'f6f6f6'},
-                {__grade: '4', __value: 'f3f3f3'}
-            ]
-        },
-        {
-            __name: 'cool-white',
-            __core: '1',
-            __values: [
-                {__grade: '1', __value: 'fbfcfc'},
-                {__grade: '2', __value: 'f8fafa'},
-                {__grade: '3', __value: 'f4f7f7'},
-                {__grade: '4', __value: 'f0f4f4'}
-            ]
-        },
-        {
-            __name: 'warm-white',
-            __core: '1',
-            __values: [
-                {__grade: '1', __value: 'fdfcfc'},
-                {__grade: '2', __value: 'fbf8f8'},
-                {__grade: '3', __value: 'f9f6f6'},
-                {__grade: '4', __value: 'f6f3f3'}
-            ]
-        },
-        {
-            __name: 'black',
-            __core: '100',
-            __values: [
-                {__grade: '100', __value: '000'}
-            ]
-        },
-        {
-            __name: 'white',
-            __core: '0',
-            __values: [
-                {__grade: '0', __value: 'fff'}
-            ]
-        }
-    ]
+    def __init__(self, amount: int, color: str, color_mode: str,
+                 special=False, show_warning: bool = True):
+        """
+        :param amount: Amount of grade
+        :param color: Color value (hex)
+        :param color_mode: Color Mode (rgb, hex, hsv)
+        :param special: If it is special color (used in Material Palette)
+        :param show_warning: If False, warnings will be suppressed
+        """
+        self.amount = amount
+        self._color = color
+        self.special = special
+        self.color_mode = color_mode
+        self.show_warning = show_warning
 
     @property
-    def all_colors(self) -> list:
-        cols = []
-        for c in self.__ibm_palette:
-            for m in c[self.__values]:
-                cols.append('#' + dict(m)[self.__value])
-        return cols
+    def color(self):
+        """
+        :return: Color associated with this grade
+        """
+        return _convert_color(self._color, self.color_mode, self.show_warning)
+
+    def __str__(self):
+        return str(self.color)
+
+
+class Color:
+    """
+    Color object which is child of Palette class.
+    This holds information about color name and its grades
+    """
+
+    def __init__(self, name: str, show_warning: bool = True,
+                 palette: str = PALETTE_IBM):
+        """
+        :param name: Name of color
+        :param show_warning: If False, warnings will be suppressed
+        :param palette: Name of Palette
+        """
+        self.name = name
+        self.palette = palette
+        self.core = -1
+        self._grades = {}
+        self._special = {}
+        self._color_mode = COLOR_MODE_HEX
+        self.show_warning = show_warning
 
     @property
-    def random(self) -> str:
-        import random
-        obj = self.__ibm_palette[random.randint(0, len(self.__ibm_palette) - 1)]
-        for v in obj[self.__values]:
-            if obj[self.__core] == dict(v)[self.__grade]:
-                return '#' + dict(v)[self.__value]
-        return '#000'
+    def grades(self) -> list:
+        """
+        :return: List of graded colors available in current palette
+        """
+        return [x for x in self._grades.values()]
 
-    def get(self, color_name: str) -> dict:
-        for item in self.__ibm_palette:
-            if color_name.lower() == dict(item)[self.__name].lower():
-                return item
-        import warnings
-        warnings.warn("%s : No such color found. Available standard colors "
-                      "are ultramarine, blue, cerulean, aqua, teal, green, "
-                      "lime, yellow, gold, orange, peach, red, magenta, "
-                      "purple, violet, indigo, gray, cool-gray, warm-gray, "
-                      "neutral-white, cool-white, warm-white, black, "
-                      "white" % color_name)
+    def add_grade(self, amount: int, color: str) -> None:
+        """
+        Add grade to current color
 
-    @staticmethod
-    def __calibrate_grade(grade: int, name: str) -> int:
-        if name == 'black':
-            return 100
-        elif name == 'white':
-            return 0
-        elif 'white' in name.lower():
-            if grade < 1:
-                return 1
-            elif grade > 4:
-                return 4
+        :param amount: Grade amount
+        :param color: Hex color
+        """
+        self._grades[amount] = Grade(amount, color, self._color_mode)
+
+    def add_special(self, amount: int, color: str) -> None:
+        """
+        Add special form of grade to color.
+        This is generally used in Material palette. These are the colors
+        which starts with 'a' as a prefix to grades
+        :param amount: Amount of grade
+        :param color: Hex color
+        """
+        self._special[amount] = Grade(amount, color, self._color_mode,
+                                      special=True)
+
+    def get_grade(self, amount: int):
+        """
+        Returns grade of specified amount.
+        If grade is not available, available grade is returned
+        :param amount: Amount of grade
+        :return: single object or list of objects
+        """
+        g_range = [x.amount for x in self._grades.values()]
+        if amount <= min(g_range):
+            return self._grades[min(g_range)]
+        elif amount >= max(g_range):
+            return self._grades[max(g_range)]
+        else:
+            for g in g_range:
+                if amount <= g:
+                    return self._grades[g]
+
+    def color_mode(self, color_mode: str) -> None:
+        """
+        Sets color mode for current color
+        :param color_mode: rgb, hex or hsv
+        """
+        for x in self._grades.values():
+            x.color_mode = color_mode
+
+    def __iter__(self):
+        """
+        You can iterate color object like 'for grade in color'.
+        :return: iterator
+        """
+        for a in self._grades.values():
+            yield a
+
+    def __str__(self) -> str:
+        """
+        If used directly as a string, core color will be returned
+        """
+        return str(self._grades[self.core].color)
+
+    def reversed(self) -> None:
+        """
+        Reverses the grade dictionary
+        """
+        keys = [x for x in self._grades.keys()]
+        keys.reverse()
+        self._grades = {k: self._grades[k] for k in keys}
+
+    def get_gradient(self, no_of_colors: int, start_from: int = None):
+        """
+        Returns gradient of current color.
+        This will first check if we can extract colors from existing
+        grades. If yes, then colors are returned from available grades.
+        If there are more number of requested colors in comparison to number
+        of grades available for current color, then it will select minimum
+        grade and maximum grade available and then calculates colors between
+        them in RGB color space
+        Similar calculation is done when start_from option is provided. If
+        there is only single grade present, all colors returning will be same
+
+        :param no_of_colors: Number of colors needed in gradient
+        :param start_from: from which grade gradient should start
+        :return: list of colors based on current color mode
+        """
+        g_range = [x for x in self._grades.keys()]
+        required_colors = no_of_colors
+        if start_from is not None:
+            required_colors = len([x for x in g_range if x >= start_from])
+        if required_colors > len(g_range) or required_colors == 0:
+            if start_from is None or start_from >= max(g_range) or start_from \
+                    <= min(g_range):
+                c1 = self._grades[min(g_range)]
+                c2 = self._grades[max(g_range)]
             else:
-                return grade
-        elif grade > 90:
-            return 90
-        elif grade < 1:
-            return 1
-        else:
-            k = grade - (grade % 10)
-            return k if k != 0 else 1
+                c1 = self.get_grade(start_from)
+                c2 = self._grades[max(g_range)]
 
-    def __get_color(self, color_item: dict, grade: int = None) -> str:
-        for v in color_item[self.__values]:
-            if grade is None:
-                if dict(v)[self.__grade] == color_item[self.__core]:
-                    return '#' + dict(v)[self.__value]
+            # If there are no distinct grades return same color
+            if c1 == c2:
+                return [c1.color] * no_of_colors
+
+            return [_convert_color(x, self._color_mode, self.show_warning) for x
+                    in color_in_between(c1.color, c2.color, no_of_colors + 1)]
+        else:
+            if start_from is not None and start_from <= max(g_range):
+                g_range = [x for x in g_range if x >= start_from]
+            g_range.sort()
+            re_col = []
+            for i in g_range:
+                re_col.append(_convert_color(self._grades[i].color,
+                                             self._color_mode,
+                                             self.show_warning))
+                if len(re_col) == no_of_colors:
+                    return re_col
+
+
+class Palette:
+    """
+    Represents color palette from existing values.
+    Currently available palettes are :
+    (1) IBM Color Palette (`ibm`) :Default
+    (2) Google Material Design Color Palette (`material`)
+
+    """
+
+    def __init__(self, name=PALETTE_IBM, color_mode: str = COLOR_MODE_HEX,
+                 show_warning: bool = True, remove_white: bool = True):
+        """
+        :param name: Name of the palette (ibm, material)
+        :param color_mode: Color mode in which colors will output will be
+        given . (rgb, hex, hsv)
+        :param show_warning: If False, warnings will be suppressed
+        :param remove_white: If True, white and its shades will be excluded
+        in generating color palettes. :Default is True
+        """
+
+        self.name = name
+        self.show_warning = show_warning
+        self._colors = {}
+        self._raw = ParentPalette()
+        self._color_mode = color_mode
+        self._other_colors = {}
+        self.remove_white = remove_white
+
+        self._all_palettes = [IBMPalette(), MaterialPalette()]
+
+        if name not in [PALETTE_IBM, PALETTE_MATERIAL]:
+            _warn("No such color palette exists. Using default palette",
+                  self.show_warning)
+            self.name = PALETTE_IBM
+
+        for p in self._all_palettes:
+            for data in p.colors:
+                c = Color(data[p.name])
+                c.core = data[p.core]
+                c.palette = p.get_palette_name()
+                for v in data[p.all]:
+                    if v[p.special]:
+                        c.add_special(v[p.grade], v[p.value])
+                    else:
+                        c.add_grade(v[p.grade], v[p.value])
+
+                if data[p.name] != "white":
+                    if self.name == p.get_palette_name():
+                        self._colors[data[p.name]] = c
+                    else:
+                        self._other_colors[data[p.name]] = c
+                elif not self.remove_white:
+                    if self.name == p.get_palette_name():
+                        self._colors[data[p.name]] = c
+                    else:
+                        self._other_colors[data[p.name]] = c
+
+        self.change_color_mode(color_mode)
+
+    def __iter__(self):
+        """
+        We can iterate over Color values like 'for color in palette'
+        :return: iterator
+        """
+        for a in self._colors.values():
+            yield a
+
+    def change_color_mode(self, mode: str) -> None:
+        """
+        Changes color mode
+        :param mode: rgb, hex, hsv (default: hex)
+        """
+        self._color_mode = mode
+        for c in self._colors.values():
+            c.color_mode(mode)
+
+    @property
+    def colors(self) -> list:
+        """
+        :return: List of all colors in current palette
+        """
+        return [x for x in self._colors.values()]
+
+    def random(self, no_of_colors: int = 1, grade: int = None):
+        """
+        Generates random color from current palette.
+        :param grade: If provided, grades are picked from this grade. If
+        current grade is not available, nearby grade is picked up
+        :param no_of_colors: Number of random colors you want to generate
+        :return: single color or list of colors
+        """
+        all_grades = []
+        if grade is None:
+            for y in [x.grades for x in self.colors]:
+                all_grades.extend(y)
+        else:
+            for y in self.colors:
+                all_grades.append(y.get_grade(grade))
+        random.shuffle(all_grades)
+        if len(all_grades) > no_of_colors:
+            if no_of_colors == 1:
+                return all_grades[0].color
             else:
-                if dict(v)[self.__grade] == \
-                        str(self.__calibrate_grade(grade,
-                                                   color_item[self.__name])):
-                    return '#' + dict(v)[self.__value]
+                return [x.color for x in all_grades[0:no_of_colors]]
 
-    def ultramarine(self, grade=None, no_of_colors: int = 1,
-                    start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('ultramarine', no_of_colors, start_from)
         else:
-            return self.__get_color(self.get('ultramarine'), grade)
+            _warn("No of colors requested are more than current palette has. "
+                  "Using custom gradient for providing requested colors",
+                  self.show_warning)
+            r = self.random(grade=grade)
+            cols = color_in_between(r.color, get_complementary(r.color),
+                                    no_of_colors)
+            return [_convert_color(x, self._color_mode, self.show_warning) for x
+                    in cols]
 
-    def blue(self, grade=None, no_of_colors: int = 1,
-             start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('blue', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('blue'), grade)
+    def _get_color(self, name: str) -> Color:
+        """
+        Internal use function to get color based on its name.
+        If color is not available in current palette, other palettes will be
+        searched.
 
-    def cerulean(self, grade=None, no_of_colors: int = 1,
-                 start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('cerulean', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('cerulean'), grade)
-
-    def aqua(self, grade=None, no_of_colors: int = 1,
-             start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('aqua', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('aqua'), grade)
-
-    def teal(self, grade=None, no_of_colors: int = 1,
-             start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('teal', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('teal'), grade)
-
-    def green(self, grade=None, no_of_colors: int = 1,
-              start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('green', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('green'), grade)
-
-    def lime(self, grade=None, no_of_colors: int = 1,
-             start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('lime', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('lime'), grade)
-
-    def gold(self, grade=None, no_of_colors: int = 1,
-             start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('gold', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('gold'), grade)
-
-    def yellow(self, grade=None, no_of_colors: int = 1,
-               start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('yellow', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('yellow'), grade)
-
-    def orange(self, grade=None, no_of_colors: int = 1,
-               start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('orange', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('orange'), grade)
-
-    def peach(self, grade=None, no_of_colors: int = 1,
-              start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('peach', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('peach'), grade)
-
-    def red(self, grade=None, no_of_colors: int = 1,
-            start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('red', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('red'), grade)
-
-    def magenta(self, grade=None, no_of_colors: int = 1,
-                start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('magenta', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('magenta'), grade)
-
-    def purple(self, grade=None, no_of_colors: int = 1,
-               start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('purple', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('purple'), grade)
-
-    def violet(self, grade=None, no_of_colors: int = 1,
-               start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('violet', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('violet'), grade)
-
-    def indigo(self, grade=None, no_of_colors: int = 1,
-               start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('indigo', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('indigo'), grade)
-
-    def gray(self, grade=None, no_of_colors: int = 1,
-             start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('gray', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('gray'), grade)
-
-    def cool_gray(self, grade=None, no_of_colors: int = 1,
-                  start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('cool-gray', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('cool-gray'), grade)
-
-    def warm_gray(self, grade=None, no_of_colors: int = 1,
-                  start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('warm-gray', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('warm-gray'), grade)
-
-    def neutral_white(self, grade=None, no_of_colors: int = 1,
-                      start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('neutral-white', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('neutral-white'), grade)
-
-    def cool_white(self, grade=None, no_of_colors: int = 1,
-                   start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('cool-white', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('cool-white'), grade)
-
-    def warm_white(self, grade=None, no_of_colors: int = 1,
-                   start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('warm-white', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('warm-white'), grade)
-
-    def black(self, grade=None, no_of_colors: int = 1,
-              start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('black', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('black'), grade)
-
-    def white(self, grade=None, no_of_colors: int = 1,
-              start_from: int = 1):
-        if no_of_colors != 1:
-            return self.__uni_default('white', no_of_colors, start_from)
-        else:
-            return self.__get_color(self.get('white'), grade)
-
-    def random_set_of(self, number: int):
-        from random import shuffle
-        col = [x for x in self.all_colors]
-        all_colors = []
-        for i in range(number):
-            shuffle(col)
-            all_colors.append(col[0])
-        return all_colors
+        :param name: name of color
+        :return: Color object
+        """
+        for c in self.colors:
+            if c.name == name:
+                return c
+        _warn("Current palette do not have this color. Using it from other "
+              "palettes", self.show_warning)
+        return self._other_colors[name]
 
     @staticmethod
-    def rgb(hex_color: str):
-        return hex_to_rgb(hex_color)
+    def _get_grade(color: Color, grade: int = None) -> Grade:
+        """
+        :param color: Color object
+        :param grade: Amount of grade
+        :return: Grade Object
+        """
+        return color.get_grade(grade)
 
-    @staticmethod
-    def hsv(hex_color: str):
-        return rgb_to_hsv(hex_to_rgb(hex_color))
+    def _common_color(self, color_name: str, grade: int = None,
+                      no_of_colors: int = 1, start_from: int = None):
 
-    def uniform_colors(self, number_of_colors: int) -> list:
-        c1 = self.random
-        c2 = self.random
-        all_colors = [c1]
-        all_colors.extend(color_in_between(c1, c2, number_of_colors + 1))
-        all_colors.append(c2)
-        return all_colors
-
-    @staticmethod
-    def uniform_colors_between(number_of_colors: int, c1: str, c2: str) -> \
-            list:
-        all_colors = [c1]
-        all_colors.extend(color_in_between(c1, c2, number_of_colors + 1))
-        all_colors.append(c2)
-        return all_colors
-
-    def __uni_default(self, name, no_of_colors, start_from):
-        if start_from > 80:
-            c1 = self.__get_color(self.get(name), 80)
+        """
+        :param color_name: Name of the color :param grade: Grade amount
+        :param no_of_colors: Number of colors needed :param start_from:
+        starting grade (used in case of more than 1 colors are requested)
+        :return: single color or list of colors
+        """
+        if grade is None and no_of_colors == 1:
+            c = self._get_color(color_name)
+            if self._color_mode == COLOR_MODE_HEX:
+                return _convert_color(str(c), self._color_mode,
+                                      self.show_warning)
+            else:
+                return c._grades[c.core].color
         else:
-            c1 = self.__get_color(self.get(name), start_from)
-        c2 = self.__get_color(self.get(name), 90)
-        all_colors = [c1]
-        if no_of_colors > 2:
-            all_colors.extend(color_in_between(c1, c2, no_of_colors - 1))
-        all_colors.append(c2)
-        return all_colors
+            if no_of_colors == 1:
+                g = self._get_grade(self._get_color(color_name), grade)
+                return g.color
+            else:
+                return self._get_color(color_name).get_gradient(no_of_colors,
+                                                                start_from)
+
+    @staticmethod
+    def gradient_between(hex_color1: str, hex_color2: str,
+                         no_of_colors: int, excluding_input: bool = False):
+
+        """
+        Returns colors between input colors
+        :param hex_color1: Color 1 in hex form
+        :param hex_color2: Color 2 in hex form
+        :param no_of_colors: Number of colors required
+        :param excluding_input: If yes, input colors are excluded from the list
+        :return: list of color or single color
+        """
+        if no_of_colors == 0:
+            return []
+        elif no_of_colors == 1:
+            return color_in_between(hex_color1, hex_color2)
+        elif no_of_colors == 2 and not excluding_input:
+            return [hex_color1, hex_color2]
+        elif no_of_colors == 2 and excluding_input:
+            return color_in_between(hex_color1, hex_color2, no_of_colors + 1)
+        else:
+            col = []
+            adjust = -1
+            if excluding_input:
+                adjust = 1
+            else:
+                col = [hex_color1]
+            col.extend(
+                color_in_between(hex_color1, hex_color2, no_of_colors + adjust))
+            if not excluding_input:
+                col.append(hex_color2)
+            return col
+
+    def red(self, grade: int = None, no_of_colors: int = 1,
+            start_from: int = None):
+        return self._common_color("red", grade, no_of_colors, start_from)
+
+    def ultramarine(self, grade: int = None, no_of_colors: int = 1,
+                    start_from: int = None):
+        return self._common_color("ultramarine", grade, no_of_colors,
+                                  start_from)
+
+    def blue(self, grade: int = None, no_of_colors: int = 1,
+             start_from: int = None):
+        return self._common_color("blue", grade, no_of_colors, start_from)
+
+    def cerulean(self, grade: int = None, no_of_colors: int = 1,
+                 start_from: int = None):
+        return self._common_color("cerulean", grade, no_of_colors, start_from)
+
+    def aqua(self, grade: int = None, no_of_colors: int = 1,
+             start_from: int = None):
+        return self._common_color("aqua", grade, no_of_colors, start_from)
+
+    def teal(self, grade: int = None, no_of_colors: int = 1,
+             start_from: int = None):
+        return self._common_color("teal", grade, no_of_colors, start_from)
+
+    def green(self, grade: int = None, no_of_colors: int = 1,
+              start_from: int = None):
+        return self._common_color("green", grade, no_of_colors, start_from)
+
+    def lime(self, grade: int = None, no_of_colors: int = 1,
+             start_from: int = None):
+        return self._common_color("lime", grade, no_of_colors, start_from)
+
+    def yellow(self, grade: int = None, no_of_colors: int = 1,
+               start_from: int = None):
+        return self._common_color("yellow", grade, no_of_colors, start_from)
+
+    def gold(self, grade: int = None, no_of_colors: int = 1,
+             start_from: int = None):
+        return self._common_color("gold", grade, no_of_colors, start_from)
+
+    def orange(self, grade: int = None, no_of_colors: int = 1,
+               start_from: int = None):
+        return self._common_color("orange", grade, no_of_colors, start_from)
+
+    def peach(self, grade: int = None, no_of_colors: int = 1,
+              start_from: int = None):
+        return self._common_color("peach", grade, no_of_colors, start_from)
+
+    def magenta(self, grade: int = None, no_of_colors: int = 1,
+                start_from: int = None):
+        return self._common_color("magenta", grade, no_of_colors, start_from)
+
+    def purple(self, grade: int = None, no_of_colors: int = 1,
+               start_from: int = None):
+        return self._common_color("purple", grade, no_of_colors, start_from)
+
+    def violet(self, grade: int = None, no_of_colors: int = 1,
+               start_from: int = None):
+        return self._common_color("violet", grade, no_of_colors, start_from)
+
+    def indigo(self, grade: int = None, no_of_colors: int = 1,
+               start_from: int = None):
+        return self._common_color("indigo", grade, no_of_colors, start_from)
+
+    def gray(self, grade: int = None, no_of_colors: int = 1,
+             start_from: int = None):
+        return self._common_color("gray", grade, no_of_colors, start_from)
+
+    def cool_gray(self, grade: int = None, no_of_colors: int = 1,
+                  start_from: int = None):
+        return self._common_color("cool-gray", grade, no_of_colors, start_from)
+
+    def warm_gray(self, grade: int = None, no_of_colors: int = 1,
+                  start_from: int = None):
+        return self._common_color("warm-gray", grade, no_of_colors, start_from)
+
+    def neutral_white(self, grade: int = None, no_of_colors: int = 1,
+                      start_from: int = None):
+        return self._common_color("neutral-white", grade, no_of_colors,
+                                  start_from)
+
+    def cool_white(self, grade: int = None, no_of_colors: int = 1,
+                   start_from: int = None):
+        return self._common_color("cool-white", grade, no_of_colors, start_from)
+
+    def warm_white(self, grade: int = None, no_of_colors: int = 1,
+                   start_from: int = None):
+        return self._common_color("warm-white", grade, no_of_colors, start_from)
+
+    def black(self, grade: int = None, no_of_colors: int = 1,
+              start_from: int = None):
+        return self._common_color("black", grade, no_of_colors, start_from)
+
+    def white(self, grade: int = None, no_of_colors: int = 1,
+              start_from: int = None):
+        if self.remove_white:
+            _warn(
+                "To include white and it's shades, use 'remove_white=False' "
+                "option")
+            return _convert_color("#fff", self._color_mode, self.show_warning)
+        else:
+            return self._common_color("white", grade, no_of_colors, start_from)
+
+    def pink(self, grade: int = None, no_of_colors: int = 1,
+             start_from: int = None):
+        return self._common_color("pink", grade, no_of_colors, start_from)
+
+    def deep_purple(self, grade: int = None, no_of_colors: int = 1,
+                    start_from: int = None):
+        return self._common_color("deep-purple", grade, no_of_colors,
+                                  start_from)
+
+    def light_blue(self, grade: int = None, no_of_colors: int = 1,
+                   start_from: int = None):
+        return self._common_color("light-blue", grade, no_of_colors, start_from)
+
+    def cyan(self, grade: int = None, no_of_colors: int = 1,
+             start_from: int = None):
+        return self._common_color("cyan", grade, no_of_colors, start_from)
+
+    def light_green(self, grade: int = None, no_of_colors: int = 1,
+                    start_from: int = None):
+        return self._common_color("light-green", grade, no_of_colors,
+                                  start_from)
+
+    def amber(self, grade: int = None, no_of_colors: int = 1,
+              start_from: int = None):
+        return self._common_color("amber", grade, no_of_colors, start_from)
+
+    def deep_orange(self, grade: int = None, no_of_colors: int = 1,
+                    start_from: int = None):
+        return self._common_color("deep-orange", grade, no_of_colors,
+                                  start_from)
+
+    def brown(self, grade: int = None, no_of_colors: int = 1,
+              start_from: int = None):
+        return self._common_color("brown", grade, no_of_colors, start_from)
+
+    def blue_gray(self, grade: int = None, no_of_colors: int = 1,
+                  start_from: int = None):
+        return self._common_color("blue-gray", grade, no_of_colors, start_from)

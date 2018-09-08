@@ -11,35 +11,78 @@ and adds few helpful functions.
     pip install SecretColors
 
 ### Usage
-Simple use will be 
+Select different Palettes
     
-    from SecretColors.palette import IBMPalette
-    palette = IBMPalette()
-    palette.red() # Red color from IBM palette
-    # Most of the color have 10 grades 1,10,20...90
-    palette.red(grade=1) # Lighter Red Color
-    palette.red(grade=90) # Darker Red Color
-    palette.red(no_of_colors=2) # Two grades of Reds
-    palette.random # Random color from the palette 
-    palette.uniform_colors(10) # 10 colors from uniform gradient
-    palette.uniform_colors_between(10, '#648fff', '#00aa5e') # 10 colors from
-     uniform gradient between #648fff and #00aa5e
+    from SecretColors.palette import Palette
+    ibm = Palette("ibm")  # IBM Palette
+    material = Palette("material")  # Material Palette
 
-Plus it has few standard conversion methods
+Get Common Colors
 
-    from SecretColors.palette import *
+    ibm.red()  # Default Red color from IBM palette (#008673)
+    ibm.cerulean()  # Default Cerulean color from IBM palette (#009bef)
+
+Shades of colors
     
-    rgb_to_hex((0, 170, 94)) # Converts RGB to Hex
-    rgb_to_hsv((0, 170, 94)) # Converts RGB to HSV
-    hex_to_rgb('#00aa5e') # Converts Hex to RGB
-    color_in_between('#00aa5e', '#95d13c') # Color beteen two in RGB space
+    ibm.red(grade=10)  # Light Red with grade 10 (#fccec7)
+    ibm.red(grade=80)  # Dark Red with grade 80 (#5c1f1b)
+    ibm.red(grade=10000)  # Maximum/Minimum will be automatically adjusted (#3e1d1b)
+
+Number of colors
+
+    reds = ibm.red(no_of_colors=5)  # List of 3 Red colors from IBM palette
+    dark_reds = ibm.red(no_of_colors=5, start_from=40)  # List of 3 Red 
+    colors from IBM palettes starting from grade 40
+ 
+Random Colors
+
+    ibm.random()  # Random color from IBM Palette
+    ibm.random(grade=60)  # Random color from grade 60
+    ibm.random(no_of_colors=10)  # 10 Random colors
+    ibm.random(no_of_colors=10, grade=30)  # Random colors with grade
+
+Gradients between colors
+
+    ibm.gradient_between(ibm.red(), ibm.blue(), no_of_colors=5)
+    # Gradient between your own custom colors
+    ibm.gradient_between("#b73752", "#2d74da", no_of_colors=5)
+
+Palette output in other color-spaces
+
+    ibm.change_color_mode("rgb")
+    ibm.red()  # (0.90, 0.13, 0.14)
+
+General Conversion Functions
+
+    from SecretColors.palette import hex_to_rgb, hex_to_hsv, rgb_to_hex
+    hex_to_rgb("#b73752")  # (0.71, 0.21, 0.32)
+    hex_to_hsv("#b73752")  # (0.96, 0.69, 183.0)
+    rgb_to_hex((0.71, 0.21, 0.32))  # #b53551
+
+Text contrast on background color
+
+    from SecretColors.palette import text_color
+    text_color("#e62325")  # Returns #ffffff. This suggest white color text will
+    # have good contrast on given color
+    text_color("#eabbbc")  # Returns #000000. Suggesting black color text will have
+    #  good contrast on given color
+
+Simple Usage with `matplotlib`
+
+    import matplotlib.pylab as plt
+    import numpy as np
+    
+    data = np.random.randint(10, 50, 5)
+    plt.bar(range(len(data)), data, color=ibm.blue(no_of_colors=len(data), start_from=30))
+    plt.show()
+
 
 ### TODO
 
 - [x] IBM Color Palette
 - [x] Color gradients
-- [ ] Google Material Design Palette
-- [ ] Text contrast detection
+- [x] Google Material Design Palette
+- [x] Text contrast detection
 - [ ] ColorBrewer Palette
 - [ ] Matplotlib `cmap` helper functions
 

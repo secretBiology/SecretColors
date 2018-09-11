@@ -76,6 +76,9 @@ Simple Usage with `matplotlib`
     plt.bar(range(len(data)), data, color=ibm.blue(no_of_colors=len(data), start_from=30))
     plt.show()
 
+Few sample plots and inspiration behind this library can be found in 
+[WeirdData blog](https://weirddata.github.io/2018/09/10/secret-colors.html). 
+
 
 ### TODO
 
@@ -83,8 +86,9 @@ Simple Usage with `matplotlib`
 - [x] Color gradients
 - [x] Google Material Design Palette
 - [x] Text contrast detection
+- [x] Matplotlib `cmap` helper functions
 - [ ] ColorBrewer Palette
-- [ ] Matplotlib `cmap` helper functions
+- [ ] VMware Palette
 
 ### Acknowledgments
 Colors used in this library are partly taken from [IBM Design Language](https://www.ibm.com/design/language/resources/color-library/) and [Google 

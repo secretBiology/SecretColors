@@ -111,6 +111,10 @@ class Color:
         """
         return [x for x in self._grades.values()]
 
+    @property
+    def base(self) -> str:
+        return self.get_grade(self.core).color
+
     def add_grade(self, amount: int, color: str) -> None:
         """
         Add grade to current color
@@ -294,7 +298,7 @@ class Palette:
         :return: iterator
         """
         for a in self._colors.values():
-            yield a
+            yield a.base
 
     def change_color_mode(self, mode: str) -> None:
         """
@@ -304,6 +308,15 @@ class Palette:
         self._color_mode = mode
         for c in self._colors.values():
             c.color_mode(mode)
+
+    def base(self, object_list) -> list:
+        colors = [x.base for x in self.colors]
+        if len(object_list) < len(colors):
+            return colors[0:len(object_list)]
+        else:
+            col_grad = self.gradient_between(colors[0], colors[-1],
+                                             no_of_colors=len(object_list))
+            return col_grad
 
     @property
     def colors(self) -> list:
@@ -569,40 +582,66 @@ class Palette:
                   start_from: int = None):
         return self._common_color("blue-gray", grade, no_of_colors, start_from)
 
-    def _color_from_hex(self, hex_color: str) -> list:
+    def _color_from_hex(self, hex_color: str, start_grade=None) -> list:
         """
         Iterate over all color grades available in package. If match is found
         color object is returned
         :param hex_color: Hex color to scan
+        :param start_grade: Starting color grade
         :return: list of gradient colors from palette or derived
         """
         for c in self.colors:
             for g in c.grades:
                 if g.color == hex_color:
-                    return c.get_gradient(no_of_colors=10)
+                    return c.get_gradient(no_of_colors=10,
+                                          start_from=start_grade)
 
         for c in self._other_colors.values():
             for g in c.grades:
                 if g.color == hex_color:
-                    return c.get_gradient(no_of_colors=10)
+                    return c.get_gradient(no_of_colors=10,
+                                          start_from=start_grade)
 
         # If couldn't find any hex color, make automatic between white, color of
         # interest and black
         return ["#f0f4f4", hex_color, "#000000"]
 
-    def cmap_of(self, matplotlib, color):
+    def cmap_of(self, matplotlib, color, start_grade=None):
         """
         Creates custom cmap from given hex_color.
 
+        :param start_grade: Starting of the gradient
         :param matplotlib: from "import matplotlib"
         :param color: hex color
         :return: LinearSegmentedColormap segment
         """
         try:
             return matplotlib.colors.LinearSegmentedColormap \
-                .from_list(color + "_secret_color", self._color_from_hex(color))
+                .from_list(color + "_secret_color", self._color_from_hex(
+                color, start_grade=start_grade))
         except AttributeError:
             raise Exception("Add 'matplotlib' as a first argument. For "
                             "example, import matplotlib; palette.cmap_of("
                             "matplotlib, "
                             "palette.red());")
+
+    def normalized_colors_for(self, matplotlib, object_list, color=None,
+                              start_grade=None, upper_bound: float = None):
+        try:
+            if upper_bound is None:
+                normalize_list = [x / max(object_list) for x in object_list]
+            else:
+                normalize_list = [x / upper_bound for x in object_list]
+
+            if color is None:
+                color = self.random()
+
+            seg = matplotlib.colors.LinearSegmentedColormap \
+                .from_list(color + "_secret_color", self._color_from_hex(
+                color, start_grade=start_grade))
+            return [seg(x) for x in normalize_list]
+        except AttributeError:
+            raise Exception("Add 'matplotlib' as a first argument. For "
+                            "example, import matplotlib; "
+                            "palette.normalized_colors_for( "
+                            "matplotlib, list_of_values);")

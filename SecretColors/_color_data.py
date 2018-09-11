@@ -248,8 +248,8 @@ class IBMPalette(ParentPalette):
                                     {g: 2, v: '#fbf8f8', s: False},
                                     {g: 3, v: '#f9f6f6', s: False},
                                     {g: 4, v: '#f6f3f3', s: False}]},
-        {n: 'black', c: 100, a: [{g: 100, v: '#000', s: False}]},
-        {n: 'white', c: 0, a: [{g: 0, v: '#fff', s: False}]}
+        {n: 'black', c: 100, a: [{g: 100, v: '#000000', s: False}]},
+        {n: 'white', c: 0, a: [{g: 0, v: '#ffffff', s: False}]}
     ]
 
 
@@ -553,6 +553,6 @@ class MaterialPalette(ParentPalette):
             {g: 700, v: '#455a64', s: False},
             {g: 800, v: '#37474f', s: False},
             {g: 900, v: '#263238', s: False}]},
-        {n: 'black', c: 1000, a: [{g: 1000, v: '#000', s: False}]},
-        {n: 'white', c: 0, a: [{g: 0, v: '#fff', s: False}]}
+        {n: 'black', c: 1000, a: [{g: 1000, v: '#000000', s: False}]},
+        {n: 'white', c: 0, a: [{g: 0, v: '#ffffff', s: False}]}
     ]

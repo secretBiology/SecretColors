@@ -198,7 +198,9 @@ class Color:
         required_colors = no_of_colors
         if start_from is not None:
             required_colors = len([x for x in g_range if x >= start_from])
-        if required_colors > len(g_range) or required_colors == 0:
+
+        if required_colors > len(g_range) or required_colors == 0 or \
+                required_colors < no_of_colors:
             if start_from is None or start_from >= max(g_range) or start_from \
                     <= min(g_range):
                 c1 = self._grades[min(g_range)]
@@ -216,6 +218,7 @@ class Color:
         else:
             if start_from is not None and start_from <= max(g_range):
                 g_range = [x for x in g_range if x >= start_from]
+
             g_range.sort()
             re_col = []
             for i in g_range:
@@ -565,3 +568,41 @@ class Palette:
     def blue_gray(self, grade: int = None, no_of_colors: int = 1,
                   start_from: int = None):
         return self._common_color("blue-gray", grade, no_of_colors, start_from)
+
+    def _color_from_hex(self, hex_color: str) -> list:
+        """
+        Iterate over all color grades available in package. If match is found
+        color object is returned
+        :param hex_color: Hex color to scan
+        :return: list of gradient colors from palette or derived
+        """
+        for c in self.colors:
+            for g in c.grades:
+                if g.color == hex_color:
+                    return c.get_gradient(no_of_colors=10)
+
+        for c in self._other_colors.values():
+            for g in c.grades:
+                if g.color == hex_color:
+                    return c.get_gradient(no_of_colors=10)
+
+        # If couldn't find any hex color, make automatic between white, color of
+        # interest and black
+        return ["#f0f4f4", hex_color, "#000000"]
+
+    def cmap_of(self, matplotlib, color):
+        """
+        Creates custom cmap from given hex_color.
+
+        :param matplotlib: from "import matplotlib"
+        :param color: hex color
+        :return: LinearSegmentedColormap segment
+        """
+        try:
+            return matplotlib.colors.LinearSegmentedColormap \
+                .from_list(color + "_secret_color", self._color_from_hex(color))
+        except AttributeError:
+            raise Exception("Add 'matplotlib' as a first argument. For "
+                            "example, import matplotlib; palette.cmap_of("
+                            "matplotlib, "
+                            "palette.red());")

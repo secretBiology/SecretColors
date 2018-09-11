@@ -9,7 +9,12 @@ def int_to_hex(num: int):
     :param num: Integer to be converted
     :return: Hex string
     """
-    return hex(int(num)).rstrip("L").lstrip("0x").lstrip("-0x")
+    digit = hex(int(num)).rstrip("L").lstrip("0x").lstrip("-0x")
+    if len(digit) == 0:
+        return "00"
+    if len(digit) == 1:
+        digit += str(digit)
+    return str(digit)
 
 
 def rgb_to_hex(rgb_tuple):
@@ -20,12 +25,10 @@ def rgb_to_hex(rgb_tuple):
     """
     if sum(rgb_tuple) > 3:
         return "#" + int_to_hex(rgb_tuple[0]) + int_to_hex(
-            rgb_tuple[1]) + \
-               int_to_hex(rgb_tuple[2])
+            rgb_tuple[1]) + int_to_hex(rgb_tuple[2])
     else:
         return "#" + int_to_hex(rgb_tuple[0] * 255) + int_to_hex(
-            rgb_tuple[1] * 255) + \
-               int_to_hex(rgb_tuple[2] * 255)
+            rgb_tuple[1] * 255) + int_to_hex(rgb_tuple[2] * 255)
 
 
 def rgb_to_hsv(rgb_tuple):
@@ -86,15 +89,18 @@ def hex_to_rgb(hex_color: str):
         r, g, b, a = [hex_color.replace("#", "")[i:i + 2] for i in
                       range(0, 8, 2)]
 
-        return int(r, 16) / 255, int(g, 16) / 255, int(b, 16) / 255, int(a)
+        return round(int(r, 16) / 255, 3), round(int(g, 16) / 255, 3), round(
+            int(b, 16) / 255, 3), int(a)
     elif len(hex_color.replace("#", "")) == 6:
         r, g, b = [hex_color.replace("#", "")[i:i + 2] for i in
                    range(0, 6, 2)]
 
-        return int(r, 16) / 255, int(g, 16) / 255, int(b, 16) / 255
+        return round(int(r, 16) / 255, 3), round(int(g, 16) / 255, 3), round(
+            int(b, 16) / 255, 3)
     elif len(hex_color.replace("#", "")) == 3:
         r, g, b = [x for x in hex_color.replace("#", "")]
-        return int(r + r, 16) / 255, int(g + g, 16) / 255, int(b + b, 16) / 255
+        return round(int(r + r, 16) / 255, 3), round(int(g + g, 16) / 255, 3), \
+               round(int(b + b, 16) / 255, 3)
 
     else:
         raise Exception("Invalid Hex Code")

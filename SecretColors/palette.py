@@ -645,3 +645,133 @@ class Palette:
                             "example, import matplotlib; "
                             "palette.normalized_colors_for( "
                             "matplotlib, list_of_values);")
+
+
+class ColorMap:
+    """
+    Simple Colormap  generator class which can be used in Matplotlib
+    """
+
+    def __init__(self, matplotlib, palette: str = PALETTE_IBM):
+        self.matplotlib = matplotlib
+        self.palette = Palette(palette)
+        self._map_colors = ["#c2dbf4", "#56acf2", "#009bef", "#047cc0",
+                            "#175d8d"]
+
+        self._map = self._get_linear_segment(self.map_colors)
+
+    def _get_linear_segment(self, color_list: list):
+        try:
+            self._map = self.matplotlib.colors.LinearSegmentedColormap \
+                .from_list("secret_color", color_list)
+            return self.map
+        except AttributeError:
+            raise Exception("Matplotlib is required to use this function")
+
+    def _get_listed_segment(self, color_list: list):
+        try:
+            self._map = self.matplotlib.colors.ListedColormap(color_list)
+            return self.map
+        except AttributeError:
+            raise Exception("Matplotlib is required to use this function")
+
+    @property
+    def map(self):
+        """
+        :return: Matplotlib colormap
+        """
+        return self._map
+
+    @property
+    def map_colors(self):
+        return self._map_colors
+
+    @map_colors.setter
+    def map_colors(self, color_list: list):
+        if color_list is list:
+            if len(color_list) > 1:
+                self._map_colors = color_list
+            else:
+                _warn("Using 'Black' as a default color for cmap. Please use "
+                      "more than 1 color to generate color map")
+                c = [x for x in color_list]
+                c.append("#000000")
+                self._map_colors = c
+        else:
+            raise Exception("Please use list for 'map_colors' instead of %s"
+                            % type(color_list))
+
+    def _derive_map(self, c, is_qualitative=False, no_of_divisions=None,
+                    start_from=None):
+        if not is_qualitative:
+            return self._get_linear_segment(c)
+        else:
+            if no_of_divisions is not None:
+                if start_from is None:
+                    if no_of_divisions < 6:
+                        c = c(no_of_colors=no_of_divisions,
+                              start_from=30)
+                    else:
+                        c = c(no_of_colors=no_of_divisions,
+                              start_from=start_from)
+                else:
+                    c = c(no_of_colors=no_of_divisions, start_from=start_from)
+            else:
+                c = c(no_of_colors=10, start_from=start_from)
+            return self._get_listed_segment(c)
+
+    def cool(self, is_qualitative=False, no_of_divisions=None,
+             start_from=None):
+        if not is_qualitative:
+            c = ["#BBDEFB", "#1565C0"]
+        else:
+            c = self.palette.cerulean
+
+        return self._derive_map(c, is_qualitative=is_qualitative,
+                                no_of_divisions=no_of_divisions,
+                                start_from=start_from)
+
+    def warm(self, is_qualitative=False, no_of_divisions=None,
+             start_from=None):
+        if not is_qualitative:
+            c = ["#FFCDD2", "#D32F2F"]
+        else:
+            c = self.palette.red
+
+        return self._derive_map(c, is_qualitative=is_qualitative,
+                                no_of_divisions=no_of_divisions,
+                                start_from=start_from)
+
+    def greens(self, is_qualitative=False, no_of_divisions=None,
+               start_from=None):
+        if not is_qualitative:
+            c = ["#89eda0", "#123b22"]
+        else:
+            c = self.palette.green
+
+        return self._derive_map(c, is_qualitative=is_qualitative,
+                                no_of_divisions=no_of_divisions,
+                                start_from=start_from)
+
+    def ibm(self, is_qualitative=False):
+        p = Palette(PALETTE_IBM)
+        c = [x.base for x in p.colors]
+        c = c[:-6]
+        c.append("#000000")
+        if is_qualitative:
+            return self._get_listed_segment(c)
+        else:
+            return self._get_linear_segment(c)
+
+    def material(self, is_qualitative=False):
+        if is_qualitative:
+            p = Palette(PALETTE_MATERIAL)
+            c = [x.base for x in p.colors]
+            return self._get_listed_segment(c)
+        else:
+            p = Palette(PALETTE_MATERIAL)
+            c = [c.base for c in p.colors]
+            return self._get_linear_segment(c)
+
+    def random(self):
+        return self._get_linear_segment(self.palette.random(no_of_colors=2))

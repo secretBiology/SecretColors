@@ -143,14 +143,9 @@ def get_complementary(hex_color: str):
     :return: Complementary Hex color
     """
 
-    def flip_value(val):
-        if val < 255 / 2:
-            return 255 - val
-        else:
-            return val - 255
-
     r, g, b = hex_to_rgb(hex_color)
-    return rgb_to_hex((flip_value(r), flip_value(g), flip_value(b)))
+    k = max([r, g, b]) + min([r, g, b])
+    return rgb_to_hex(tuple(k - u for u in (r, g, b)))
 
 
 def text_color(hex_color: str):
@@ -167,4 +162,4 @@ def text_color(hex_color: str):
     """
     r, g, b = hex_to_rgb(hex_color)
     score = (r * 0.299 + g * 0.587 + b * 0.114)
-    return "#000000" if score > 186 else "#ffffff"
+    return "#000000" if score > 0.729 else "#ffffff"

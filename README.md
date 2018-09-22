@@ -6,6 +6,10 @@ Library generated for making plots with better color palette. It uses
 famous color palettes 
 and adds few helpful functions. 
 
+Few sample plots and inspiration behind this library can be found in 
+[WeirdData blog](https://weirddata.github.io/2018/09/10/secret-colors.html). 
+
+
 ### Installation 
 
     pip install SecretColors
@@ -76,9 +80,31 @@ Simple Usage with `matplotlib`
     plt.bar(range(len(data)), data, color=ibm.blue(no_of_colors=len(data), start_from=30))
     plt.show()
 
-Few sample plots and inspiration behind this library can be found in 
-[WeirdData blog](https://weirddata.github.io/2018/09/10/secret-colors.html). 
+Custom ColorMaps
 
+    import matplotlib
+    import matplotlib.pylab as plt
+    from SecretColors.palette import ColorMap
+    a = np.random.random((16, 16))
+    cmap = ColorMap(matplotlib)
+    plt.imshow(a, cmap=cmap.warm(), interpolation='nearest')
+    plt.colorbar()
+    plt.show()
+    
+    #Similarly
+    plt.imshow(a, cmap=cmap.cool(), interpolation='nearest')
+    plt.imshow(a, cmap=cmap.greens(), interpolation='nearest')
+    plt.imshow(a, cmap=cmap.ibm(), interpolation='nearest')
+    plt.imshow(a, cmap=cmap.material(), interpolation='nearest')
+    
+    # Qualitative maps
+     plt.imshow(a, cmap=cmap.greens(is_qualitative=True), interpolation='nearest')
+    
+    # Definite Divisions
+    plt.imshow(a, cmap=cmap.greens(is_qualitative=True, no_of_divisions=5), interpolation='nearest')
+    
+More color maps will be added in next release !
+    
 
 ### TODO
 

@@ -3,18 +3,13 @@ Utility functions used in this module
 """
 
 
-def int_to_hex(num: int):
+def __int_to_hex(num: int):
     """
     Converts integer to hex. Automatically rounds of the float
     :param num: Integer to be converted
     :return: Hex string
     """
-    digit = hex(int(num)).rstrip("L").lstrip("0x").lstrip("-0x")
-    if len(digit) == 0:
-        return "00"
-    if len(digit) == 1:
-        digit += str(digit)
-    return str(digit)
+    return '%02x' % int(num)
 
 
 def rgb_to_hex(rgb_tuple):
@@ -23,60 +18,8 @@ def rgb_to_hex(rgb_tuple):
     :param rgb_tuple: RGB tuple .
     :return: Hex color
     """
-    if sum(rgb_tuple) > 3:
-        return "#" + int_to_hex(rgb_tuple[0]) + int_to_hex(
-            rgb_tuple[1]) + int_to_hex(rgb_tuple[2])
-    else:
-        return "#" + int_to_hex(rgb_tuple[0] * 255) + int_to_hex(
-            rgb_tuple[1] * 255) + int_to_hex(rgb_tuple[2] * 255)
-
-
-def rgb_to_hsv(rgb_tuple):
-    import numpy as np
-    """
-    Code from https://github.com/matplotlib/
-    matplotlib/blob/master/lib/matplotlib/_color_data.py
-    """
-    # make sure it is an ndarray
-    rgb_tuple = np.asarray(rgb_tuple)
-
-    # check length of the last dimension, should be _some_ sort of rgb
-    if rgb_tuple.shape[-1] != 3:
-        raise ValueError("Last dimension of input array must be 3; "
-                         "shape {} was found.".format(rgb_tuple.shape))
-
-    in_ndim = rgb_tuple.ndim
-    if rgb_tuple.ndim == 1:
-        rgb_tuple = np.array(rgb_tuple, ndmin=2)
-
-    # make sure we don't have an int image
-    rgb_tuple = rgb_tuple.astype(np.promote_types(rgb_tuple.dtype, np.float32))
-
-    out = np.zeros_like(rgb_tuple)
-    arr_max = rgb_tuple.max(-1)
-    ipos = arr_max > 0
-    delta = rgb_tuple.ptp(-1)
-    s = np.zeros_like(delta)
-    s[ipos] = delta[ipos] / arr_max[ipos]
-    ipos = delta > 0
-    # red is max
-    idx = (rgb_tuple[..., 0] == arr_max) & ipos
-    out[idx, 0] = (rgb_tuple[idx, 1] - rgb_tuple[idx, 2]) / delta[idx]
-    # green is max
-    idx = (rgb_tuple[..., 1] == arr_max) & ipos
-    out[idx, 0] = 2. + (rgb_tuple[idx, 2] - rgb_tuple[idx, 0]) / delta[idx]
-    # blue is max
-    idx = (rgb_tuple[..., 2] == arr_max) & ipos
-    out[idx, 0] = 4. + (rgb_tuple[idx, 0] - rgb_tuple[idx, 1]) / delta[idx]
-
-    out[..., 0] = (out[..., 0] / 6.0) % 1.0
-    out[..., 1] = s
-    out[..., 2] = arr_max
-
-    if in_ndim == 1:
-        out.shape = (3,)
-
-    return out[0], out[1], out[2]
+    return "#" + __int_to_hex(rgb_tuple[0] * 255) + __int_to_hex(
+        rgb_tuple[1] * 255) + __int_to_hex(rgb_tuple[2] * 255)
 
 
 def hex_to_rgb(hex_color: str):
@@ -97,10 +40,12 @@ def hex_to_rgb(hex_color: str):
 
         return round(int(r, 16) / 255, 3), round(int(g, 16) / 255, 3), round(
             int(b, 16) / 255, 3)
+
     elif len(hex_color.replace("#", "")) == 3:
         r, g, b = [x for x in hex_color.replace("#", "")]
-        return round(int(r + r, 16) / 255, 3), round(int(g + g, 16) / 255, 3), \
-               round(int(b + b, 16) / 255, 3)
+        return round(int(r + r, 16) / 255, 3), round(int(g + g, 16) / 255,
+                                                     3), round(
+            int(b + b, 16) / 255, 3)
 
     else:
         raise Exception("Invalid Hex Code")
@@ -125,15 +70,6 @@ def color_in_between(c1, c2, steps=2) -> list:
         b1 += bdelta
         all_colors.append(rgb_to_hex((r1, g1, b1)))
     return all_colors
-
-
-def hex_to_hsv(hex_color: str):
-    """
-    Converts hex to HSV value
-    :param hex_color: Hex color
-    :return: HSV tuple
-    """
-    return rgb_to_hsv(hex_to_rgb(hex_color))
 
 
 def get_complementary(hex_color: str):
@@ -163,3 +99,103 @@ def text_color(hex_color: str):
     r, g, b = hex_to_rgb(hex_color)
     score = (r * 0.299 + g * 0.587 + b * 0.114)
     return "#000000" if score > 0.729 else "#ffffff"
+
+
+def rgb_to_hsl(r, g, b):
+    """
+    http://www.easyrgb.com/en/math.php
+    :param r:
+    :param g:
+    :param b:
+    :return:
+    """
+    min_rgb = min(r, g, b)
+    max_rgb = max(r, g, b)
+    delta_rgb = max_rgb - min_rgb
+    l = (max_rgb + min_rgb) / 2
+    if delta_rgb == 0:
+        h = 0
+        s = 0
+    else:
+        if l < 0.5:
+            s = delta_rgb / (max_rgb + min_rgb)
+        else:
+            s = delta_rgb / (2 - max_rgb - min_rgb)
+
+        delta_r = (((max_rgb - r) / 6) + (delta_rgb / 2)) / delta_rgb
+        delta_g = (((max_rgb - g) / 6) + (delta_rgb / 2)) / delta_rgb
+        delta_b = (((max_rgb - b) / 6) + (delta_rgb / 2)) / delta_rgb
+
+        if r == max_rgb:
+            h = delta_b - delta_g
+        elif g == max_rgb:
+            h = (1 / 3) + delta_r - delta_b
+        else:
+            h = (2 / 3) + delta_g - delta_r
+
+        if h < 0:
+            h += 1
+        if h > 1:
+            h -= 1
+
+    return round(h, 3), round(s, 3), round(l, 3)
+
+
+def __hue_to_rgb(v1, v2, vh):
+    """
+    http://www.easyrgb.com/en/math.php
+
+    :param v1:
+    :param v2:
+    :param vh:
+    :return:
+    """
+    if vh < 0:
+        vh += 1
+    if vh > 1:
+        vh -= 1
+    if 6 * vh < 1:
+        return v1 + ((v2 - v1) * 6 * vh)
+    elif 2 * vh < 1:
+        return v2
+    elif 3 * vh < 2:
+        return v1 + ((v2 - v1) * ((2 / 3) - vh) * 6)
+    else:
+        return v1
+
+
+def hsl_to_rgb(h, s, l):
+    """
+    http://www.easyrgb.com/en/math.php
+
+    :param h:
+    :param s:
+    :param l:
+    :return:
+    """
+    if s == 0:
+        r = l
+        g = l
+        b = l
+    else:
+        if l < 0.5:
+            var2 = l * (1 + s)
+        else:
+            var2 = (l + s) - (s * l)
+
+        var1 = (2 * l) - var2
+
+        r = __hue_to_rgb(var1, var2, h + (1 / 3))
+        g = __hue_to_rgb(var1, var2, h)
+        b = __hue_to_rgb(var1, var2, h - (1 / 3))
+
+    return round(r, 3), round(g, 3), round(b, 3)
+
+
+def hex_to_hsl(hex_name: str):
+    r, g, b = hex_to_rgb(hex_name)
+    return rgb_to_hsl(r, g, b)
+
+
+def hsl_to_hex(h, s, l):
+    return rgb_to_hex(hsl_to_rgb(h, s, l))

@@ -1,15 +1,8 @@
-"""
-Main Color Palette classes
-"""
 import random
 import warnings
 
-from SecretColors._color_data import *
+from SecretColors.__colors import *
 from SecretColors.utils import *
-
-COLOR_MODE_RGB = "rgb"
-COLOR_MODE_HEX = "hex"
-COLOR_MODE_HSV = "hsv"
 
 
 def _warn(message: str, show_warning: bool = True) -> None:
@@ -19,759 +12,177 @@ def _warn(message: str, show_warning: bool = True) -> None:
     :param show_warning: If False, warnings will be suppressed
     """
     if show_warning:
-        warnings.warn(message + " To suppress warning use " +
-                      "'show_warning=False' in constructor of palette")
-
-
-def _convert_color(color: str, color_mode: str, show_warning: bool):
-    """
-    General function to change color modes
-    :param color: Hex color
-    :param color_mode: Color Mode (rgb, hex, hsv)
-    :param show_warning: If False, warnings will be suppressed
-    :return: String (in case of hex) or tuple (in rgb and hsv) of color
-    """
-    if color_mode == COLOR_MODE_HEX:
-        return color
-    elif color_mode == COLOR_MODE_RGB:
-        return hex_to_rgb(color)
-    elif color_mode == COLOR_MODE_HSV:
-        return hex_to_hsv(color)
-    else:
-        _warn("Invalid color_mode. Using default mode", show_warning)
-        return color
-
-
-class Grade:
-    """
-    Class to hold various grades of colors
-    Currently supports following grade range
-
-    for IBM Palette : [0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    for Material Palette: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-
-    Any value below minimum will be considered as minimum while any value
-    above maximum will be threshold to maximum. Any intermediate value will
-    be converted nearest highest value
-    e.g. value of 12 or 18 in IBM Palette will be considered as 20
-
-    """
-
-    def __init__(self, amount: int, color: str, color_mode: str,
-                 special=False, show_warning: bool = True):
-        """
-        :param amount: Amount of grade
-        :param color: Color value (hex)
-        :param color_mode: Color Mode (rgb, hex, hsv)
-        :param special: If it is special color (used in Material Palette)
-        :param show_warning: If False, warnings will be suppressed
-        """
-        self.amount = amount
-        self._color = color
-        self.special = special
-        self.color_mode = color_mode
-        self.show_warning = show_warning
-
-    @property
-    def color(self):
-        """
-        :return: Color associated with this grade
-        """
-        return _convert_color(self._color, self.color_mode, self.show_warning)
-
-    def __str__(self):
-        return str(self.color)
-
-
-class Color:
-    """
-    Color object which is child of Palette class.
-    This holds information about color name and its grades
-    """
-
-    def __init__(self, name: str, show_warning: bool = True,
-                 palette: str = PALETTE_IBM):
-        """
-        :param name: Name of color
-        :param show_warning: If False, warnings will be suppressed
-        :param palette: Name of Palette
-        """
-        self.name = name
-        self.palette = palette
-        self.core = -1
-        self._grades = {}
-        self._special = {}
-        self._color_mode = COLOR_MODE_HEX
-        self.show_warning = show_warning
-
-    @property
-    def grades(self) -> list:
-        """
-        :return: List of graded colors available in current palette
-        """
-        return [x for x in self._grades.values()]
-
-    @property
-    def base(self) -> str:
-        return self.get_grade(self.core).color
-
-    def add_grade(self, amount: int, color: str) -> None:
-        """
-        Add grade to current color
-
-        :param amount: Grade amount
-        :param color: Hex color
-        """
-        self._grades[amount] = Grade(amount, color, self._color_mode)
-
-    def add_special(self, amount: int, color: str) -> None:
-        """
-        Add special form of grade to color.
-        This is generally used in Material palette. These are the colors
-        which starts with 'a' as a prefix to grades
-        :param amount: Amount of grade
-        :param color: Hex color
-        """
-        self._special[amount] = Grade(amount, color, self._color_mode,
-                                      special=True)
-
-    def get_grade(self, amount: int):
-        """
-        Returns grade of specified amount.
-        If grade is not available, available grade is returned
-        :param amount: Amount of grade
-        :return: single object or list of objects
-        """
-        g_range = [x.amount for x in self._grades.values()]
-        if amount <= min(g_range):
-            return self._grades[min(g_range)]
-        elif amount >= max(g_range):
-            return self._grades[max(g_range)]
-        else:
-            for g in g_range:
-                if amount <= g:
-                    return self._grades[g]
-
-    def color_mode(self, color_mode: str) -> None:
-        """
-        Sets color mode for current color
-        :param color_mode: rgb, hex or hsv
-        """
-        for x in self._grades.values():
-            x.color_mode = color_mode
-
-    def __iter__(self):
-        """
-        You can iterate color object like 'for grade in color'.
-        :return: iterator
-        """
-        for a in self._grades.values():
-            yield a
-
-    def __str__(self) -> str:
-        """
-        If used directly as a string, core color will be returned
-        """
-        return str(self._grades[self.core].color)
-
-    def reversed(self) -> None:
-        """
-        Reverses the grade dictionary
-        """
-        keys = [x for x in self._grades.keys()]
-        keys.reverse()
-        self._grades = {k: self._grades[k] for k in keys}
-
-    def get_gradient(self, no_of_colors: int, start_from: int = None):
-        """
-        Returns gradient of current color.
-        This will first check if we can extract colors from existing
-        grades. If yes, then colors are returned from available grades.
-        If there are more number of requested colors in comparison to number
-        of grades available for current color, then it will select minimum
-        grade and maximum grade available and then calculates colors between
-        them in RGB color space
-        Similar calculation is done when start_from option is provided. If
-        there is only single grade present, all colors returning will be same
-
-        :param no_of_colors: Number of colors needed in gradient
-        :param start_from: from which grade gradient should start
-        :return: list of colors based on current color mode
-        """
-        g_range = [x for x in self._grades.keys()]
-        required_colors = no_of_colors
-        if start_from is not None:
-            required_colors = len([x for x in g_range if x >= start_from])
-
-        if required_colors > len(g_range) or required_colors == 0 or \
-                required_colors < no_of_colors:
-            if start_from is None or start_from >= max(g_range) or start_from \
-                    <= min(g_range):
-                c1 = self._grades[min(g_range)]
-                c2 = self._grades[max(g_range)]
-            else:
-                c1 = self.get_grade(start_from)
-                c2 = self._grades[max(g_range)]
-
-            # If there are no distinct grades return same color
-            if c1 == c2:
-                return [c1.color] * no_of_colors
-
-            return [_convert_color(x, self._color_mode, self.show_warning) for x
-                    in color_in_between(c1.color, c2.color, no_of_colors + 1)]
-        else:
-            if start_from is not None and start_from <= max(g_range):
-                g_range = [x for x in g_range if x >= start_from]
-
-            g_range.sort()
-            re_col = []
-            for i in g_range:
-                re_col.append(_convert_color(self._grades[i].color,
-                                             self._color_mode,
-                                             self.show_warning))
-                if len(re_col) == no_of_colors:
-                    return re_col
+        m = message + "\nTo suppress warning use 'show_warning=False' in " \
+                      "constructor of the palette"
+        ##
+        warnings.warn(m)
 
 
 class Palette:
-    """
-    Represents color palette from existing values.
-    Currently available palettes are :
-    (1) IBM Color Palette (`ibm`) :Default
-    (2) Google Material Design Color Palette (`material`)
 
-    """
+    def __init__(self, name: str = PALETTE_IBM, allow_gray_shades: bool = True,
+                 show_warning: bool = True, color_mode: str = MODE_HEX):
 
-    def __init__(self, name=PALETTE_IBM, color_mode: str = COLOR_MODE_HEX,
-                 show_warning: bool = True, remove_white: bool = True):
-        """
-        :param name: Name of the palette (ibm, material)
-        :param color_mode: Color mode in which colors will output will be
-        given . (rgb, hex, hsv)
-        :param show_warning: If False, warnings will be suppressed
-        :param remove_white: If True, white and its shades will be excluded
-        in generating color palettes. :Default is True
-        """
+        self.__palette = self.__get_palette(name)
 
-        self.name = name
-        self.show_warning = show_warning
-        self._colors = {}
-        self._raw = ParentPalette()
-        self._color_mode = color_mode
-        self._other_colors = {}
-        self.remove_white = remove_white
+        self.__colors = {}
+        for c in self.__palette.get_all_colors():
+            self.__colors[c.name] = c
 
-        self._all_palettes = [IBMPalette(), MaterialPalette()]
-
-        if name not in [PALETTE_IBM, PALETTE_MATERIAL]:
-            _warn("No such color palette exists. Using default palette",
-                  self.show_warning)
-            self.name = PALETTE_IBM
-
-        for p in self._all_palettes:
-            for data in p.colors:
-                c = Color(data[p.name])
-                c.core = data[p.core]
-                c.palette = p.get_palette_name()
-                for v in data[p.all]:
-                    if v[p.special]:
-                        c.add_special(v[p.grade], v[p.value])
-                    else:
-                        c.add_grade(v[p.grade], v[p.value])
-
-                if data[p.name] != "white":
-                    if self.name == p.get_palette_name():
-                        self._colors[data[p.name]] = c
-                    else:
-                        self._other_colors[data[p.name]] = c
-                elif not self.remove_white:
-                    if self.name == p.get_palette_name():
-                        self._colors[data[p.name]] = c
-                    else:
-                        self._other_colors[data[p.name]] = c
-
-        self.change_color_mode(color_mode)
-
-    def __iter__(self):
-        """
-        We can iterate over Color values like 'for color in palette'
-        :return: iterator
-        """
-        for a in self._colors.values():
-            yield a.base
-
-    def change_color_mode(self, mode: str) -> None:
-        """
-        Changes color mode
-        :param mode: rgb, hex, hsv (default: hex)
-        """
-        self._color_mode = mode
-        for c in self._colors.values():
-            c.color_mode(mode)
-
-    def base(self, object_list) -> list:
-        colors = [x.base for x in self.colors]
-        if len(object_list) < len(colors):
-            return colors[0:len(object_list)]
-        else:
-            col_grad = self.gradient_between(colors[0], colors[-1],
-                                             no_of_colors=len(object_list))
-            return col_grad
-
-    @property
-    def colors(self) -> list:
-        """
-        :return: List of all colors in current palette
-        """
-        return [x for x in self._colors.values()]
-
-    def random(self, no_of_colors: int = 1, grade: int = None):
-        """
-        Generates random color from current palette.
-        :param grade: If provided, grades are picked from this grade. If
-        current grade is not available, nearby grade is picked up
-        :param no_of_colors: Number of random colors you want to generate
-        :return: single color or list of colors
-        """
-        all_grades = []
-        if grade is None:
-            for y in [x.grades for x in self.colors]:
-                all_grades.extend(y)
-        else:
-            for y in self.colors:
-                all_grades.append(y.get_grade(grade))
-        random.shuffle(all_grades)
-        if len(all_grades) > no_of_colors:
-            if no_of_colors == 1:
-                return all_grades[0].color
-            else:
-                return [x.color for x in all_grades[0:no_of_colors]]
-
-        else:
-            _warn("No of colors requested are more than current palette has. "
-                  "Using custom gradient for providing requested colors",
-                  self.show_warning)
-            r = self.random(grade=grade)
-            cols = color_in_between(r.color, get_complementary(r.color),
-                                    no_of_colors)
-            return [_convert_color(x, self._color_mode, self.show_warning) for x
-                    in cols]
-
-    def _get_color(self, name: str) -> Color:
-        """
-        Internal use function to get color based on its name.
-        If color is not available in current palette, other palettes will be
-        searched.
-
-        :param name: name of color
-        :return: Color object
-        """
-        for c in self.colors:
-            if c.name == name:
-                return c
-        _warn("Current palette do not have this color. Using it from other "
-              "palettes", self.show_warning)
-        return self._other_colors[name]
+        self.__allow_gray = allow_gray_shades
+        self._show_warning = show_warning
+        self.color_mode = color_mode
 
     @staticmethod
-    def _get_grade(color: Color, grade: int = None) -> Grade:
+    def __get_palette(name: str) -> ParentPalette:
         """
-        :param color: Color object
-        :param grade: Amount of grade
-        :return: Grade Object
+        :param name: Name of the color palette
+        :return: respective palette class
         """
-        return color.get_grade(grade)
-
-    def _common_color(self, color_name: str, grade: int = None,
-                      no_of_colors: int = 1, start_from: int = None):
-
-        """
-        :param color_name: Name of the color :param grade: Grade amount
-        :param no_of_colors: Number of colors needed :param start_from:
-        starting grade (used in case of more than 1 colors are requested)
-        :return: single color or list of colors
-        """
-        if grade is None and no_of_colors == 1:
-            c = self._get_color(color_name)
-            if self._color_mode == COLOR_MODE_HEX:
-                return _convert_color(str(c), self._color_mode,
-                                      self.show_warning)
-            else:
-                return c._grades[c.core].color
+        if name == PALETTE_IBM:
+            return IBMPalette()
+        elif name == PALETTE_MATERIAL:
+            return MaterialPalette()
         else:
-            if no_of_colors == 1:
-                g = self._get_grade(self._get_color(color_name), grade)
-                return g.color
+            raise Exception(
+                "Invalid Color Palette. Available Palettes are: {}".format(
+                    ALL_PALETTES
+                ))
+
+    def __all_colors(self) -> dict:
+        """
+        :return: Dictionary of colors from all palettes
+        """
+        d = {}
+        for p in ALL_PALETTES:
+            for c in self.__get_palette(p).get_all_colors():
+                d[c.name] = c
+        return d
+
+    @property
+    def name(self):
+        """
+        :return: Name of the current palette
+        """
+        return self.__palette.get_palette_name()
+
+    @property
+    def version(self):
+        """
+        :return: Version of the current palette in THIS library
+        """
+        return self.__palette.get_version()
+
+    @property
+    def creator_url(self):
+        """
+        :return: URL citing original creator
+        """
+        return self.__palette.get_creator_url()
+
+    @property
+    def standard_colors(self):
+        """
+        :return: Standard colors from the palette
+        """
+        d = {}
+        for x in self.__colors.values():
+            if self.__allow_gray:
+                d[x.name] = x.hex
             else:
-                return self._get_color(color_name).get_gradient(no_of_colors,
-                                                                start_from)
+                if x.type != TYPE_GRAY:
+                    d[x.name] = x.hex
+        return d
+
+    def __convert(self, hex_name: str):
+        if self.color_mode == MODE_HEX:
+            return hex_name
+        elif self.color_mode == MODE_RGB:
+            return hex_to_rgb(hex_name)
+        elif self.color_mode == MODE_HSL:
+            return hex_to_hsl(hex_name)
+        else:
+            raise Exception("Invalid Color Mode or this color mode is not "
+                            "supported yet")
+
+    def __get_color(self, name: str):
+        try:
+            return self.__colors[name]
+        except KeyError:
+            _warn("Current palette do not have this color. Using it from other "
+                  "palettes. ", self._show_warning)
+            return self.__all_colors()[name]
 
     @staticmethod
-    def gradient_between(hex_color1: str, hex_color2: str,
-                         no_of_colors: int, excluding_input: bool = False):
-
-        """
-        Returns colors between input colors
-        :param hex_color1: Color 1 in hex form
-        :param hex_color2: Color 2 in hex form
-        :param no_of_colors: Number of colors required
-        :param excluding_input: If yes, input colors are excluded from the list
-        :return: list of color or single color
-        """
-        if no_of_colors == 0:
-            return []
-        elif no_of_colors == 1:
-            return color_in_between(hex_color1, hex_color2)
-        elif no_of_colors == 2 and not excluding_input:
-            return [hex_color1, hex_color2]
-        elif no_of_colors == 2 and excluding_input:
-            return color_in_between(hex_color1, hex_color2, no_of_colors + 1)
+    def __random_pick(color: Color, no_of_colors: int = 1,
+                      shade: float = None,
+                      starting_shade: float = 0,
+                      ending_shade: float = 100):
+        if shade is not None and no_of_colors == 1:
+            return color.shade(shade)
         else:
-            col = []
-            adjust = -1
-            if excluding_input:
-                adjust = 1
+
+            k = color.random_between(starting_shade, ending_shade,
+                                     no_of_colors)
+            if len(k) == 1:
+                return k[0]
             else:
-                col = [hex_color1]
-            col.extend(
-                color_in_between(hex_color1, hex_color2, no_of_colors + adjust))
-            if not excluding_input:
-                col.append(hex_color2)
-            return col
+                return k
 
-    def red(self, grade: int = None, no_of_colors: int = 1,
-            start_from: int = None):
-        return self._common_color("red", grade, no_of_colors, start_from)
+    def random(self, no_of_colors: int = 1, shade: float = None,
+               starting_shade: float = 0,
+               end_shade: float = 100,
+               force_gray: bool = False):
 
-    def ultramarine(self, grade: int = None, no_of_colors: int = 1,
-                    start_from: int = None):
-        return self._common_color("ultramarine", grade, no_of_colors,
-                                  start_from)
+        box = [x for x in self.__colors.values() if x.type != TYPE_GRAY]
 
-    def blue(self, grade: int = None, no_of_colors: int = 1,
-             start_from: int = None):
-        return self._common_color("blue", grade, no_of_colors, start_from)
+        if force_gray:
+            box = [x for x in self.__colors.values()]
 
-    def cerulean(self, grade: int = None, no_of_colors: int = 1,
-                 start_from: int = None):
-        return self._common_color("cerulean", grade, no_of_colors, start_from)
+        if no_of_colors == 1:
+            return self.__convert(self.__random_pick(random.sample(box, 1)[0],
+                                                     shade=shade,
+                                                     starting_shade=starting_shade,
+                                                     ending_shade=end_shade))
+        elif no_of_colors < len(box):
+            return_box = []
+            for c in random.sample(box, no_of_colors):
+                return_box.append(self.__random_pick(c, shade=shade,
+                                                     starting_shade=starting_shade,
+                                                     ending_shade=end_shade))
 
-    def aqua(self, grade: int = None, no_of_colors: int = 1,
-             start_from: int = None):
-        return self._common_color("aqua", grade, no_of_colors, start_from)
+            return [self.__convert(x) for x in return_box]
 
-    def teal(self, grade: int = None, no_of_colors: int = 1,
-             start_from: int = None):
-        return self._common_color("teal", grade, no_of_colors, start_from)
-
-    def green(self, grade: int = None, no_of_colors: int = 1,
-              start_from: int = None):
-        return self._common_color("green", grade, no_of_colors, start_from)
-
-    def lime(self, grade: int = None, no_of_colors: int = 1,
-             start_from: int = None):
-        return self._common_color("lime", grade, no_of_colors, start_from)
-
-    def yellow(self, grade: int = None, no_of_colors: int = 1,
-               start_from: int = None):
-        return self._common_color("yellow", grade, no_of_colors, start_from)
-
-    def gold(self, grade: int = None, no_of_colors: int = 1,
-             start_from: int = None):
-        return self._common_color("gold", grade, no_of_colors, start_from)
-
-    def orange(self, grade: int = None, no_of_colors: int = 1,
-               start_from: int = None):
-        return self._common_color("orange", grade, no_of_colors, start_from)
-
-    def peach(self, grade: int = None, no_of_colors: int = 1,
-              start_from: int = None):
-        return self._common_color("peach", grade, no_of_colors, start_from)
-
-    def magenta(self, grade: int = None, no_of_colors: int = 1,
-                start_from: int = None):
-        return self._common_color("magenta", grade, no_of_colors, start_from)
-
-    def purple(self, grade: int = None, no_of_colors: int = 1,
-               start_from: int = None):
-        return self._common_color("purple", grade, no_of_colors, start_from)
-
-    def violet(self, grade: int = None, no_of_colors: int = 1,
-               start_from: int = None):
-        return self._common_color("violet", grade, no_of_colors, start_from)
-
-    def indigo(self, grade: int = None, no_of_colors: int = 1,
-               start_from: int = None):
-        return self._common_color("indigo", grade, no_of_colors, start_from)
-
-    def gray(self, grade: int = None, no_of_colors: int = 1,
-             start_from: int = None):
-        return self._common_color("gray", grade, no_of_colors, start_from)
-
-    def cool_gray(self, grade: int = None, no_of_colors: int = 1,
-                  start_from: int = None):
-        return self._common_color("cool-gray", grade, no_of_colors, start_from)
-
-    def warm_gray(self, grade: int = None, no_of_colors: int = 1,
-                  start_from: int = None):
-        return self._common_color("warm-gray", grade, no_of_colors, start_from)
-
-    def neutral_white(self, grade: int = None, no_of_colors: int = 1,
-                      start_from: int = None):
-        return self._common_color("neutral-white", grade, no_of_colors,
-                                  start_from)
-
-    def cool_white(self, grade: int = None, no_of_colors: int = 1,
-                   start_from: int = None):
-        return self._common_color("cool-white", grade, no_of_colors, start_from)
-
-    def warm_white(self, grade: int = None, no_of_colors: int = 1,
-                   start_from: int = None):
-        return self._common_color("warm-white", grade, no_of_colors, start_from)
-
-    def black(self, grade: int = None, no_of_colors: int = 1,
-              start_from: int = None):
-        return self._common_color("black", grade, no_of_colors, start_from)
-
-    def white(self, grade: int = None, no_of_colors: int = 1,
-              start_from: int = None):
-        if self.remove_white:
-            _warn(
-                "To include white and it's shades, use 'remove_white=False' "
-                "option")
-            return _convert_color("#fff", self._color_mode, self.show_warning)
         else:
-            return self._common_color("white", grade, no_of_colors, start_from)
+            extra_box = []
+            for i in range(no_of_colors):
+                c = random.sample(box, 1)[0]
+                extra_box.append(self.__random_pick(c, shade=shade,
+                                                    starting_shade=starting_shade,
+                                                    ending_shade=end_shade))
 
-    def pink(self, grade: int = None, no_of_colors: int = 1,
-             start_from: int = None):
-        return self._common_color("pink", grade, no_of_colors, start_from)
+            return [self.__convert(x) for x in extra_box]
 
-    def deep_purple(self, grade: int = None, no_of_colors: int = 1,
-                    start_from: int = None):
-        return self._common_color("deep-purple", grade, no_of_colors,
-                                  start_from)
+    def random_balanced(self, no_of_colors: int = 1):
+        return self.random(shade=50, no_of_colors=no_of_colors)
 
-    def light_blue(self, grade: int = None, no_of_colors: int = 1,
-                   start_from: int = None):
-        return self._common_color("light-blue", grade, no_of_colors, start_from)
+    def __common_color(self, name: str, shade: float = None,
+                       no_of_colors: int = 1, starting_shade: float = 0,
+                       ending_shade: float = 100):
+        c = self.__get_color(name)
+        if shade is None:
+            shade = c.core_shade_value
+        return self.__convert(self.__random_pick(c,
+                                                 no_of_colors,
+                                                 shade,
+                                                 starting_shade, ending_shade
+                                                 ))
 
-    def cyan(self, grade: int = None, no_of_colors: int = 1,
-             start_from: int = None):
-        return self._common_color("cyan", grade, no_of_colors, start_from)
+    def red(self, shade: float = None,
+            no_of_colors: int = 1, starting_shade: float = 0,
+            ending_shade: float = 100):
+        return self.__common_color("red", shade, no_of_colors, starting_shade,
+                                   ending_shade)
 
-    def light_green(self, grade: int = None, no_of_colors: int = 1,
-                    start_from: int = None):
-        return self._common_color("light-green", grade, no_of_colors,
-                                  start_from)
-
-    def amber(self, grade: int = None, no_of_colors: int = 1,
-              start_from: int = None):
-        return self._common_color("amber", grade, no_of_colors, start_from)
-
-    def deep_orange(self, grade: int = None, no_of_colors: int = 1,
-                    start_from: int = None):
-        return self._common_color("deep-orange", grade, no_of_colors,
-                                  start_from)
-
-    def brown(self, grade: int = None, no_of_colors: int = 1,
-              start_from: int = None):
-        return self._common_color("brown", grade, no_of_colors, start_from)
-
-    def blue_gray(self, grade: int = None, no_of_colors: int = 1,
-                  start_from: int = None):
-        return self._common_color("blue-gray", grade, no_of_colors, start_from)
-
-    def _color_from_hex(self, hex_color: str, start_grade=None) -> list:
-        """
-        Iterate over all color grades available in package. If match is found
-        color object is returned
-        :param hex_color: Hex color to scan
-        :param start_grade: Starting color grade
-        :return: list of gradient colors from palette or derived
-        """
-        for c in self.colors:
-            for g in c.grades:
-                if g.color == hex_color:
-                    return c.get_gradient(no_of_colors=10,
-                                          start_from=start_grade)
-
-        for c in self._other_colors.values():
-            for g in c.grades:
-                if g.color == hex_color:
-                    return c.get_gradient(no_of_colors=10,
-                                          start_from=start_grade)
-
-        # If couldn't find any hex color, make automatic between white, color of
-        # interest and black
-        return ["#f0f4f4", hex_color, "#000000"]
-
-    def cmap_of(self, matplotlib, color, start_grade=None):
-        """
-        Creates custom cmap from given hex_color.
-
-        :param start_grade: Starting of the gradient
-        :param matplotlib: from "import matplotlib"
-        :param color: hex color
-        :return: LinearSegmentedColormap segment
-        """
-        try:
-            return matplotlib.colors.LinearSegmentedColormap \
-                .from_list(color + "_secret_color", self._color_from_hex(
-                color, start_grade=start_grade))
-        except AttributeError:
-            raise Exception("Add 'matplotlib' as a first argument. For "
-                            "example, import matplotlib; palette.cmap_of("
-                            "matplotlib, "
-                            "palette.red());")
-
-    def normalized_colors_for(self, matplotlib, object_list, color=None,
-                              start_grade=None, upper_bound: float = None):
-        try:
-            if upper_bound is None:
-                normalize_list = [x / max(object_list) for x in object_list]
-            else:
-                normalize_list = [x / upper_bound for x in object_list]
-
-            if color is None:
-                color = self.random()
-
-            seg = matplotlib.colors.LinearSegmentedColormap \
-                .from_list(color + "_secret_color", self._color_from_hex(
-                color, start_grade=start_grade))
-            return [seg(x) for x in normalize_list]
-        except AttributeError:
-            raise Exception("Add 'matplotlib' as a first argument. For "
-                            "example, import matplotlib; "
-                            "palette.normalized_colors_for( "
-                            "matplotlib, list_of_values);")
-
-
-class ColorMap:
-    """
-    Simple Colormap  generator class which can be used in Matplotlib
-    """
-
-    def __init__(self, matplotlib, palette: str = PALETTE_IBM):
-        self.matplotlib = matplotlib
-        self.palette = Palette(palette)
-        self._map_colors = ["#c2dbf4", "#56acf2", "#009bef", "#047cc0",
-                            "#175d8d"]
-
-        self._map = self._get_linear_segment(self.map_colors)
-
-    def _get_linear_segment(self, color_list: list):
-        try:
-            self._map = self.matplotlib.colors.LinearSegmentedColormap \
-                .from_list("secret_color", color_list)
-            return self.map
-        except AttributeError:
-            raise Exception("Matplotlib is required to use this function")
-
-    def _get_listed_segment(self, color_list: list):
-        try:
-            self._map = self.matplotlib.colors.ListedColormap(color_list)
-            return self.map
-        except AttributeError:
-            raise Exception("Matplotlib is required to use this function")
-
-    @property
-    def map(self):
-        """
-        :return: Matplotlib colormap
-        """
-        return self._map
-
-    @property
-    def map_colors(self):
-        return self._map_colors
-
-    @map_colors.setter
-    def map_colors(self, color_list: list):
-        if color_list is list:
-            if len(color_list) > 1:
-                self._map_colors = color_list
-            else:
-                _warn("Using 'Black' as a default color for cmap. Please use "
-                      "more than 1 color to generate color map")
-                c = [x for x in color_list]
-                c.append("#000000")
-                self._map_colors = c
-        else:
-            raise Exception("Please use list for 'map_colors' instead of %s"
-                            % type(color_list))
-
-    def _derive_map(self, c, is_qualitative=False, no_of_divisions=None,
-                    start_from=None):
-        if not is_qualitative:
-            return self._get_linear_segment(c)
-        else:
-            if no_of_divisions is not None:
-                if start_from is None:
-                    if no_of_divisions < 6:
-                        c = c(no_of_colors=no_of_divisions,
-                              start_from=30)
-                    else:
-                        c = c(no_of_colors=no_of_divisions,
-                              start_from=start_from)
-                else:
-                    c = c(no_of_colors=no_of_divisions, start_from=start_from)
-            else:
-                c = c(no_of_colors=10, start_from=start_from)
-            return self._get_listed_segment(c)
-
-    def cool(self, is_qualitative=False, no_of_divisions=None,
-             start_from=None):
-        if not is_qualitative:
-            c = ["#BBDEFB", "#1565C0"]
-        else:
-            c = self.palette.cerulean
-
-        return self._derive_map(c, is_qualitative=is_qualitative,
-                                no_of_divisions=no_of_divisions,
-                                start_from=start_from)
-
-    def warm(self, is_qualitative=False, no_of_divisions=None,
-             start_from=None):
-        if not is_qualitative:
-            c = ["#FFCDD2", "#D32F2F"]
-        else:
-            c = self.palette.red
-
-        return self._derive_map(c, is_qualitative=is_qualitative,
-                                no_of_divisions=no_of_divisions,
-                                start_from=start_from)
-
-    def greens(self, is_qualitative=False, no_of_divisions=None,
-               start_from=None):
-        if not is_qualitative:
-            c = ["#89eda0", "#123b22"]
-        else:
-            c = self.palette.green
-
-        return self._derive_map(c, is_qualitative=is_qualitative,
-                                no_of_divisions=no_of_divisions,
-                                start_from=start_from)
-
-    def ibm(self, is_qualitative=False):
-        p = Palette(PALETTE_IBM)
-        c = [x.base for x in p.colors]
-        c = c[:-6]
-        c.append("#000000")
-        if is_qualitative:
-            return self._get_listed_segment(c)
-        else:
-            return self._get_linear_segment(c)
-
-    def material(self, is_qualitative=False):
-        if is_qualitative:
-            p = Palette(PALETTE_MATERIAL)
-            c = [x.base for x in p.colors]
-            return self._get_listed_segment(c)
-        else:
-            p = Palette(PALETTE_MATERIAL)
-            c = [c.base for c in p.colors]
-            return self._get_linear_segment(c)
-
-    def random(self):
-        return self._get_linear_segment(self.palette.random(no_of_colors=2))
+    def test(self):
+        print(self.red(20))

@@ -10,14 +10,23 @@ This contain colors from v2 as well as v1
 Material Design Colors
 (https://material.io/design/color/#color-theme-creation)
 
+ColorBrewer Color Palette
+http://colorbrewer2.org/
+Only SingleHue colors are considered here
+
+VMWare Clarity Palette
+https://vmware.github.io/clarity/documentation/v0.13/color
+Core color is considered as 70
 """
 
 from SecretColors.__color import Color
 
 PALETTE_IBM = "ibm"
 PALETTE_MATERIAL = "material"
+PALETTE_BREWER = "brewer"
+PALETTE_CLARITY = "clarity"
 
-ALL_PALETTES = [PALETTE_IBM, PALETTE_MATERIAL]
+ALL_PALETTES = [PALETTE_IBM, PALETTE_MATERIAL, PALETTE_BREWER, PALETTE_CLARITY]
 
 TYPE_CORE = "core"  # Regular Color
 TYPE_GRAY = "gray"  # White, Black and shades of Grey
@@ -395,4 +404,204 @@ class MaterialPalette(ParentPalette):
             'c': ['#ffffff']
         }
 
+    ]
+
+
+class ColorBrewer(ParentPalette):
+    """
+    Color Brewer Color Paletter
+    """
+
+    def get_all_colors(self) -> list:
+        return [Color(x, self.shades, self.core) for x in self.colors]
+
+    def get_palette_name(self) -> str:
+        return "Color Brewer Color Palette"
+
+    def get_creator_url(self) -> str:
+        return "http://colorbrewer2.org/"
+
+    def get_shades(self) -> list:
+        return self.shades
+
+    def get_core_shade(self) -> int:
+        return self.core
+
+    def get_version(self) -> int:
+        return 1
+
+    def get_last_update(self) -> str:
+        return "12 April 2019"
+
+    shades = [90, 80, 70, 60, 50, 40, 30, 20, 10]
+    core = 60
+    colors = [
+        {
+            'n': 'blue',
+            't': TYPE_CORE,
+            'c': ['#08306b', '#08519c', '#2171b5', '#4292c6', '#6baed6',
+                  '#9ecae1', '#c6dbef', '#deebf7', '#f7fbff']
+        },
+        {
+            'n': 'purple',
+            't': TYPE_CORE,
+            'c': ['#3f007d', '#54278f', '#6a51a3', '#807dba', '#9e9ac8',
+                  '#bcbddc', '#dadaeb', '#efedf5', '#fcfbfd']
+        },
+        {
+            'n': 'green',
+            't': TYPE_CORE,
+            'c': ['#00441b', '#006d2c', '#238b45', '#41ab5d', '#74c476',
+                  '#a1d99b', '#c7e9c0', '#e5f5e0', '#f7fcf5']
+        },
+        {
+            'n': 'orange',
+            't': TYPE_CORE,
+            'c': ['#7f2704', '#a63603', '#d94801', '#f16913', '#fd8d3c',
+                  '#fdae6b', '#fdd0a2', '#fee6ce', '#fff5eb']
+        },
+        {
+            'n': 'red',
+            't': TYPE_CORE,
+            'c': ['#67000d', '#a50f15', '#cb181d', '#ef3b2c', '#fb6a4a',
+                  '#fc9272', '#fcbba1', '#fee0d2', '#fff5f0']
+        },
+        {
+            'n': 'gray',
+            't': TYPE_GRAY,
+            'c': ['#000000', '#252525', '#525252', '#737373', '#969696',
+                  '#bdbdbd', '#d9d9d9', '#f0f0f0', '#ffffff']
+        },
+        {
+            'n': 'black',
+            't': TYPE_GRAY,
+            'c': ['#000000']
+        },
+        {
+            'n': 'white',
+            't': TYPE_GRAY,
+            'c': ['#ffffff']
+        }
+    ]
+
+
+class ClarityPalette(ParentPalette):
+    def get_all_colors(self) -> list:
+        return [Color(x, self.shades, self.core) for x in self.colors]
+
+    def get_palette_name(self) -> str:
+        return "VMWare Clarity Color Palette"
+
+    def get_creator_url(self) -> str:
+        return "https://vmware.github.io/clarity/documentation/v0.13/color"
+
+    def get_shades(self) -> list:
+        return self.shades
+
+    def get_core_shade(self) -> int:
+        return self.core
+
+    def get_version(self) -> int:
+        return 1
+
+    def get_last_update(self) -> str:
+        return "12 April 2019"
+
+    shades = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
+    core = 70
+    colors = [
+        {
+            'n': 'red',
+            't': TYPE_CORE,
+            'c': ['#a32100', '#c92100', '#e12200', '#f52f22', '#f54f47',
+                  '#f76f6c', '#f89997', '#f8b7b6', '#f5dbd9', '#fff0ee']
+        },
+        {
+            'n': 'pink',
+            't': TYPE_CORE,
+            'c': ['#9b0d54', '#b0105b', '#c41261', '#d91468', '#ed186f',
+                  '#f1428a', '#f46ca5', '#f897bf', '#fbc1da', '#ffebf5']
+        },
+        {
+            'n': 'purple',
+            't': TYPE_CORE,
+            'c': ['#4d007a', '#660092', '#781da0', '#8939ad', '#9b56bb',
+                  '#ad73c8', '#be90d6', '#d0ace4', '#e1c9f1', '#f3e6ff']
+        },
+        {
+            'n': 'ultramarine',
+            't': TYPE_EXTRA,
+            'c': ['#0f1e82', '#1a23a0', '#343dac', '#4e56b8', '#6870c4',
+                  '#838acf', '#9da3db', '#b7bde7', '#d1d6f3', '#ebf0ff']
+        },
+        {
+            'n': 'blue',
+            't': TYPE_CORE,
+            'c': ['#003d79', '#004d8a', '#0065ab', '#0079b8', '#0095d3',
+                  '#49afd9', '#89cbdf', '#a6d8e7', '#c5e5ef', '#e1f1f6']
+        },
+        {
+            'n': 'cyan',
+            't': TYPE_CORE,
+            'c': ['#004a70', '#005680', '#006690', '#0081a7', '#009cbf',
+                  '#00b7d6', '#36c9e1', '#6ddbeb', '#a3edf6', '#ccfbff']
+        },
+        {
+            'n': 'teal',
+            't': TYPE_CORE,
+            'c': ['#006668', '#007e7a', '#00968b', '#00ab9a', '#00bfa9',
+                  '#00d4b8', '#38dfc8', '#6fead9', '#a7f4e9', '#defff9']
+        },
+        {
+            'n': 'green',
+            't': TYPE_CORE,
+            'c': ['#1d5100', '#266900', '#2f8400', '#48960c', '#62a420',
+                  '#60b515', '#85c81a', '#aadb1e', '#c7e59c', '#dff0d0']
+        },
+        {
+            'n': 'yellow',
+            't': TYPE_CORE,
+            'c': ['#c47d00', '#d28f00', '#dfa100', '#edb200', '#fac400',
+                  '#fdd006', '#ffdc0b', '#ffe860', '#fef3b5', '#fffce8']
+        },
+        {
+            'n': 'orange',
+            't': TYPE_CORE,
+            'c': ['#aa4500', '#c25400', '#d36000', '#e46c00', '#f57600',
+                  '#ff8400', '#ff9c32', '#ffb565', '#ffcd97', '#ffe5c9']
+        },
+        {
+            'n': 'red-orange',
+            't': TYPE_EXTRA,
+            'c': ['#cd3517', '#de400f', '#ee4a08', '#ff5500', '#ff681c',
+                  '#ff8142', '#ff9a69', '#ffb38f', '#ffccb5', '#ffe5dc']
+        },
+        {
+            'n': 'warm-gray',
+            't': TYPE_GRAY,
+            'c': ['#5b4d47', '#6c5f59', '#80746d', '#948981', '#a89e95',
+                  '#bbb3a9', '#cfc8bd', '#e3ddd1', '#f4f1e6', '#faf9f5']
+        },
+        {
+            'n': 'neutral-gray',
+            't': TYPE_GRAY,
+            'c': ['#313131', '#444444', '#565656', '#737373', '#9a9a9a',
+                  '#cccccc', '#dddddd', '#eeeeee', '#f2f2f2', '#fafafa']
+        },
+        {
+            'n': 'cool-gray',
+            't': TYPE_GRAY,
+            'c': ['#25333d', '#314351', '#495a67', '#61717d', '#798893',
+                  '#919fa8', '#a9b6be', '#c1cdd4', '#d9e4ea', '#f3f6fa']
+        },
+        {
+            'n': 'black',
+            't': TYPE_GRAY,
+            'c': ['#000000']
+        },
+        {
+            'n': 'white',
+            't': TYPE_GRAY,
+            'c': ['#ffffff']
+        }
     ]

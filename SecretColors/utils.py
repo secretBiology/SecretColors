@@ -1,5 +1,9 @@
 """
-Utility functions used in this module
+SecretColors 2019
+Author: Rohit Suratekar
+
+Utility functions used in this module.
+These can also be used as standalone functions.
 """
 
 
@@ -15,6 +19,8 @@ def __int_to_hex(num: int):
 def rgb_to_hex(rgb_tuple):
     """
     Converts RGB tuple to hex. Ignores alpha channel
+    All Red, Green, Blue values should be between 0 to 1
+
     :param rgb_tuple: RGB tuple .
     :return: Hex color
     """
@@ -22,11 +28,12 @@ def rgb_to_hex(rgb_tuple):
         rgb_tuple[1] * 255) + __int_to_hex(rgb_tuple[2] * 255)
 
 
-def hex_to_rgb(hex_color: str):
+def hex_to_rgb(hex_color: str) -> tuple:
     """
     Converts hex color to RGB
+
     :param hex_color: Color in Hex
-    :return: RGB tuple
+    :return: (Red, Green, Blue) between 0 to 1
     """
     if len(hex_color.replace("#", "")) == 8:
         r, g, b, a = [hex_color.replace("#", "")[i:i + 2] for i in
@@ -101,13 +108,15 @@ def text_color(hex_color: str):
     return "#000000" if score > 0.729 else "#ffffff"
 
 
-def rgb_to_hsl(r, g, b):
+def rgb_to_hsl(r, g, b) -> tuple:
     """
-    http://www.easyrgb.com/en/math.php
-    :param r:
-    :param g:
-    :param b:
-    :return:
+    Converts RGB tuple into HSL tuple
+    Calculations are taken from  http://www.easyrgb.com/en/math.php
+
+    :param r: Red (between 0 to 1)
+    :param g: Green (between 0 to 1)
+    :param b: Blue (between 0 to 1)
+    :return: (hue, saturation, lightness) All between 0 to 1
     """
     min_rgb = min(r, g, b)
     max_rgb = max(r, g, b)
@@ -143,12 +152,7 @@ def rgb_to_hsl(r, g, b):
 
 def __hue_to_rgb(v1, v2, vh):
     """
-    http://www.easyrgb.com/en/math.php
-
-    :param v1:
-    :param v2:
-    :param vh:
-    :return:
+    Calculation from http://www.easyrgb.com/en/math.php
     """
     if vh < 0:
         vh += 1
@@ -164,14 +168,15 @@ def __hue_to_rgb(v1, v2, vh):
         return v1
 
 
-def hsl_to_rgb(h, s, l):
+def hsl_to_rgb(h, s, l) -> tuple:
     """
-    http://www.easyrgb.com/en/math.php
+    Converts HSL values to RGB tuple.
+    Calculations are taken from http://www.easyrgb.com/en/math.php
 
-    :param h:
-    :param s:
-    :param l:
-    :return:
+    :param h: Hue (between 0 to 1)
+    :param s: Saturation (between 0 to 1)
+    :param l: Lightness (between 0 to 1)
+    :return: (Red, Green, Blue) between 0 to 1
     """
     if s == 0:
         r = l
@@ -192,10 +197,23 @@ def hsl_to_rgb(h, s, l):
     return round(r, 3), round(g, 3), round(b, 3)
 
 
-def hex_to_hsl(hex_name: str):
+def hex_to_hsl(hex_name: str) -> tuple:
+    """
+    Converts Hex Color to HSL tuple
+    :param hex_name: Color code in Hex
+    :return: (Hue, Saturation, Lightness) between 0 to 1
+    """
     r, g, b = hex_to_rgb(hex_name)
     return rgb_to_hsl(r, g, b)
 
 
 def hsl_to_hex(h, s, l):
+    """
+    Converts HSL to Hex
+
+    :param h: Hue (between 0 to 1)
+    :param s: Saturation (between 0 to 1)
+    :param l: Lightness (between 0 to 1)
+    :return: Hex color
+    """
     return rgb_to_hex(hsl_to_rgb(h, s, l))

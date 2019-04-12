@@ -16,12 +16,20 @@ class Shade:
     """
 
     def __init__(self, color: str, value: float, max_shade: float):
+        """
+        :param color: Name of the color
+        :param value: Value of the shade
+        :param max_shade: Maximum shade possible in current palette
+        """
         self.hex = color
         self.__value = value
         self.__max_shade = max_shade
 
     @property
     def value(self):
+        """
+        :return: Normalized shade value
+        """
         return round(self.__value * 100 / self.__max_shade)
 
 
@@ -44,6 +52,10 @@ class Color:
         self.__default_shade_values = shades
         self.__raw_core = core
         max_shade = max(shades)
+        if len(shades) > len(self.__raw_shade_colors):
+            for i in range(len(shades) - len(self.__raw_shade_colors)):
+                self.__raw_shade_colors.append(self.__raw_shade_colors[-1])
+
         self.__default_shades_dict = {}
         for i, s in enumerate(self.__raw_shade_colors):
             x = Shade(s, self.__default_shade_values[i], max_shade)
@@ -129,6 +141,14 @@ class Color:
 
     def random_between(self, starting_shade: float, ending_shade: float,
                        no_of_colors: int = 1):
+        """
+        Generates colors between two shades of the current color
+
+        :param starting_shade: Minimum shade (0-100)
+        :param ending_shade: Maximum Shade (0-100)
+        :param no_of_colors: Number of colors
+        :return: Color/List of colors (in Hex)
+        """
         if starting_shade < 0 or ending_shade > 100:
             raise Exception("Shade value should be between 0 and 100")
         else:
@@ -138,3 +158,60 @@ class Color:
                     random.uniform(starting_shade, ending_shade))
 
             return [self.shade(x) for x in random_shades]
+
+    def gradient(self, starting_shade: float, ending_shade: float,
+                 no_of_colors: int = 2, include_first: bool = False,
+                 include_last: bool = False,
+                 include_both: bool = False) -> list:
+
+        """
+        Generates the color gradient
+
+        :param starting_shade: Minimum shade
+        :param ending_shade: Maximum Shade
+        :param no_of_colors: Number of colors
+        :param include_first: If True, starting shade will be included
+        :param include_last: If True, end shade will be included
+        :param include_both: If True, both starting and ending shade will be
+        included in the final list of colors
+        :return: List of Colors
+        """
+        if no_of_colors < 2:
+            raise Exception("No of colors should be minimum 2")
+
+        if no_of_colors < 3:
+            if include_both or (include_first and include_last):
+                return [self.shade(starting_shade), self.shade(ending_shade)]
+            elif include_first:
+                return [self.shade(starting_shade),
+                        self.shade(
+                            random.uniform(starting_shade, ending_shade))]
+            elif include_last:
+                return [self.shade(
+                    random.uniform(starting_shade, ending_shade)),
+                    self.shade(ending_shade)]
+
+        grad_shades = []
+        if include_both or (include_first and include_last):
+            step_count = -2
+            grad_shades.append(starting_shade)
+        elif include_first:
+            step_count = -1
+            grad_shades.append(starting_shade)
+        elif include_last:
+            step_count = -1
+        else:
+            step_count = 0
+
+        step = (ending_shade - starting_shade) / (no_of_colors + step_count + 1)
+
+        for i in range(no_of_colors + step_count):
+            if len(grad_shades) > 0:
+                grad_shades.append(grad_shades[-1] + step)
+            else:
+                grad_shades.append(starting_shade + step)
+
+        if include_last or include_both:
+            grad_shades.append(ending_shade)
+
+        return [self.shade(x) for x in grad_shades]

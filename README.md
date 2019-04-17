@@ -15,6 +15,10 @@ Few sample plots and inspiration behind this library can be found in
     pip install SecretColors
 
 ### Usage
+
+`Note: Following documentation is for older version (<1.0.0) of the library. 
+New documentation will be updated here soon.`
+
 Select different Palettes
     
     from SecretColors.palette import Palette

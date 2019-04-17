@@ -35,6 +35,10 @@ TYPE_EXTRA = "extra"  # Special palette specific colors
 MODE_HEX = "hex"
 MODE_RGB = "rgb"
 MODE_HSL = "hsl"
+MODE_RGBA = "rgba"  # With Transparency
+MODE_AHEX = "ahex"  # With Transparency
+MODE_HSLA = "hsla"  # With Transparency
+MODE_HEX_A = "hexa"  # With Transparency
 
 
 class ParentPalette:

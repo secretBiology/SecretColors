@@ -217,3 +217,59 @@ def hsl_to_hex(h, s, l):
     :return: Hex color
     """
     return rgb_to_hex(hsl_to_rgb(h, s, l))
+
+
+def hex_to_ahex(hex_name: str, alpha: float):
+    """
+    Adds Transparency unit to hex code
+    :param hex_name: Color in hex format
+    :param alpha: Transparency between 0 to 1
+    :return: Hex code with transparency value
+    """
+    if alpha > 1 or alpha < 0:
+        raise Exception("Alpha value should be between 0 and 1")
+    if len(hex_name) == 7:
+        return "#{}{}".format(__int_to_hex(int(alpha * 255)), hex_name[1:7])
+    else:
+        raise Exception("Invalid Hex")
+
+
+def hex_to_hex_a(hex_name: str, alpha: float):
+    """
+    Adds Transparency unit to hex code
+    :param hex_name: Color in hex format
+    :param alpha: Transparency between 0 to 1
+    :return: Hex code with transparency value
+    """
+    if alpha > 1 or alpha < 0:
+        raise Exception("Alpha value should be between 0 and 1")
+    if len(hex_name) == 7:
+        return "#{}{}".format(hex_name[1:7], __int_to_hex(int(alpha * 255)))
+    else:
+        raise Exception("Invalid Hex")
+
+
+def hex_to_rgba(hex_name: str, alpha: float):
+    """
+    Hex to RGBA
+    :param hex_name: Color in hex format
+    :param alpha: Transparency between 0 to 1
+    :return: (Red, Green, Blue, Alpha) all between 0 to 1
+    """
+    if alpha > 1 or alpha < 0:
+        raise Exception("Alpha value should be between 0 and 1")
+    r, b, g = hex_to_rgb(hex_name)
+    return r, g, b, alpha
+
+
+def hex_to_hsla(hex_name: str, alpha: float):
+    """
+    Hex to HSLA
+    :param hex_name: Color in hex format
+    :param alpha: Transparency between 0 to 1
+    :return: (Hue, Saturation, Lightness, Alpha) all between 0 to 1
+    """
+    if alpha > 1 or alpha < 0:
+        raise Exception("Alpha value should be between 0 and 1")
+    h, s, l = hex_to_hsl(hex_name)
+    return h, s, l, alpha

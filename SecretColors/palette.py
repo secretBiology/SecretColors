@@ -115,19 +115,33 @@ class Palette:
                     d[x.name] = x.hex
         return d
 
-    def __convert(self, hex_name: str):
+    def __convert(self, hex_name: str, alpha: float = 1):
         """
         Converts Hex into palette's current color-mode
 
         :param hex_name: Name of color in Hex format
         :return: color in palette's color mode
         """
+        if alpha != 1 and (
+                self.color_mode not in [MODE_AHEX, MODE_HSLA, MODE_RGBA,
+                                        MODE_HEX_A]):
+            _warn("Transparency will be ignored. Please use color mode which "
+                  "supports transparency.")
+
         if self.color_mode == MODE_HEX:
             return hex_name
         elif self.color_mode == MODE_RGB:
             return hex_to_rgb(hex_name)
         elif self.color_mode == MODE_HSL:
             return hex_to_hsl(hex_name)
+        elif self.color_mode == MODE_RGBA:
+            return hex_to_rgba(hex_name, alpha)
+        elif self.color_mode == MODE_AHEX:
+            return hex_to_ahex(hex_name, alpha)
+        elif self.color_mode == MODE_HSLA:
+            return hex_to_hsla(hex_name, alpha)
+        elif self.color_mode == MODE_HEX_A:
+            return hex_to_hex_a(hex_name, alpha)
         else:
             raise Exception("Invalid Color Mode or this color mode is not "
                             "supported yet")
@@ -152,6 +166,7 @@ class Palette:
                       shade: float = None,
                       no_of_colors: int = 1,
                       gradient=False,
+                      alpha: float = 1,
                       starting_shade: float = 0,
                       ending_shade: float = 100):
         """
@@ -186,6 +201,7 @@ class Palette:
                  shade: float = None,
                  starting_shade: float = 0,
                  end_shade: float = 100,
+                 alpha: float = 1,
                  force_gray: bool = False):
 
         box = [x for x in self.__colors.values() if x.type != TYPE_GRAY]
@@ -196,6 +212,7 @@ class Palette:
         if no_of_colors == 1:
             return self.__random_pick(random.sample(box, 1)[0],
                                       shade=shade,
+                                      alpha=alpha,
                                       starting_shade=starting_shade,
                                       ending_shade=end_shade)
         elif no_of_colors < len(box):
@@ -203,6 +220,7 @@ class Palette:
             for c in random.sample(box, no_of_colors):
                 return_box.append(
                     self.__random_pick(c, shade=shade,
+                                       alpha=alpha,
                                        starting_shade=starting_shade,
                                        ending_shade=end_shade))
 
@@ -214,6 +232,7 @@ class Palette:
                 c = random.sample(box, 1)[0]
                 extra_box.append(
                     self.__random_pick(c, shade=shade,
+                                       alpha=alpha,
                                        starting_shade=starting_shade,
                                        ending_shade=end_shade))
 
@@ -223,6 +242,7 @@ class Palette:
                shade: float = None,
                starting_shade: float = 0,
                ending_shade: float = 100,
+               alpha: float = 1,
                force_gray: bool = False):
         """
         Generates random color. First it will try to pick color existed in
@@ -230,10 +250,12 @@ class Palette:
         desired output. By default, shades of gray, white and black colors
         are excluded from random function
 
+
         :param no_of_colors: Number of Colors
         :param shade: Shade of Color
         :param starting_shade: Starting Shade
         :param ending_shade: End Shade
+        :param alpha:
         :param force_gray: If True, it will add grays, whites and blacks
         while picking random colors
         :return: Color/List of colors
@@ -243,7 +265,8 @@ class Palette:
                           shade=shade,
                           starting_shade=starting_shade,
                           end_shade=ending_shade,
-                          force_gray=force_gray))
+                          alpha=alpha,
+                          force_gray=force_gray), alpha=alpha)
 
     def random_balanced(self, no_of_colors: int = 1):
         """
@@ -261,7 +284,8 @@ class Palette:
                        no_of_colors: int = 1,
                        gradient=False,
                        starting_shade: float = 0,
-                       ending_shade: float = 100):
+                       ending_shade: float = 100,
+                       alpha: float = 1):
         c = self.__get_color(name)
 
         if no_of_colors > 1 and shade is not None:
@@ -274,17 +298,19 @@ class Palette:
                                   no_of_colors=no_of_colors,
                                   shade=shade,
                                   gradient=gradient,
+                                  alpha=alpha,
                                   starting_shade=starting_shade,
                                   ending_shade=ending_shade
                                   )
 
     def random_gradient(self, no_of_colors: int = 1, shade: float = None,
-                        complementary=True):
+                        complementary=True, alpha: float = 1):
         """
         Generates random gradient between two colors. By default it uses two
         random complementary colors. However you can change it to make
         complete random by setting `complementary` to False
 
+        :param alpha: Transparency (between 0 to 1)
         :param no_of_colors: Number of colors in your gradient
         :param shade: Keep shade value between 0 to 100 if you want random
         colors from specific shade
@@ -298,11 +324,12 @@ class Palette:
         else:
             r1, r2 = self.__random(shade=shade, no_of_colors=2)
         return self.color_between(r1, r2, no_of_colors,
-                                  include_both=True)
+                                  include_both=True, alpha=alpha)
 
     def color_between(self, color1_hex: str,
                       color2_hex: str,
                       no_of_colors: int,
+                      alpha: float = 1,
                       include_first: bool = False,
                       include_last: bool = False,
                       include_both: bool = False):
@@ -311,6 +338,7 @@ class Palette:
         Generates list of colors between given colors. You can use this to
         make gradients as well
 
+        :param alpha: Transparency (between 0 to 1)
         :param color1_hex: Starting color
         :param color2_hex: End Color
         :param no_of_colors: Total number of colors
@@ -330,13 +358,13 @@ class Palette:
 
         if no_of_colors == 1:
             if include_first:
-                return self.__return_colors([color1_hex])
+                return self.__return_colors([color1_hex], alpha=alpha)
             elif include_last:
-                return self.__return_colors([color2_hex])
+                return self.__return_colors([color2_hex], alpha=alpha)
 
         if no_of_colors == 2 and (include_both or (include_first and
                                                    include_last)):
-            return self.__return_colors([color1_hex, color2_hex])
+            return self.__return_colors([color1_hex, color2_hex], alpha=alpha)
 
         adjust_factor = 1
         if include_both:
@@ -358,17 +386,17 @@ class Palette:
                 c.insert(0, color1_hex)
             elif include_last:
                 c.append(color2_hex)
-        return self.__return_colors(c)
+        return self.__return_colors(c, alpha=alpha)
 
-    def __return_colors(self, obj):
+    def __return_colors(self, obj, alpha: float = 1):
         """
         :param obj: Single string or list of strings
         :return: Colors according to color mode
         """
         if type(obj) is str:
-            return self.__convert(obj)
+            return self.__convert(obj, alpha=alpha)
         elif type(obj) is list:
-            return [self.__convert(x) for x in obj]
+            return [self.__convert(x, alpha=alpha) for x in obj]
         else:
             _warn("Unable to convert current object")
             return obj
@@ -398,6 +426,7 @@ class Palette:
             shade: float = None,
             no_of_colors: int = 1,
             gradient=True,
+            alpha: float = 1,
             starting_shade: float = 0,
             ending_shade: float = 100):
         """
@@ -405,7 +434,11 @@ class Palette:
         :param shade: Shade of the color (0,100). Default is based on core
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
-        :param gradient: If set True, color will be output in gradient manner
+        :param gradient: If set True, color will be output in gradient manner        
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -417,39 +450,45 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def blue(self,
              shade: float = None,
              no_of_colors: int = 1,
              gradient=True,
+             alpha: float = 1,
              starting_shade: float = 0,
              ending_shade: float = 100):
         """
-            Blue Color from the palette
-           :param shade: Shade of the color (0,100). Default is based on core
-           color of the palette
-           :param no_of_colors: Total number of colors (color shades)
-           :param gradient: If set True, color will be output in gradient manner
-           :param starting_shade: Minimum shade value (when creating multiple
-           colors)
-           :param ending_shade: Maximum shade value  (when creating multiple
-           colors)
-           :return: String, tuple or List of color(s) depending on options
+        Blue Color from the palette
+        :param shade: Shade of the color (0,100). Default is based on core
+        color of the palette
+        :param no_of_colors: Total number of colors (color shades)
+        :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes
+        which have transparency channels like RGBA, AHEX, HSLA
+        :param starting_shade: Minimum shade value (when creating multiple
+        colors)
+        :param ending_shade: Maximum shade value  (when creating multiple
+        colors)
+        :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
             self.__common_color("blue",
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def green(self,
               shade: float = None,
               no_of_colors: int = 1,
               gradient=True,
+              alpha: float = 1,
               starting_shade: float = 0,
               ending_shade: float = 100):
         """
@@ -458,6 +497,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -469,13 +510,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def magenta(self,
                 shade: float = None,
                 no_of_colors: int = 1,
                 gradient=True,
+                alpha: float = 1,
                 starting_shade: float = 0,
                 ending_shade: float = 100):
         """
@@ -484,6 +527,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -495,13 +540,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def purple(self,
                shade: float = None,
                no_of_colors: int = 1,
                gradient=True,
+               alpha: float = 1,
                starting_shade: float = 0,
                ending_shade: float = 100):
         """
@@ -510,6 +557,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -521,13 +570,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def cyan(self,
              shade: float = None,
              no_of_colors: int = 1,
              gradient=True,
+             alpha: float = 1,
              starting_shade: float = 0,
              ending_shade: float = 100):
         """
@@ -536,6 +587,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -547,13 +600,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def teal(self,
              shade: float = None,
              no_of_colors: int = 1,
              gradient=True,
+             alpha: float = 1,
              starting_shade: float = 0,
              ending_shade: float = 100):
         """
@@ -562,6 +617,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -573,13 +630,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def gray_cool(self,
                   shade: float = None,
                   no_of_colors: int = 1,
                   gradient=True,
+                  alpha: float = 1,
                   starting_shade: float = 0,
                   ending_shade: float = 100):
         """
@@ -588,6 +647,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -599,13 +660,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def gray_neutral(self,
                      shade: float = None,
                      no_of_colors: int = 1,
                      gradient=True,
+                     alpha: float = 1,
                      starting_shade: float = 0,
                      ending_shade: float = 100):
         """
@@ -614,6 +677,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -625,13 +690,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def gray(self,
              shade: float = None,
              no_of_colors: int = 1,
              gradient=True,
+             alpha: float = 1,
              starting_shade: float = 0,
              ending_shade: float = 100):
         """
@@ -640,6 +707,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -651,13 +720,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def gray_warm(self,
                   shade: float = None,
                   no_of_colors: int = 1,
                   gradient=True,
+                  alpha: float = 1,
                   starting_shade: float = 0,
                   ending_shade: float = 100):
         """
@@ -666,6 +737,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -677,13 +750,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def red_orange(self,
                    shade: float = None,
                    no_of_colors: int = 1,
                    gradient=True,
+                   alpha: float = 1,
                    starting_shade: float = 0,
                    ending_shade: float = 100):
         """
@@ -692,6 +767,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -703,13 +780,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def black(self,
               shade: float = None,
               no_of_colors: int = 1,
               gradient=True,
+              alpha: float = 1,
               starting_shade: float = 0,
               ending_shade: float = 100):
         """
@@ -718,6 +797,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -729,13 +810,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def white(self,
               shade: float = None,
               no_of_colors: int = 1,
               gradient=True,
+              alpha: float = 1,
               starting_shade: float = 0,
               ending_shade: float = 100):
         """
@@ -744,6 +827,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -755,13 +840,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def ultramarine(self,
                     shade: float = None,
                     no_of_colors: int = 1,
                     gradient=True,
+                    alpha: float = 1,
                     starting_shade: float = 0,
                     ending_shade: float = 100):
         """
@@ -770,6 +857,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -781,13 +870,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def cerulean(self,
                  shade: float = None,
                  no_of_colors: int = 1,
                  gradient=True,
+                 alpha: float = 1,
                  starting_shade: float = 0,
                  ending_shade: float = 100):
         """
@@ -796,6 +887,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -807,13 +900,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def aqua(self,
              shade: float = None,
              no_of_colors: int = 1,
              gradient=True,
+             alpha: float = 1,
              starting_shade: float = 0,
              ending_shade: float = 100):
         """
@@ -822,6 +917,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -833,13 +930,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def lime(self,
              shade: float = None,
              no_of_colors: int = 1,
              gradient=True,
+             alpha: float = 1,
              starting_shade: float = 0,
              ending_shade: float = 100):
         """
@@ -848,6 +947,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -859,13 +960,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def yellow(self,
                shade: float = None,
                no_of_colors: int = 1,
                gradient=True,
+               alpha: float = 1,
                starting_shade: float = 0,
                ending_shade: float = 100):
         """
@@ -874,6 +977,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -885,13 +990,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def gold(self,
              shade: float = None,
              no_of_colors: int = 1,
              gradient=True,
+             alpha: float = 1,
              starting_shade: float = 0,
              ending_shade: float = 100):
         """
@@ -900,6 +1007,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -911,13 +1020,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def orange(self,
                shade: float = None,
                no_of_colors: int = 1,
                gradient=True,
+               alpha: float = 1,
                starting_shade: float = 0,
                ending_shade: float = 100):
         """
@@ -926,6 +1037,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -937,13 +1050,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def peach(self,
               shade: float = None,
               no_of_colors: int = 1,
               gradient=True,
+              alpha: float = 1,
               starting_shade: float = 0,
               ending_shade: float = 100):
         """
@@ -952,6 +1067,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -963,13 +1080,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def violet(self,
                shade: float = None,
                no_of_colors: int = 1,
                gradient=True,
+               alpha: float = 1,
                starting_shade: float = 0,
                ending_shade: float = 100):
         """
@@ -978,6 +1097,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -989,13 +1110,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def indigo(self,
                shade: float = None,
                no_of_colors: int = 1,
                gradient=True,
+               alpha: float = 1,
                starting_shade: float = 0,
                ending_shade: float = 100):
         """
@@ -1004,6 +1127,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1015,13 +1140,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def pink(self,
              shade: float = None,
              no_of_colors: int = 1,
              gradient=True,
+             alpha: float = 1,
              starting_shade: float = 0,
              ending_shade: float = 100):
         """
@@ -1030,6 +1157,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1041,13 +1170,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def purple_deep(self,
                     shade: float = None,
                     no_of_colors: int = 1,
                     gradient=True,
+                    alpha: float = 1,
                     starting_shade: float = 0,
                     ending_shade: float = 100):
         """
@@ -1056,6 +1187,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1067,13 +1200,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def blue_light(self,
                    shade: float = None,
                    no_of_colors: int = 1,
                    gradient=True,
+                   alpha: float = 1,
                    starting_shade: float = 0,
                    ending_shade: float = 100):
         """
@@ -1082,6 +1217,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1093,13 +1230,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def green_light(self,
                     shade: float = None,
                     no_of_colors: int = 1,
                     gradient=True,
+                    alpha: float = 1,
                     starting_shade: float = 0,
                     ending_shade: float = 100):
         """
@@ -1108,6 +1247,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1119,13 +1260,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def amber(self,
               shade: float = None,
               no_of_colors: int = 1,
               gradient=True,
+              alpha: float = 1,
               starting_shade: float = 0,
               ending_shade: float = 100):
         """
@@ -1134,6 +1277,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1145,13 +1290,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def orange_deep(self,
                     shade: float = None,
                     no_of_colors: int = 1,
                     gradient=True,
+                    alpha: float = 1,
                     starting_shade: float = 0,
                     ending_shade: float = 100):
         """
@@ -1160,6 +1307,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1171,13 +1320,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def brown(self,
               shade: float = None,
               no_of_colors: int = 1,
               gradient=True,
+              alpha: float = 1,
               starting_shade: float = 0,
               ending_shade: float = 100):
         """
@@ -1186,6 +1337,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1197,13 +1350,15 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
     def gray_blue(self,
                   shade: float = None,
                   no_of_colors: int = 1,
                   gradient=True,
+                  alpha: float = 1,
                   starting_shade: float = 0,
                   ending_shade: float = 100):
         """
@@ -1212,6 +1367,8 @@ class Palette:
         color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+        have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
         colors)
         :param ending_shade: Maximum shade value  (when creating multiple
@@ -1223,8 +1380,9 @@ class Palette:
                                 shade=shade,
                                 no_of_colors=no_of_colors,
                                 gradient=gradient,
+                                alpha=alpha,
                                 starting_shade=starting_shade,
-                                ending_shade=ending_shade))
+                                ending_shade=ending_shade), alpha)
 
 
 class ColorMap:

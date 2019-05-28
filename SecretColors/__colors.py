@@ -117,7 +117,7 @@ class IBMPalette(ParentPalette):
         return "IBM Color Palette"
 
     shades = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
-    core = 60
+    core = 50
     colors = [
         {
             'n': 'red',

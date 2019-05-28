@@ -47,6 +47,7 @@ class Palette:
             self.__colors[c.name] = c
 
         self.__allow_gray = allow_gray_shades
+        self.__iter_index = 0
         self._show_warning = show_warning
         self.color_mode = color_mode
 
@@ -113,6 +114,20 @@ class Palette:
             else:
                 if x.type != TYPE_GRAY:
                     d[x.name] = x.hex
+        return d
+
+    @property
+    def get_color_list(self) -> list:
+        """
+        :return: List of all standard colors
+        """
+        d = []
+        for x in self.__colors.values():
+            if self.__allow_gray:
+                d.append(x.hex)
+            else:
+                if x.type != TYPE_GRAY:
+                    d.append(x.hex)
         return d
 
     def __convert(self, hex_name: str, alpha: float = 1):
@@ -237,6 +252,17 @@ class Palette:
                                        ending_shade=end_shade))
 
             return extra_box
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.__iter_index += 1
+        try:
+            return self.get_color_list[self.__iter_index - 1]
+        except IndexError:
+            self.__iter_index = 0
+            raise StopIteration
 
     def random(self, no_of_colors: int = 1,
                shade: float = None,
@@ -1420,51 +1446,60 @@ class ColorMap:
         except AttributeError:
             raise Exception("Matplotlib is required to use this function")
 
-    def __derive_map(self, color_list: list, is_qualitative=False):
+    def __derive_map(self, color_list: list,
+                     is_qualitative=False,
+                     is_reversed=False):
         """
         :param color_list: List of colors
         :param is_qualitative: If True, makes listed colormap
+        :param is_reversed: Reverses the order of color in Colormap
         :return: Colormap which can be directly used with matplotlib
         """
+
+        if is_reversed:
+            color_list = [x for x in reversed(color_list)]
         if is_qualitative:
             return self.__get_listed_segment(color_list)
         else:
             return self.__get_linear_segment(color_list)
 
-    def from_list(self, color_list: list, is_qualitative: bool = False):
+    def from_list(self, color_list: list, is_qualitative: bool = False,
+                  is_reversed=False):
         """
         You can create your own colormap with list of own colors
 
         :param color_list: List of colors
         :param is_qualitative: If True, makes listed colormap
+        :param is_reversed: Reverses the order of color in Colormap
         :return: Colormap which can be directly used with matplotlib
         """
-        return self.__derive_map(color_list, is_qualitative)
+        return self.__derive_map(color_list, is_qualitative, is_reversed)
 
     def warm(self, starting_shade: float = 0, ending_shade: float = 100,
              no_of_colors: int = 10,
-             is_qualitative: bool = False):
+             is_qualitative: bool = False, is_reversed=False):
         """
         :param starting_shade: Minimum shade of Orange
         :param ending_shade: Maximum shade of Orange
         :param no_of_colors: Number of colors to make colormap
         :param is_qualitative: True if colormap is qualitative
+        :param is_reversed: Reverses the order of color in Colormap
         :return: Matplotlib cmap wrapper
         """
         return self.__derive_map(self.palette.orange(
             no_of_colors=no_of_colors,
             starting_shade=starting_shade,
-            ending_shade=ending_shade
-        ), is_qualitative)
+            ending_shade=ending_shade), is_qualitative, is_reversed)
 
     def calm(self, starting_shade: float = 0, ending_shade: float = 100,
              no_of_colors: int = 10,
-             is_qualitative: bool = False):
+             is_qualitative: bool = False, is_reversed=False):
         """
         :param starting_shade: Minimum shade
         :param ending_shade: Maximum shade
         :param no_of_colors: Number of colors to make colormap
         :param is_qualitative: True if colormap is qualitative
+        :param is_reversed: Reverses the order of color in Colormap
         :return: Matplotlib cmap wrapper
         """
 
@@ -1472,16 +1507,17 @@ class ColorMap:
             no_of_colors=no_of_colors,
             starting_shade=starting_shade,
             ending_shade=ending_shade
-        ), is_qualitative)
+        ), is_qualitative, is_reversed)
 
     def greens(self, starting_shade: float = 0, ending_shade: float = 100,
                no_of_colors: int = 10,
-               is_qualitative: bool = False):
+               is_qualitative: bool = False, is_reversed=False):
         """
         :param starting_shade: Minimum shade
         :param ending_shade: Maximum shade
         :param no_of_colors: Number of colors to make colormap
         :param is_qualitative: True if colormap is qualitative
+        :param is_reversed: Reverses the order of color in Colormap
         :return: Matplotlib cmap wrapper
         """
 
@@ -1489,16 +1525,17 @@ class ColorMap:
             no_of_colors=no_of_colors,
             starting_shade=starting_shade,
             ending_shade=ending_shade
-        ), is_qualitative)
+        ), is_qualitative, is_reversed)
 
     def hot(self, starting_shade: float = 0, ending_shade: float = 100,
             no_of_colors: int = 10,
-            is_qualitative: bool = False):
+            is_qualitative: bool = False, is_reversed=False):
         """
         :param starting_shade: Minimum shade
         :param ending_shade: Maximum shade
         :param no_of_colors: Number of colors to make colormap
         :param is_qualitative: True if colormap is qualitative
+        :param is_reversed: Reverses the order of color in Colormap
         :return: Matplotlib cmap wrapper
         """
 
@@ -1506,4 +1543,4 @@ class ColorMap:
             no_of_colors=no_of_colors,
             starting_shade=starting_shade,
             ending_shade=ending_shade
-        ), is_qualitative)
+        ), is_qualitative, is_reversed)

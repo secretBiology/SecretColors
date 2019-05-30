@@ -1,8 +1,13 @@
 """
-SecretColors 2019
+SecretColors 2019\n
 Author: Rohit Suratekar
 
-All basic functions and main classes
+for more and up-to date information,
+visit: https://github.com/secretBiology/SecretColors
+
+
+This module provides all basic functions and main classes.
+
 """
 
 import random
@@ -26,17 +31,58 @@ def _warn(message: str, show_warning: bool = True) -> None:
 
 
 class Palette:
-    """
-    Base Palette Class
+    """Base Palette Class
+
+    Currently this library supports following Palettes which can be provided
+    at the time of generation of Palette Object.
+
+    * **ibm** - IBM Color Palette v2 + v1 [*Default*]
+    * **material** - Google Material Design Color Palettes
+    * **brewer** - ColorBrewer Color Palette
+    * **clarity** - VMWare Clarity Palette
+
+    >>> from SecretColors.palette import Palette
+    >>> p = Palette() # Generates Default color palette i.e. IBM Color Palette
+    >>> ibm = Palette("ibm") # Generates IBM Palette
+    >>> ibm.red() # Returns '#fb4b53'
+    >>> material = Palette("material") # Generates Material Palette
+    >>> material.red() # Returns '#f44336'
+
+    You can specify *color_mode* to control color output format. Currently
+    this library supports following color modes
+
+    * **hex** - Hex Format [*Default*]
+    * **rgb** - RGB Format (values between 0 to 1)
+    * **hsl** - HSL Format (values between 0 to 1)
+    * **rgba** - RGB with Alpha/Transparency (values between 0 to 1)
+    * **ahex** - Hex with Alpha/Transparency (Appended before hex)
+    * **hexa** - Hex with Alpha/Transparency (Appended after hex)
+    * **hsla** - HSL with Alpha/Transparency (values between 0 to 1)
+
+    >>> p1 = Palette() # Default Color mode (hex)
+    >>> p1.green() # '#24a148'
+    >>> p2 = Palette(color_mode="hexa")
+    >>> p2.green() # '#24a148ff'
+    >>> p3 = Palette(color_mode="ahex")
+    >>> p3.green() # '#ff24a148'
+    >>> p4 = Palette(color_mode="rgb")
+    >>> p4.green() # (0.141, 0.631, 0.282)
+    >>> p5 = Palette(color_mode="rgba")
+    >>> p5.green() # '(0.141, 0.282, 0.631, 1)'
+
+    Note: *matplotlib* can accepts "hex", "rgb" or "hexa"
+
+
+
     """
 
     def __init__(self, name: str = PALETTE_IBM, allow_gray_shades: bool = True,
                  show_warning: bool = True, color_mode: str = MODE_HEX):
-        """
-        Generates Palette Object
+        """Generates Palette Object
+
         :param name: Name of the palette
         :param allow_gray_shades: If True, shades of gray, white and black
-        are included in the gradient formation or random color generation
+            are included in the gradient formation or random color generation
         :param show_warning: If True, warnings will be shown
         :param color_mode: Color Mode in which output will be provided
         """
@@ -91,7 +137,8 @@ class Palette:
     @property
     def version(self):
         """
-        :return: Version of the current palette in THIS library
+        :return: Version of the current palette in THIS library. Original
+            version can be different from this.
         """
         return self.__palette.get_version()
 
@@ -103,9 +150,15 @@ class Palette:
         return self.__palette.get_creator_url()
 
     @property
-    def standard_colors(self):
-        """
-        :return: Standard colors from the palette
+    def get_color_dict(self) -> dict:
+        """Returns dictionary of colors available from current palette
+
+        >>> p = Palette()
+        >>> p.get_color_list # {'red': '#fb4b53', 'magenta': '#ee538b'...}
+
+        Similar to :func:`~get_color_list` but outputs as a dictionary
+
+        :return: Dictionary of colors from the palette with their names as a key
         """
         d = {}
         for x in self.__colors.values():
@@ -118,7 +171,13 @@ class Palette:
 
     @property
     def get_color_list(self) -> list:
-        """
+        """Returns list of colors available from current palette
+
+        >>> p = Palette()
+        >>> p.get_color_list # ['#fb4b53', '#ee538b', '#a66efa'...]
+
+        Similar to :func:`~get_color_dict` but outputs as a list
+
         :return: List of all standard colors
         """
         d = []
@@ -270,22 +329,29 @@ class Palette:
                ending_shade: float = 100,
                alpha: float = 1,
                force_gray: bool = False):
-        """
-        Generates random color. First it will try to pick color existed in
+        """Generates random color.
+
+        First it will try to pick color existed in
         the given palette. However, with other options, you can refine the
         desired output. By default, shades of gray, white and black colors
-        are excluded from random function
+        are excluded from random function.
 
+
+        >>> p = Palette()
+        >>> p.random() # '#90dbe9'
+        >>> p.random(no_of_colors=3) # ['#8fca39', '#64a0fe', '#7430b6']
+        >>> p.random(no_of_colors=2, shade=20) # ['#b3e6ff', '#c2dbf4']
 
         :param no_of_colors: Number of Colors
         :param shade: Shade of Color
         :param starting_shade: Starting Shade
         :param ending_shade: End Shade
-        :param alpha:
+        :param alpha: Transparency (will be used only in an appropriate mode)
         :param force_gray: If True, it will add grays, whites and blacks
-        while picking random colors
+            while picking random colors
         :return: Color/List of colors
         """
+
         return self.__return_colors(
             self.__random(no_of_colors=no_of_colors,
                           shade=shade,
@@ -295,10 +361,12 @@ class Palette:
                           force_gray=force_gray), alpha=alpha)
 
     def random_balanced(self, no_of_colors: int = 1):
-        """
-        Essentially `random()` function with shade=50. Shade 50 colors are
+        """Returns 'balanced' colors
+
+        Essentially :func:`~random` function with shade=50. Shade 50 colors are
         generally neutral and visually appealing. Hence use this function for
-        regular analysis instead `random()`
+        regular analysis instead :func:`~random` . Any parameter passed
+        as a 'shade' will be ignored
 
         :param no_of_colors: Number of colors
         :return: Color/List of colors
@@ -331,19 +399,23 @@ class Palette:
 
     def random_gradient(self, no_of_colors: int = 1, shade: float = None,
                         complementary=True, alpha: float = 1):
-        """
-        Generates random gradient between two colors. By default it uses two
-        random complementary colors. However you can change it to make
-        complete random by setting `complementary` to False
+        """Generates random gradient between two colors.
+
+        By default it uses two random complementary colors. However you can
+        change it to make complete random by setting *complementary* to False
+
+        >>> p = Palette()
+        >>> p.random_gradient(no_of_colors=3) # ['#03b2c6', '#646364', '#c51603']
 
         :param alpha: Transparency (between 0 to 1)
         :param no_of_colors: Number of colors in your gradient
         :param shade: Keep shade value between 0 to 100 if you want random
-        colors from specific shade
+            colors from specific shade
         :param complementary: If True, two colors picked will be
-        complementary to each other
+            complementary to each other
         :return: List of colors
         """
+
         if complementary:
             r1 = self.__random(shade=shade)
             r2 = get_complementary(r1)
@@ -352,29 +424,32 @@ class Palette:
         return self.color_between(r1, r2, no_of_colors,
                                   include_both=True, alpha=alpha)
 
-    def color_between(self, color1_hex: str,
-                      color2_hex: str,
-                      no_of_colors: int,
-                      alpha: float = 1,
-                      include_first: bool = False,
-                      include_last: bool = False,
-                      include_both: bool = False):
+    def color_between(self, color1_hex: str, color2_hex: str, no_of_colors: int,
+                      alpha: float = 1, include_first: bool = False,
+                      include_last: bool = False, include_both: bool =
+                      False) -> list:
 
-        """
-        Generates list of colors between given colors. You can use this to
-        make gradients as well
+        """Generates list of colors between given colors.
 
-        :param alpha: Transparency (between 0 to 1)
-        :param color1_hex: Starting color
-        :param color2_hex: End Color
-        :param no_of_colors: Total number of colors
+        This can be used to make gradients as well. :func:`~random_gradient`
+        uses this function to generate gradient after selecting random colors.
+
+        >>> p = Palette()
+        >>> p.color_between(p.red(),p.yellow(), no_of_colors=1) # ['#d66d38']
+
+        Important : Color inputs should be in HEX format
+
+        :param color1_hex: Transparency (between 0 to 1)
+        :param color2_hex: Starting color
+        :param no_of_colors: End Color
+        :param alpha: Total number of colors
         :param include_first: Keep True, if you want to include starting
-        color in final list
+            color in final list
         :param include_last: Keep True, if you want to include end color in
-        final list
+            final list
         :param include_both: Keep True, if you want to include both starting
-        and end colors in your final list. If kept True, it will override
-        `include_first` and `include_last` values
+            and end colors in your final list. If kept True, it will
+            override`include_first` and `include_last` values
         :return: List of colors
         """
 
@@ -415,7 +490,7 @@ class Palette:
         return self.__return_colors(c, alpha=alpha)
 
     def __return_colors(self, obj, alpha: float = 1):
-        """
+        """ Returns Colors with provided mode
         :param obj: Single string or list of strings
         :return: Colors according to color mode
         """
@@ -429,13 +504,20 @@ class Palette:
 
     @staticmethod
     def cmap_from(matplotlib, hex_color_list: list):
-        """
-        Creates custom cmap from given hex_color list.
-        Use SecretColors.palette.ColorMap for more refined control
+        """Creates custom cmap from given hex_color list.
 
-        :param matplotlib: from "import matplotlib"
+        Use :class:`~ColorMap` for more refined control. Color inputs should
+        be HEX format.
+
+        >>> import matplotlib
+        >>> p =  Palette()
+        >>> color_list = [p.aqua(), p.yellow(), p.gray()]
+        >>> p.cmap_from(matplotlib, color_list) # <matplotlib.colors.LinearSegmentedColormap object at 0x000002623B6A1898>
+
+        :param matplotlib: matplotlib object (https://matplotlib.org/)
         :param hex_color_list: List of colors in Hex format
-        :return: LinearSegmentedColormap segment
+        :return: *LinearSegmentedColormap* segment which can be used with
+            *matplotlib* plots.
         """
         if type(hex_color_list) is not list:
             raise Exception("Please provide list of colors")
@@ -457,18 +539,19 @@ class Palette:
             ending_shade: float = 100):
         """
         Red Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner        
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -489,16 +572,19 @@ class Palette:
              ending_shade: float = 100):
         """
         Blue Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
-        :param alpha: Transparency (between 0 to 1) Only works in Modes
-        which have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -519,16 +605,19 @@ class Palette:
               ending_shade: float = 100):
         """
         Green Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -549,16 +638,19 @@ class Palette:
                 ending_shade: float = 100):
         """
         Magenta Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -579,16 +671,19 @@ class Palette:
                ending_shade: float = 100):
         """
         Purple Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -609,16 +704,19 @@ class Palette:
              ending_shade: float = 100):
         """
         Cyan Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -639,16 +737,19 @@ class Palette:
              ending_shade: float = 100):
         """
         Teal Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -669,16 +770,19 @@ class Palette:
                   ending_shade: float = 100):
         """
         Cool Gray Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -699,16 +803,19 @@ class Palette:
                      ending_shade: float = 100):
         """
         Neutral Gray Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -729,16 +836,19 @@ class Palette:
              ending_shade: float = 100):
         """
         Gray Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -759,16 +869,19 @@ class Palette:
                   ending_shade: float = 100):
         """
         Warm Gray Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -789,16 +902,19 @@ class Palette:
                    ending_shade: float = 100):
         """
         Red Orange Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -819,16 +935,19 @@ class Palette:
               ending_shade: float = 100):
         """
         Black Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -849,16 +968,19 @@ class Palette:
               ending_shade: float = 100):
         """
         White Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -879,16 +1001,19 @@ class Palette:
                     ending_shade: float = 100):
         """
         Ultramarine Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -909,16 +1034,19 @@ class Palette:
                  ending_shade: float = 100):
         """
         Cerulean Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -939,16 +1067,19 @@ class Palette:
              ending_shade: float = 100):
         """
         Aqua Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -969,16 +1100,19 @@ class Palette:
              ending_shade: float = 100):
         """
         Lime Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -999,16 +1133,19 @@ class Palette:
                ending_shade: float = 100):
         """
         Yellow Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1029,16 +1166,19 @@ class Palette:
              ending_shade: float = 100):
         """
         Gold Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1059,16 +1199,19 @@ class Palette:
                ending_shade: float = 100):
         """
         Orange Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1089,16 +1232,19 @@ class Palette:
               ending_shade: float = 100):
         """
         Peach Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1119,16 +1265,19 @@ class Palette:
                ending_shade: float = 100):
         """
         Violet Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1149,16 +1298,19 @@ class Palette:
                ending_shade: float = 100):
         """
         Indigo Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1179,16 +1331,19 @@ class Palette:
              ending_shade: float = 100):
         """
         Pink Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1209,16 +1364,19 @@ class Palette:
                     ending_shade: float = 100):
         """
         Deep-Purple Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1239,16 +1397,19 @@ class Palette:
                    ending_shade: float = 100):
         """
         Light-Blue Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1269,16 +1430,19 @@ class Palette:
                     ending_shade: float = 100):
         """
         Light Green Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1299,16 +1463,19 @@ class Palette:
               ending_shade: float = 100):
         """
         Amber Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1329,16 +1496,19 @@ class Palette:
                     ending_shade: float = 100):
         """
         Deep Orange Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1359,16 +1529,19 @@ class Palette:
               ending_shade: float = 100):
         """
         Brown Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1389,16 +1562,19 @@ class Palette:
                   ending_shade: float = 100):
         """
         Blue Gray Color from the palette
+
         :param shade: Shade of the color (0,100). Default is based on core
-        color of the palette
+            color of the palette
         :param no_of_colors: Total number of colors (color shades)
         :param gradient: If set True, color will be output in gradient manner
         :param alpha: Transparency (between 0 to 1) Only works in Modes which
-        have transparency channels like RGBA, AHEX, HSLA
+            have transparency channels like RGBA, AHEX, HSLA
+        :param alpha: Transparency (between 0 to 1) Only works in Modes which
+            have transparency channels like RGBA, AHEX, HSLA
         :param starting_shade: Minimum shade value (when creating multiple
-        colors)
+            colors)
         :param ending_shade: Maximum shade value  (when creating multiple
-        colors)
+            colors)
         :return: String, tuple or List of color(s) depending on options
         """
         return self.__return_colors(
@@ -1414,6 +1590,32 @@ class Palette:
 class ColorMap:
     """
     Simple class to create colormaps for matplotlib
+
+    This allows you flexibility of :class:`~Palette` class to make colormaps
+    which can be used in regular *matplotlib* workflow.
+
+    >>> import matplotlib
+    >>> import matplotlib.pylab as plt
+    >>> import numpy as np
+    >>> from SecretColors.palette import Palette, ColorMap
+    >>> p = Palette()
+    >>> c = ColorMap(matplotlib, p)
+    >>> data = np.random.rand(100, 100)
+    >>> plt.pcolor(data, cmap=c.warm())
+    >>> plt.show()
+
+    You can also create qualitative colormap by setting up
+    'is_qualitative=True' option
+
+    >>> color_list = [p.red(), p.blue()]
+    >>> plt.pcolor(data, cmap=c.from_list(color_list, is_qualitative=True))
+
+    Reverse the colormap by adding 'is_reversed=True'
+
+    >>> plt.pcolor(data, cmap=c.greens(is_reversed=True))
+
+    Currently this class supports very less built in colormaps. However you
+    can create your own by using very flexible function :func:`~from_list`.
     """
 
     def __init__(self, matplotlib, palette: Palette):

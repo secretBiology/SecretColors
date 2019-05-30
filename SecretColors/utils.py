@@ -21,6 +21,8 @@ def rgb_to_hex(rgb_tuple):
     Converts RGB tuple to hex. Ignores alpha channel
     All Red, Green, Blue values should be between 0 to 1
 
+    >>> rgb_to_hex((0.251, 0.545, 0.988)) # '#408afb'
+
     :param rgb_tuple: RGB tuple .
     :return: Hex color
     """
@@ -31,6 +33,8 @@ def rgb_to_hex(rgb_tuple):
 def hex_to_rgb(hex_color: str) -> tuple:
     """
     Converts hex color to RGB
+
+    >>> hex_to_rgb("#408afb") # (0.251, 0.541, 0.984)
 
     :param hex_color: Color in Hex
     :return: (Red, Green, Blue) between 0 to 1
@@ -61,9 +65,14 @@ def hex_to_rgb(hex_color: str) -> tuple:
 def color_in_between(c1, c2, steps=2) -> list:
     """
     Creates color between two colors
+
+    >>> color_in_between("#fb4b53", "#408bfc") # ['#9d6aa7']
+    >>> color_in_between("#fb4b53", "#408bfc", steps=3) # ['#bc608b', '#7e75c3']
+
+
     :param c1: Hex of first color
     :param c2: Hex of second color
-    :param steps: How many divisions in between? (Default :2)
+    :param steps: How many divisions in between? [Default :2]
     :return: List of Colors between provided colors in RGB space
     """
     all_colors = []
@@ -82,6 +91,9 @@ def color_in_between(c1, c2, steps=2) -> list:
 def get_complementary(hex_color: str):
     """
     Returns complementary color
+
+    >>> get_complementary("#fb4b53") # '#4afaf3'
+
     :param hex_color: Hex color
     :return: Complementary Hex color
     """
@@ -97,8 +109,9 @@ def text_color(hex_color: str):
     color background
 
     Taken from:
-    https://stackoverflow.com/questions/3942878
-    /how-to-decide-font-color-in-white-or-black-depending-on-background-color
+    https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+
+    >>> text_color("#ffffff") # '#000000'
 
     :param hex_color: background color
     :return: proper text color
@@ -200,6 +213,7 @@ def hsl_to_rgb(h, s, l) -> tuple:
 def hex_to_hsl(hex_name: str) -> tuple:
     """
     Converts Hex Color to HSL tuple
+
     :param hex_name: Color code in Hex
     :return: (Hue, Saturation, Lightness) between 0 to 1
     """
@@ -222,6 +236,7 @@ def hsl_to_hex(h, s, l):
 def hex_to_ahex(hex_name: str, alpha: float):
     """
     Adds Transparency unit to hex code
+
     :param hex_name: Color in hex format
     :param alpha: Transparency between 0 to 1
     :return: Hex code with transparency value
@@ -237,6 +252,7 @@ def hex_to_ahex(hex_name: str, alpha: float):
 def hex_to_hex_a(hex_name: str, alpha: float):
     """
     Adds Transparency unit to hex code
+
     :param hex_name: Color in hex format
     :param alpha: Transparency between 0 to 1
     :return: Hex code with transparency value
@@ -252,6 +268,7 @@ def hex_to_hex_a(hex_name: str, alpha: float):
 def hex_to_rgba(hex_name: str, alpha: float):
     """
     Hex to RGBA
+
     :param hex_name: Color in hex format
     :param alpha: Transparency between 0 to 1
     :return: (Red, Green, Blue, Alpha) all between 0 to 1
@@ -265,6 +282,7 @@ def hex_to_rgba(hex_name: str, alpha: float):
 def hex_to_hsla(hex_name: str, alpha: float):
     """
     Hex to HSLA
+
     :param hex_name: Color in hex format
     :param alpha: Transparency between 0 to 1
     :return: (Hue, Saturation, Lightness, Alpha) all between 0 to 1

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="SecretColors",
-    version="1.0.1",
+    version="1.0.2",
     author="Rohit Suratekar",
     author_email="rohitsuratekar@gmail.com",
     description="A small package for fantastic color palette",

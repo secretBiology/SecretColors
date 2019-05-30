@@ -1,125 +1,150 @@
-# Secret Colors
+## SecretColors
 
-[![PyPI version](https://badge.fury.io/py/SecretColors.svg)](https://badge.fury.io/py/SecretColors)
+[![PyPI version](https://badge.fury.io/py/SecretColors.svg)](https://badge.fury.io/py/SecretColors) [![Documentation Status](https://readthedocs.org/projects/secretcolors/badge/?version=latest)](https://secretcolors.readthedocs.io/en/latest/?badge=latest) 
 
-Library generated for making plots with better color palette. It uses 
-famous color palettes 
-and adds few helpful functions. 
 
-Few sample plots and inspiration behind this library can be found in 
-[WeirdData blog](https://weirddata.github.io/2018/09/10/secret-colors.html). 
 
+Library generated for making plots with better color palette. It uses  famous color palettes and adds few helpful functions.   
+
+Currently it supports following Color Palettes
+
+- IBM Color Palette
+- Google Material Design Color Palette
+- ColorBrewer2 Color Palette
+- VMWare Clarity Color Palette 
+
+You can get output of colors in variety of color formats including `hex` , `rgb` , `hsl`, `rgba` etc. 
+
+Few sample plots and inspiration behind this library can be found in [WeirdData blog](https://weirddata.github.io/2018/09/10/secret-colors.html). 
 
 ### Installation 
 
-    pip install SecretColors
+```
+pip install SecretColors
+```
 
-### Usage
+### Documentation
 
-`Note: Following documentation is for older version (<1.0.0) of the library. 
-New documentation will be updated here soon.`
+Full documentation and API reference can be accessed via [ReadTheDocs](https://secretcolors.readthedocs.io) 
 
-Select different Palettes
-    
-    from SecretColors.palette import Palette
-    ibm = Palette("ibm")  # IBM Palette
-    material = Palette("material")  # Material Palette
+**SecretColors** is a very flexible library. You can easily select different color palettes.
 
-Get Common Colors
+```python
+from SecretColors.palette import Palette
 
-    ibm.red()  # Default Red color from IBM palette (#008673)
-    ibm.cerulean()  # Default Cerulean color from IBM palette (#009bef)
+p = Palette()  # Generates Default color palette i.e. IBM Color Palette
+ibm = Palette("ibm")  # Generates IBM Palette
+ibm.red()  # Returns '#fb4b53'
+material = Palette("material")  # Generates Material Palette
+material.red()  # Returns '#f44336'
+```
 
-Shades of colors
-    
-    ibm.red(grade=10)  # Light Red with grade 10 (#fccec7)
-    ibm.red(grade=80)  # Dark Red with grade 80 (#5c1f1b)
-    ibm.red(grade=10000)  # Maximum/Minimum will be automatically adjusted (#3e1d1b)
+Select different types of color modes
 
-Number of colors
+```python
+p1 = Palette() # Default Color mode (hex)
+p1.green() # '#24a148'
+p2 = Palette(color_mode="hexa")
+p2.green() # '#24a148ff'
+p3 = Palette(color_mode="ahex")
+p3.green() # '#ff24a148'
+p4 = Palette(color_mode="rgb")
+p4.green() # (0.141, 0.631, 0.282)
+p5 = Palette(color_mode="rgba")
+p5.green() # '(0.141, 0.282, 0.631, 1)'
+```
 
-    reds = ibm.red(no_of_colors=5)  # List of 3 Red colors from IBM palette
-    dark_reds = ibm.red(no_of_colors=5, start_from=40)  # List of 3 Red 
-    colors from IBM palettes starting from grade 40
- 
-Random Colors
+Note: `matplotlib` can accepts *hex*, *rgb* or *hexa* 
 
-    ibm.random()  # Random color from IBM Palette
-    ibm.random(grade=60)  # Random color from grade 60
-    ibm.random(no_of_colors=10)  # 10 Random colors
-    ibm.random(no_of_colors=10, grade=30)  # Random colors with grade
+Get random colors
 
-Gradients between colors
+```python
+p = Palette()
+p.random() # '#90dbe9'
+p.random(no_of_colors=3) # ['#8fca39', '#64a0fe', '#7430b6']
+p.random(no_of_colors=2, shade=20) # ['#b3e6ff', '#c2dbf4']
+```
 
-    ibm.gradient_between(ibm.red(), ibm.blue(), no_of_colors=5)
-    # Gradient between your own custom colors
-    ibm.gradient_between("#b73752", "#2d74da", no_of_colors=5)
+Unlimited color manipulations
 
-Palette output in other color-spaces
+```python
+p = Palette()
+p.blue()  # normal blue [#408bfc]
+p.blue(shade=20)  # lighter shade of blue [#c9deff]
+p.blue(shade=70)  # darker shade of blue [#054ada]
+p.blue(shade=16.10)  # arbitrary shade of blue (between 0 to 100) [#dbe9ff]
+p.blue(no_of_colors=3)  # Three blue shades ['#b8d4ff', '#408bfc', '#0546d4']
+p.blue(no_of_colors=3, starting_shade=30)  # Three blue shades with lightest one is 30 ['#64a0fe', '#005ef9', '#052ea8']
+p.blue(no_of_colors=3, ending_shade=40)  # Three blue shades with darkest one is 40 ['#edf4ff', '#c9deff', '#97c1ff']
+p.blue(no_of_colors=3, starting_shade=30, ending_shade=40) # Three blue shades with lightest 30 and darkest 60 ['#8cbaff', '#8cbaff', '#8cbaff']
+p.blue(no_of_colors=3, gradient=False) # Three blue shades in random order ['#8cbaff', '#b8d4ff', '#64a0fe']
+p.color_mode = "rgba"
+p.blue(alpha=0.3) # Blue with alpha (0.251, 0.988, 0.545, 0.3) Only works in color mode which outputs alpha values
+```
 
-    ibm.change_color_mode("rgb")
-    ibm.red()  # (0.90, 0.13, 0.14)
+Flexible functions
 
-General Conversion Functions
+```python
+get_complementary("#24a148") # Get complementary color [#a0237c]
+hex_to_rgb("#a0237c") # (0.627, 0.137, 0.486)
+hex_to_hsl("#a0237c") # (0.881, 0.641, 0.382)
+hex_to_hex_a("#a0237c", alpha=0.7) # Get hex with transparency at end [#a0237cb2]
+hex_to_ahex("#a0237c", alpha=0.7) # Get hex with transparency at start [#b2a0237c]
+color_in_between("#24a148","#a0237c") # Color between two ['#616161']
+color_in_between("#24a148","#a0237c", steps=4) # 3 colors between two ['#428154', '#616161', '#80426e'] such that color space is divided into 4 parts
+rgb_to_hex(0.181, 0.241, 0.382) # '#2e3d61'
+rgb_to_hsl(0.181, 0.241, 0.382) # (0.617, 0.357, 0.281)
+hsl_to_hex(0.181, 0.241, 0.382) # '#747849'
+```
 
-    from SecretColors.palette import hex_to_rgb, hex_to_hsv, rgb_to_hex
-    hex_to_rgb("#b73752")  # (0.71, 0.21, 0.32)
-    hex_to_hsv("#b73752")  # (0.96, 0.69, 183.0)
-    rgb_to_hex((0.71, 0.21, 0.32))  # #b53551
+Custom and flexible colormaps which can be directly used in `matplotlib ` workflow 
 
-Text contrast on background color
+```python
+import matplotlib
+import matplotlib.pylab as plt
+import numpy as np
+from SecretColors.palette import Palette, ColorMap
+p = Palette()
+c = ColorMap(matplotlib, p)
+data = np.random.rand(100, 100)
+plt.pcolor(data, cmap=c.warm())
+plt.show()
+```
 
-    from SecretColors.palette import text_color
-    text_color("#e62325")  # Returns #ffffff. This suggest white color text will
-    # have good contrast on given color
-    text_color("#eabbbc")  # Returns #000000. Suggesting black color text will have
-    #  good contrast on given color
+Create your own colormaps or make it *qualitative* colormap
 
-Simple Usage with `matplotlib`
+```python
+color_list = [p.red(), p.blue()]
+plt.pcolor(data, cmap=c.from_list(color_list, is_qualitative=True))
+plt.show()
+```
 
-    import matplotlib.pylab as plt
-    import numpy as np
-    
-    data = np.random.randint(10, 50, 5)
-    plt.bar(range(len(data)), data, color=ibm.blue(no_of_colors=len(data), start_from=30))
-    plt.show()
+Reverse the direction 
 
-Custom ColorMaps
+```python
+plt.pcolor(data, cmap=c.greens(is_reversed=True))
+```
 
-    import matplotlib
-    import matplotlib.pylab as plt
-    from SecretColors.palette import ColorMap
-    a = np.random.random((16, 16))
-    cmap = ColorMap(matplotlib)
-    plt.imshow(a, cmap=cmap.warm(), interpolation='nearest')
-    plt.colorbar()
-    plt.show()
-    
-    #Similarly
-    plt.imshow(a, cmap=cmap.cool(), interpolation='nearest')
-    plt.imshow(a, cmap=cmap.greens(), interpolation='nearest')
-    plt.imshow(a, cmap=cmap.ibm(), interpolation='nearest')
-    plt.imshow(a, cmap=cmap.material(), interpolation='nearest')
-    
-    # Qualitative maps
-     plt.imshow(a, cmap=cmap.greens(is_qualitative=True), interpolation='nearest')
-    
-    # Definite Divisions
-    plt.imshow(a, cmap=cmap.greens(is_qualitative=True, no_of_divisions=5), interpolation='nearest')
-    
-More color maps will be added in next release !
-    
+
 
 ### TODO
 
-- [x] IBM Color Palette
-- [x] Color gradients
-- [x] Google Material Design Palette
-- [x] Text contrast detection
-- [x] Matplotlib `cmap` helper functions
-- [ ] ColorBrewer Palette
-- [ ] VMware Palette
+- [ ] Out of the box `LinearSegmentedColormap` object 
+- [ ] Out of the box `ListedColormap` object 
+- [ ] More balanced `ColorMap` presets 
+- [ ] Color blind safe palette
+- [ ] Print and Web safe color indicator 
+- [ ] Generate Color Palette from image
+
+### Contribution and Feedback
+
+Feel free to provide feedback and criticism through GitHub or you can email me [rohitsuratekar@gmail.com ](mailto:rohitsuratekar@gmail.com). If you want to contribute, please send pull request to this repository. 
 
 ### Acknowledgments
-Colors used in this library are partly taken from [IBM Design Language](https://www.ibm.com/design/language/resources/color-library/) and [Google 
-Material Design](https://material.io/design/color/the-color-system.html)  
+
+Colors used in this library are partly taken from [IBM Design Language](https://www.ibm.com/design/language/resources/color-library/) , [Google 
+Material Design](https://material.io/design/color/the-color-system.html) , [ColorBrewer](http://colorbrewer2.org/) and [VMWare Clarity ](https://vmware.github.io/clarity/documentation/v0.13/color). 
+
+### License 
+
+This library and its code is released under MIT License . Read full statement [here](https://github.com/secretBiology/SecretColors/blob/master/LICENSE). 

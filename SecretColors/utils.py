@@ -16,18 +16,20 @@ def __int_to_hex(num: int):
     return '%02x' % int(num)
 
 
-def rgb_to_hex(rgb_tuple):
+def rgb_to_hex(r, g, b):
     """
     Converts RGB tuple to hex. Ignores alpha channel
     All Red, Green, Blue values should be between 0 to 1
 
-    >>> rgb_to_hex((0.251, 0.545, 0.988)) # '#408afb'
+    >>> rgb_to_hex(0.251, 0.545, 0.988) # '#408afb'
 
-    :param rgb_tuple: RGB tuple .
+    :param r: Red
+    :param g: Green
+    :param b: Blue
     :return: Hex color
     """
-    return "#" + __int_to_hex(rgb_tuple[0] * 255) + __int_to_hex(
-        rgb_tuple[1] * 255) + __int_to_hex(rgb_tuple[2] * 255)
+    return "#" + __int_to_hex(r * 255) + __int_to_hex(
+        g * 255) + __int_to_hex(b * 255)
 
 
 def hex_to_rgb(hex_color: str) -> tuple:
@@ -84,7 +86,7 @@ def color_in_between(c1, c2, steps=2) -> list:
         r1 += rdelta
         g1 += gdelta
         b1 += bdelta
-        all_colors.append(rgb_to_hex((r1, g1, b1)))
+        all_colors.append(rgb_to_hex(r1, g1, b1))
     return all_colors
 
 
@@ -100,7 +102,8 @@ def get_complementary(hex_color: str):
 
     r, g, b = hex_to_rgb(hex_color)
     k = max([r, g, b]) + min([r, g, b])
-    return rgb_to_hex(tuple(k - u for u in (r, g, b)))
+    t = tuple(k - u for u in (r, g, b))
+    return rgb_to_hex(t[0], t[1], t[2])
 
 
 def text_color(hex_color: str):
@@ -230,7 +233,8 @@ def hsl_to_hex(h, s, l):
     :param l: Lightness (between 0 to 1)
     :return: Hex color
     """
-    return rgb_to_hex(hsl_to_rgb(h, s, l))
+    r, g, b = hsl_to_rgb(h, s, l)
+    return rgb_to_hex(r, g, b)
 
 
 def hex_to_ahex(hex_name: str, alpha: float):

@@ -1,16 +1,16 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("PYPI.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="SecretColors",
-    version="1.0.2",
+    version="1.0.3",
     author="Rohit Suratekar",
     author_email="rohitsuratekar@gmail.com",
     description="A small package for fantastic color palette",
-    long_description=long_description,
     long_description_content_type="text/markdown",
+    long_description=long_description,
     url="https://github.com/secretBiology/SecretColors",
     packages=setuptools.find_packages(),
     license='MIT License',

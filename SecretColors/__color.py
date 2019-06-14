@@ -7,7 +7,9 @@ Color and its related classes
 
 import random
 
-from SecretColors.utils import color_in_between
+import math
+
+from SecretColors.utils import color_in_between, _warn
 
 
 class Shade:
@@ -38,11 +40,13 @@ class Color:
     Base Color Class
     """
 
-    def __init__(self, data: dict, shades: list, core: int):
+    def __init__(self, data: dict, shades: list, core: int,
+                 show_warning: bool = True):
         """
         :param data: Dictionary values from __colors.py
         :param shades: List of standard shades
         :param core: Shade of core color (Default Shade)
+        :param show_warning: If True, warnings will be shown
         """
 
         self._raw = data
@@ -51,14 +55,16 @@ class Color:
         self.__raw_shade_colors = data['c']
         self.__default_shade_values = shades
         self.__raw_core = core
-        max_shade = max(shades)
+        self.__max_shade = math.pow(10, math.ceil(math.log10(max(shades))))
+        self.show_warnings = show_warning
+
         if len(shades) > len(self.__raw_shade_colors):
             for i in range(len(shades) - len(self.__raw_shade_colors)):
                 self.__raw_shade_colors.append(self.__raw_shade_colors[-1])
 
         self.__default_shades_dict = {}
         for i, s in enumerate(self.__raw_shade_colors):
-            x = Shade(s, self.__default_shade_values[i], max_shade)
+            x = Shade(s, self.__default_shade_values[i], self.__max_shade)
             self.__default_shades_dict[x.value] = x
 
     @property
@@ -66,7 +72,7 @@ class Color:
         """
         :return: Standard normalized shade slabs
         """
-        return [round(x * 100 / max(self.__default_shade_values))
+        return [round(x * 100 / self.__max_shade)
                 for x in self.__default_shade_values]
 
     @property
@@ -109,35 +115,74 @@ class Color:
             return self.__default_shades_dict[self.core_shade_value].hex
         else:
             if value > 100:
-                # If value is more than 100, return maximum shade available
-                return self.__default_shades_dict[max(self.shade_slabs)].hex
+                _warn("Maximum allowed shade is 100. Provided value is {}. "
+                      "Returning black".format(value), self.show_warnings)
+                # If value is more than or equal to 100, return black
+                return "#000000"
+            elif value < 0:
+                _warn("Minimum allowed shade is 0. Provided value is {}. "
+                      "Returning white".format(value), self.show_warnings)
+                # If value is 0, return white
+                return "#ffffff"
             elif int(value) in self.shade_slabs:
                 # If value is available in standard shade slabs, return it
                 return self.__default_shades_dict[int(value)].hex
             else:
+                # If value is greater than max slab, return color between max
+                # shade and black
+                if value > max(self.shade_slabs):
+                    _warn(
+                        "Maximum shade of of this palette is {} and provided "
+                        "shade value is {} , hence black color is used to "
+                        "generate darker shade".format(
+                            max(self.shade_slabs), value), self.show_warnings)
+                    col3 = color_in_between(
+                        self.__default_shades_dict[max(self.shade_slabs)].hex,
+                        "#000000", 98)
+                    col3.insert(0, self.__default_shades_dict[
+                        max(self.shade_slabs)].hex)
+                    col3.append("#000000")
+                    ind3 = 100 - round(1000 - value * 10)
+                    return col3[ind3 - 1]
                 for i, s in enumerate(self.shade_slabs):
                     if value > s:
                         cols = color_in_between(
                             self.__default_shades_dict[s].hex,
                             self.__default_shades_dict[
                                 self.shade_slabs[i - 1]].hex,
-                            101)
+                            99)
+                        cols.append(self.__default_shades_dict[
+                                        self.shade_slabs[i - 1]].hex)
+                        ind = round((value - s) * 10)
+                        return cols[ind - 1]
 
-                        ind = round((self.shade_slabs[i - 1] - s) * 100 /
-                                    self.shade_slabs[i - 1]) - 1
-                        return cols[int(ind)]
+            if value == 0:
+                _warn(
+                    "Minimum shade of of this palette is {} and provided shade "
+                    "value is {} , hence white is returned.".format(
+                        min(self.shade_slabs), value), self.show_warnings)
+
+                return "#ffffff"
 
             # If value is below minimum standard shade, use white as a first
             # color and then calculate the shade
 
-            col2 = color_in_between(
-                self.__default_shades_dict[min(self.shade_slabs)].hex,
-                "#ffffff", 102)
+            _warn(
+                "Minimum shade of of this palette is {} and provided shade "
+                "value is {} , hence white color is used to generate lighter "
+                "shade".format(
+                    min(self.shade_slabs), value), self.show_warnings)
 
-            ind2 = round((min(self.shade_slabs) - value) * 100 / min(
-                self.shade_slabs)) - 1
+            col2 = color_in_between("#ffffff", self.__default_shades_dict[
+                min(self.shade_slabs)].hex, 98)
 
-            return col2[int(ind2) + 1]  # +1 will skip white
+            col2.insert(0, "#ffffff")
+            col2.append(self.__default_shades_dict[min(self.shade_slabs)].hex)
+
+            ind2 = round(100 - (min(self.shade_slabs) - value) * 100 / min(
+                self.shade_slabs))
+
+            return col2[ind2]
 
     def random_between(self, starting_shade: float, ending_shade: float,
                        no_of_colors: int = 1):

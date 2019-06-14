@@ -46,6 +46,9 @@ class ParentPalette:
     Base class to create new colors
     """
 
+    def __init__(self, show_warning: bool = True):
+        self.show_warning = show_warning
+
     def get_all_colors(self) -> list:
         """
         :return: List of all colors
@@ -111,7 +114,8 @@ class IBMPalette(ParentPalette):
         return "https://www.ibm.com/design/language/elements/color/"
 
     def get_all_colors(self):
-        return [Color(x, self.shades, self.core) for x in self.colors]
+        return [Color(x, self.shades, self.core, self.show_warning) for x in
+                self.colors]
 
     def get_palette_name(self) -> str:
         return "IBM Color Palette"
@@ -260,7 +264,8 @@ class MaterialPalette(ParentPalette):
     """
 
     def get_all_colors(self):
-        return [Color(x, self.shades, self.core) for x in self.colors]
+        return [Color(x, self.shades, self.core, self.show_warning) for x in
+                self.colors]
 
     def get_palette_name(self):
         return "Material Design Colors"
@@ -417,7 +422,8 @@ class ColorBrewer(ParentPalette):
     """
 
     def get_all_colors(self) -> list:
-        return [Color(x, self.shades, self.core) for x in self.colors]
+        return [Color(x, self.shades, self.core, self.show_warning) for x in
+                self.colors]
 
     def get_palette_name(self) -> str:
         return "Color Brewer Color Palette"
@@ -491,7 +497,8 @@ class ColorBrewer(ParentPalette):
 
 class ClarityPalette(ParentPalette):
     def get_all_colors(self) -> list:
-        return [Color(x, self.shades, self.core) for x in self.colors]
+        return [Color(x, self.shades, self.core, self.show_warning) for x in
+                self.colors]
 
     def get_palette_name(self) -> str:
         return "VMWare Clarity Color Palette"

@@ -11,23 +11,10 @@ This module provides all basic functions and main classes.
 """
 
 import random
-import warnings
 
 from SecretColors.__colors import *
 from SecretColors.utils import *
-
-
-def _warn(message: str, show_warning: bool = True) -> None:
-    """
-    Simple function to generate warning
-    :param message: Message you want to send
-    :param show_warning: If False, warnings will be suppressed
-    """
-    if show_warning:
-        m = message + "\nTo suppress warning use 'show_warning=False' in " \
-                      "constructor of the palette"
-        ##
-        warnings.warn(m)
+from SecretColors.utils import _warn
 
 
 class Palette:
@@ -87,7 +74,7 @@ class Palette:
         :param color_mode: Color Mode in which output will be provided
         """
 
-        self.__palette = self.__get_palette(name)
+        self.__palette = self.__get_palette(name, show_warning)
         self.__colors = {}
         for c in self.__palette.get_all_colors():
             self.__colors[c.name] = c
@@ -98,19 +85,20 @@ class Palette:
         self.color_mode = color_mode
 
     @staticmethod
-    def __get_palette(name: str) -> ParentPalette:
+    def __get_palette(name: str, show_warning: bool) -> ParentPalette:
         """
         :param name: Name of the color palette
+        :param show_warning: If True, warnings will be shown
         :return: respective palette class
         """
         if name == PALETTE_IBM:
-            return IBMPalette()
+            return IBMPalette(show_warning)
         elif name == PALETTE_MATERIAL:
-            return MaterialPalette()
+            return MaterialPalette(show_warning)
         elif name == PALETTE_BREWER:
-            return ColorBrewer()
+            return ColorBrewer(show_warning)
         elif name == PALETTE_CLARITY:
-            return ClarityPalette()
+            return ClarityPalette(show_warning)
         else:
             raise Exception(
                 "Invalid Color Palette. Available Palettes are: {}".format(
@@ -168,6 +156,9 @@ class Palette:
                 if x.type != TYPE_GRAY:
                     d[x.name] = x.hex
         return d
+
+    def test(self):
+        return self.__colors["red"]
 
     @property
     def get_color_list(self) -> list:

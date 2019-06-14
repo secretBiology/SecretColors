@@ -5,6 +5,20 @@ Author: Rohit Suratekar
 Utility functions used in this module.
 These can also be used as standalone functions.
 """
+import warnings
+
+
+def _warn(message: str, show_warning: bool = True) -> None:
+    """
+    Simple function to generate warning
+    :param message: Message you want to send
+    :param show_warning: If False, warnings will be suppressed
+    """
+    if show_warning:
+        m = message + "\nTo suppress warning use 'show_warning=False' in " \
+                      "constructor of the palette"
+        ##
+        warnings.warn(m)
 
 
 def __int_to_hex(num: int):
@@ -64,19 +78,20 @@ def hex_to_rgb(hex_color: str) -> tuple:
         raise Exception("Invalid Hex Code")
 
 
-def color_in_between(c1, c2, steps=2) -> list:
+def color_in_between(c1, c2, no_of_colors=1) -> list:
     """
     Creates color between two colors
 
     >>> color_in_between("#fb4b53", "#408bfc") # ['#9d6aa7']
-    >>> color_in_between("#fb4b53", "#408bfc", steps=3) # ['#bc608b', '#7e75c3']
+    >>> color_in_between("#fb4b53", "#408bfc", no_of_colors=3) # ['#bc608b', '#7e75c3']
 
 
     :param c1: Hex of first color
     :param c2: Hex of second color
-    :param steps: How many divisions in between? [Default :2]
+    :param no_of_colors: How many colors in between? [Default :1]
     :return: List of Colors between provided colors in RGB space
     """
+    steps = no_of_colors + 1
     all_colors = []
     r1, g1, b1 = hex_to_rgb(c1)
     r2, g2, b2 = hex_to_rgb(c2)

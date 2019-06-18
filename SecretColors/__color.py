@@ -80,7 +80,7 @@ class Color:
         """
         :return: Normalized value of core shade
         """
-        return round(self.__raw_core * 100 / max(self.__default_shade_values))
+        return round(self.__raw_core * 100 / self.__max_shade)
 
     @property
     def default_shades_list(self) -> list:
@@ -111,6 +111,7 @@ class Color:
         :param value: Shade percentage (min and max is defined in the palette)
         :return: Hex code for given shade
         """
+
         if value is None:
             return self.__default_shades_dict[self.core_shade_value].hex
         else:
@@ -158,7 +159,7 @@ class Color:
 
             if value == 0:
                 _warn(
-                    "Minimum shade of of this palette is {} and provided shade "
+                    "Minimum shade of this palette is {} and provided shade "
                     "value is {} , hence white is returned.".format(
                         min(self.shade_slabs), value), self.show_warnings)
 
@@ -168,7 +169,7 @@ class Color:
             # color and then calculate the shade
 
             _warn(
-                "Minimum shade of of this palette is {} and provided shade "
+                "Minimum shade of this palette is {} and provided shade "
                 "value is {} , hence white color is used to generate lighter "
                 "shade".format(
                     min(self.shade_slabs), value), self.show_warnings)

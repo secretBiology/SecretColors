@@ -78,12 +78,43 @@ def hex_to_rgb(hex_color: str) -> tuple:
         raise Exception("Invalid Hex Code")
 
 
+def hex_to_rgb255(hex_color: str) -> tuple:
+    """
+    Converts hex color to RGB with 0 to 255 range instead 0 to 1
+
+    >>> hex_to_rgb255("#fb4b53") # (251, 75, 83)
+
+    :param hex_color: Color in Hex
+    :return: (Red, Green, Blue) between 0 to 255
+    """
+    if len(hex_color.replace("#", "")) == 8:
+        r, g, b, a = [hex_color.replace("#", "")[i:i + 2] for i in
+                      range(0, 8, 2)]
+
+        return round(int(r, 16), 3), round(int(g, 16), 3), round(
+            int(b, 16), 3), int(a)
+    elif len(hex_color.replace("#", "")) == 6:
+        r, g, b = [hex_color.replace("#", "")[i:i + 2] for i in
+                   range(0, 6, 2)]
+
+        return round(int(r, 16), 3), round(int(g, 16), 3), round(
+            int(b, 16), 3)
+
+    elif len(hex_color.replace("#", "")) == 3:
+        r, g, b = [x for x in hex_color.replace("#", "")]
+        return round(int(r + r, 16), 3), round(int(g + g, 16), 3), round(
+            int(b + b, 16), 3)
+
+    else:
+        raise Exception("Invalid Hex Code")
+
+
 def color_in_between(c1, c2, no_of_colors=1) -> list:
     """
     Creates color between two colors
 
     >>> color_in_between("#fb4b53", "#408bfc") # ['#9d6aa7']
-    >>> color_in_between("#fb4b53", "#408bfc", no_of_colors=3) # ['#bc608b', '#7e75c3']
+    >>> color_in_between("#fb4b53", "#408bfc", 3) # ['#cc5a7d', '#9d6aa7', '#6e7ad1']
 
 
     :param c1: Hex of first color

@@ -23,7 +23,7 @@ class Palette:
     Currently this library supports following Palettes which can be provided
     at the time of generation of Palette Object.
 
-    * **ibm** - IBM Color Palette v2 + v1 [*Default*]
+    * **ibm** - IBM Color Palette v2 + v1 [*Default*, for now]
     * **material** - Google Material Design Color Palettes
     * **brewer** - ColorBrewer Color Palette
     * **clarity** - VMWare Clarity Palette
@@ -45,6 +45,7 @@ class Palette:
     * **ahex** - Hex with Alpha/Transparency (Appended before hex)
     * **hexa** - Hex with Alpha/Transparency (Appended after hex)
     * **hsla** - HSL with Alpha/Transparency (values between 0 to 1)
+    * **rgb255** - RGB Format (values between 0 to 255)
 
     >>> p1 = Palette() # Default Color mode (hex)
     >>> p1.green() # '#24a148'
@@ -59,6 +60,9 @@ class Palette:
 
     Note: *matplotlib* can accepts "hex", "rgb" or "hexa"
 
+    In future, default color palette will be replaced with custom color
+    palette which should take best colors from all palettes and make even
+    better color palette.
 
 
     """
@@ -74,14 +78,14 @@ class Palette:
         :param color_mode: Color Mode in which output will be provided
         """
 
-        self.__palette = self.__get_palette(name, show_warning)
+        self.__palette = self.__get_palette(name.strip().lower(), show_warning)
         self.__colors = {}
         for c in self.__palette.get_all_colors():
             self.__colors[c.name] = c
 
         self.__allow_gray = allow_gray_shades
         self.__iter_index = 0
-        self._show_warning = show_warning
+        self.__show_warning = show_warning
         self.color_mode = color_mode
 
     @staticmethod
@@ -111,7 +115,8 @@ class Palette:
         """
         d = {}
         for p in ALL_PALETTES:
-            for c in self.__get_palette(p).get_all_colors():
+            for c in self.__get_palette(p,
+                                        self.__show_warning).get_all_colors():
                 d[c.name] = c
         return d
 
@@ -180,11 +185,13 @@ class Palette:
                     d.append(x.hex)
         return d
 
-    def __convert(self, hex_name: str, alpha: float = 1):
+    def __convert(self, hex_name: str, alpha: float = 1,
+                  print_colors: bool = False):
         """
         Converts Hex into palette's current color-mode
 
         :param hex_name: Name of color in Hex format
+        :param print_colors: If True, prints the color
         :return: color in palette's color mode
         """
         if alpha != 1 and (
@@ -193,23 +200,31 @@ class Palette:
             _warn("Transparency will be ignored. Please use color mode which "
                   "supports transparency.")
 
-        if self.color_mode == MODE_HEX:
-            return hex_name
-        elif self.color_mode == MODE_RGB:
-            return hex_to_rgb(hex_name)
-        elif self.color_mode == MODE_HSL:
-            return hex_to_hsl(hex_name)
-        elif self.color_mode == MODE_RGBA:
-            return hex_to_rgba(hex_name, alpha)
-        elif self.color_mode == MODE_AHEX:
-            return hex_to_ahex(hex_name, alpha)
-        elif self.color_mode == MODE_HSLA:
-            return hex_to_hsla(hex_name, alpha)
-        elif self.color_mode == MODE_HEX_A:
-            return hex_to_hex_a(hex_name, alpha)
-        else:
-            raise Exception("Invalid Color Mode or this color mode is not "
-                            "supported yet")
+        def __format_color():
+            if self.color_mode == MODE_HEX:
+                return hex_name
+            elif self.color_mode == MODE_RGB:
+                return hex_to_rgb(hex_name)
+            elif self.color_mode == MODE_HSL:
+                return hex_to_hsl(hex_name)
+            elif self.color_mode == MODE_RGBA:
+                return hex_to_rgba(hex_name, alpha)
+            elif self.color_mode == MODE_AHEX:
+                return hex_to_ahex(hex_name, alpha)
+            elif self.color_mode == MODE_HSLA:
+                return hex_to_hsla(hex_name, alpha)
+            elif self.color_mode == MODE_HEX_A:
+                return hex_to_hex_a(hex_name, alpha)
+            elif self.color_mode == MODE_RGB255:
+                return hex_to_rgb255(hex_name)
+            else:
+                raise Exception("Invalid Color Mode or this color mode is not "
+                                "supported yet")
+
+        c = __format_color()
+        if print_colors:
+            print(c)
+        return c
 
     def __get_color(self, name: str):
         """
@@ -222,8 +237,8 @@ class Palette:
         try:
             return self.__colors[name.lower().strip()]
         except KeyError:
-            _warn("Current palette do not have this color. Using it from other "
-                  "palettes. ", self._show_warning)
+            _warn("Current palette do not have '{}'. Using it from other "
+                  "palettes. ".format(name), self.__show_warning)
             return self.__all_colors()[name.lower().strip()]
 
     @staticmethod
@@ -319,7 +334,8 @@ class Palette:
                starting_shade: float = 0,
                ending_shade: float = 100,
                alpha: float = 1,
-               force_gray: bool = False):
+               force_gray: bool = False,
+               print_colors: bool = False):
         """Generates random color.
 
         First it will try to pick color existed in
@@ -340,18 +356,20 @@ class Palette:
         :param alpha: Transparency (will be used only in an appropriate mode)
         :param force_gray: If True, it will add grays, whites and blacks
             while picking random colors
+        :param print_colors: If True, prints color generated
         :return: Color/List of colors
         """
-
         return self.__return_colors(
             self.__random(no_of_colors=no_of_colors,
                           shade=shade,
                           starting_shade=starting_shade,
                           end_shade=ending_shade,
                           alpha=alpha,
-                          force_gray=force_gray), alpha=alpha)
+                          force_gray=force_gray), alpha=alpha,
+            print_colors=print_colors)
 
-    def random_balanced(self, no_of_colors: int = 1):
+    def random_balanced(self, no_of_colors: int = 1,
+                        print_colors: bool = False):
         """Returns 'balanced' colors
 
         Essentially :func:`~random` function with shade=50. Shade 50 colors are
@@ -360,9 +378,11 @@ class Palette:
         as a 'shade' will be ignored
 
         :param no_of_colors: Number of colors
+        :param print_colors: If True, colors will be printed
         :return: Color/List of colors
         """
-        return self.random(shade=50, no_of_colors=no_of_colors)
+        return self.random(shade=50, no_of_colors=no_of_colors,
+                           print_colors=print_colors)
 
     def __common_color(self, name: str,
                        shade: float = None,
@@ -389,7 +409,8 @@ class Palette:
                                   )
 
     def random_gradient(self, no_of_colors: int = 1, shade: float = None,
-                        complementary=True, alpha: float = 1):
+                        complementary=True, alpha: float = 1,
+                        print_colors: bool = False):
         """Generates random gradient between two colors.
 
         By default it uses two random complementary colors. However you can
@@ -404,6 +425,7 @@ class Palette:
             colors from specific shade
         :param complementary: If True, two colors picked will be
             complementary to each other
+        :param print_colors: If True, Colors will be printed
         :return: List of colors
         """
 
@@ -413,12 +435,13 @@ class Palette:
         else:
             r1, r2 = self.__random(shade=shade, no_of_colors=2)
         return self.color_between(r1, r2, no_of_colors,
-                                  include_both=True, alpha=alpha)
+                                  include_both=True, alpha=alpha,
+                                  print_colors=print_colors)
 
     def color_between(self, color1_hex: str, color2_hex: str, no_of_colors: int,
                       alpha: float = 1, include_first: bool = False,
                       include_last: bool = False, include_both: bool =
-                      False) -> list:
+                      False, print_colors: bool = False) -> list:
 
         """Generates list of colors between given colors.
 
@@ -441,6 +464,7 @@ class Palette:
         :param include_both: Keep True, if you want to include both starting
             and end colors in your final list. If kept True, it will
             override`include_first` and `include_last` values
+        :param print_colors: If True, Colors will be printed
         :return: List of colors
         """
 
@@ -450,15 +474,18 @@ class Palette:
 
         if no_of_colors == 1:
             if include_first:
-                return self.__return_colors([color1_hex], alpha=alpha)
+                return self.__return_colors([color1_hex], alpha=alpha,
+                                            print_colors=print_colors)
             elif include_last:
-                return self.__return_colors([color2_hex], alpha=alpha)
+                return self.__return_colors([color2_hex], alpha=alpha,
+                                            print_colors=print_colors)
 
         if no_of_colors == 2 and (include_both or (include_first and
                                                    include_last)):
-            return self.__return_colors([color1_hex, color2_hex], alpha=alpha)
+            return self.__return_colors([color1_hex, color2_hex],
+                                        alpha=alpha, print_colors=print_colors)
 
-        adjust_factor = 1
+        adjust_factor = 0
         if include_both:
             adjust_factor -= 2
         else:
@@ -478,17 +505,21 @@ class Palette:
                 c.insert(0, color1_hex)
             elif include_last:
                 c.append(color2_hex)
-        return self.__return_colors(c, alpha=alpha)
+        return self.__return_colors(c, alpha=alpha, print_colors=print_colors)
 
-    def __return_colors(self, obj, alpha: float = 1):
+    def __return_colors(self, obj, alpha: float = 1,
+                        print_colors: bool = False):
         """ Returns Colors with provided mode
         :param obj: Single string or list of strings
+        :param alpha: Transparency
+        :param print_colors: If True, color will be printed
         :return: Colors according to color mode
         """
         if type(obj) is str:
-            return self.__convert(obj, alpha=alpha)
+            return self.__convert(obj, alpha=alpha, print_colors=print_colors)
         elif type(obj) is list:
-            return [self.__convert(x, alpha=alpha) for x in obj]
+            return [self.__convert(x, alpha=alpha, print_colors=print_colors)
+                    for x in obj]
         else:
             _warn("Unable to convert current object")
             return obj

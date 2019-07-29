@@ -5,7 +5,7 @@ with open("PYPI.md", "r") as fh:
 
 setuptools.setup(
     name="SecretColors",
-    version="1.0.4",
+    version="1.1.0",
     author="Rohit Suratekar",
     author_email="rohitsuratekar@gmail.com",
     description="A small package for fantastic color palette",

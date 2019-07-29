@@ -28,7 +28,7 @@ class Palette:
     * **brewer** - ColorBrewer Color Palette
     * **clarity** - VMWare Clarity Palette
 
-    >>> from SecretColors.palette import Palette
+    >>> from SecretColors import Palette
     >>> p = Palette() # Generates Default color palette i.e. IBM Color Palette
     >>> ibm = Palette("ibm") # Generates IBM Palette
     >>> ibm.red() # Returns '#fb4b53'
@@ -1619,7 +1619,7 @@ class ColorMap:
     >>> import matplotlib
     >>> import matplotlib.pylab as plt
     >>> import numpy as np
-    >>> from SecretColors.palette import Palette, ColorMap
+    >>> from SecretColors import Palette, ColorMap
     >>> p = Palette()
     >>> c = ColorMap(matplotlib, p)
     >>> data = np.random.rand(100, 100)

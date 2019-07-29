@@ -11,7 +11,7 @@ Currently it supports following Color Palettes
 
 You can get output of colors in variety of color formats including `hex` , `rgb` , `hsl`, `rgba` etc. 
 
-Few sample plots and inspiration behind this library can be found in [WeirdData blog](https://weirddata.github.io/2018/09/10/secret-colors.html). 
+Few sample plots and inspiration behind this library can be found in [WeirdData blog](https://weirddata.github.io/2019/06/11/secret-colors-2.html). 
 
 ### Installation 
 

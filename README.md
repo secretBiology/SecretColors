@@ -29,7 +29,7 @@ Full documentation and API reference can be accessed via [ReadTheDocs](https://s
 
 **SecretColors** is a very flexible library. You can easily select different color palettes.
 
-    from SecretColors.palette import Palette
+    from SecretColors import Palette
     
     p = Palette()  # Generates Default color palette i.e. IBM Color Palette
     ibm = Palette("ibm")  # Generates IBM Palette
@@ -101,7 +101,7 @@ Custom and flexible colormaps which can be directly used in `matplotlib` workflo
     import matplotlib
     import matplotlib.pylab as plt
     import numpy as np
-    from SecretColors.palette import Palette, ColorMap
+    from SecretColors import Palette, ColorMap
     p = Palette()
     c = ColorMap(matplotlib, p)
     data = np.random.rand(100, 100)

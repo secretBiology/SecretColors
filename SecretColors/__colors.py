@@ -2,6 +2,8 @@
 SecretColors 2019
 Author: Rohit Suratekar
 
+Colors are obtained from following sources
+
 IBM Color Palette
 (https://www.ibm.com/design/language/elements/color/)
 Last Update: 10 April 2019

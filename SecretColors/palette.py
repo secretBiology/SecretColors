@@ -394,7 +394,8 @@ class Palette:
         c = self.__get_color(name)
 
         if no_of_colors > 1 and shade is not None:
-            _warn("Shade will be ignored when number of colors are more than 1")
+            _warn(
+                "Shade will be ignored when number of colors are more than 1")
 
         if shade is None:
             shade = c.core_shade_value
@@ -438,7 +439,8 @@ class Palette:
                                   include_both=True, alpha=alpha,
                                   print_colors=print_colors)
 
-    def color_between(self, color1_hex: str, color2_hex: str, no_of_colors: int,
+    def color_between(self, color1_hex: str, color2_hex: str,
+                      no_of_colors: int,
                       alpha: float = 1, include_first: bool = False,
                       include_last: bool = False, include_both: bool =
                       False, print_colors: bool = False) -> list:
@@ -1620,8 +1622,7 @@ class ColorMap:
     >>> import matplotlib.pylab as plt
     >>> import numpy as np
     >>> from SecretColors import Palette, ColorMap
-    >>> p = Palette()
-    >>> c = ColorMap(matplotlib, p)
+    >>> c = ColorMap(matplotlib)
     >>> data = np.random.rand(100, 100)
     >>> plt.pcolor(data, cmap=c.warm())
     >>> plt.show()
@@ -1629,6 +1630,7 @@ class ColorMap:
     You can also create qualitative colormap by setting up
     'is_qualitative=True' option
 
+    >>> p = Palette()
     >>> color_list = [p.red(), p.blue()]
     >>> plt.pcolor(data, cmap=c.from_list(color_list, is_qualitative=True))
 
@@ -1636,17 +1638,28 @@ class ColorMap:
 
     >>> plt.pcolor(data, cmap=c.greens(is_reversed=True))
 
+    If you want to use your own Palette while generating colormap, you can
+    provide it while initialization
+
+    >>> my_palette = Palette("material")
+    >>> c = ColorMap(matplotlib, my_palette)
+
+
     Currently this class supports very less built in colormaps. However you
     can create your own by using very flexible function :func:`~from_list`.
     """
 
-    def __init__(self, matplotlib, palette: Palette):
+    def __init__(self, matplotlib, palette: Palette = None):
         """
         :param matplotlib: This is base module (import matplotlib)
-        :param palette: SecretColor Palette
+        :param palette: SecretColor Palette. If not provided, default
+        palette will be used
         """
         self.__mat = matplotlib
-        self.palette = palette
+        if palette is None:
+            self.palette = Palette()
+        else:
+            self.palette = palette
         self.__default_no_of_colors = 10
 
     def __get_linear_segment(self, color_list: list):

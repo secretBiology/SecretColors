@@ -9,7 +9,7 @@ import random
 
 import math
 
-from SecretColors.utils import color_in_between, _warn
+from SecretColors.utils import color_in_between, _warn, Log
 
 
 class Shade:
@@ -249,7 +249,8 @@ class Color:
         else:
             step_count = 0
 
-        step = (ending_shade - starting_shade) / (no_of_colors + step_count + 1)
+        step = (ending_shade - starting_shade) / (
+                no_of_colors + step_count + 1)
 
         for i in range(no_of_colors + step_count):
             if len(grad_shades) > 0:

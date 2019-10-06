@@ -9,7 +9,8 @@ import random
 
 import math
 
-from SecretColors.utils import color_in_between, _warn, Log
+from SecretColors.utils import color_in_between
+from SecretColors._helpers import _warn
 
 
 class Shade:
@@ -43,7 +44,7 @@ class Color:
     def __init__(self, data: dict, shades: list, core: int,
                  show_warning: bool = True):
         """
-        :param data: Dictionary values from __colors.py
+        :param data: Dictionary values from _colors.py
         :param shades: List of standard shades
         :param core: Shade of core color (Default Shade)
         :param show_warning: If True, warnings will be shown

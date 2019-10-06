@@ -21,111 +21,36 @@ https://vmware.github.io/clarity/documentation/v0.13/color
 Core color is considered as 70
 """
 
-from SecretColors.__color import Color
-
-PALETTE_IBM = "ibm"
-PALETTE_MATERIAL = "material"
-PALETTE_BREWER = "brewer"
-PALETTE_CLARITY = "clarity"
-
-ALL_PALETTES = [PALETTE_IBM, PALETTE_MATERIAL, PALETTE_BREWER, PALETTE_CLARITY]
-
-TYPE_CORE = "core"  # Regular Color
-TYPE_GRAY = "gray"  # White, Black and shades of Grey
-TYPE_EXTRA = "extra"  # Special palette specific colors
-
-MODE_HEX = "hex"
-MODE_RGB = "rgb"
-MODE_RGB255 = "rgb255"
-MODE_HSL = "hsl"
-MODE_RGBA = "rgba"  # With Transparency
-MODE_AHEX = "ahex"  # With Transparency
-MODE_HSLA = "hsla"  # With Transparency
-MODE_HEX_A = "hexa"  # With Transparency
+from SecretColors._models import PaletteColors, MetaData
+from SecretColors._constants import *
 
 
-class ParentPalette:
-    """
-    Base class to create new colors
-    """
-
-    def __init__(self, show_warning: bool = True):
-        self.show_warning = show_warning
-
-    def get_all_colors(self) -> list:
-        """
-        :return: List of all colors
-        """
-        raise NotImplementedError
-
-    def get_palette_name(self) -> str:
-        """
-        :return: Name of the color palette
-        """
-        raise NotImplementedError
-
-    def get_creator_url(self) -> str:
-        """
-        :return: URL of the original resource
-        """
-        raise NotImplementedError
-
-    def get_shades(self) -> list:
-        """
-        :return: List of original shades. Note: This will be normalized
-        between 0 - 100
-        """
-        raise NotImplementedError
-
-    def get_core_shade(self) -> int:
-        """
-        :return: Shade of core color
-        """
-        raise NotImplementedError
-
-    def get_version(self) -> int:
-        """
-        :return: Palette version used in this library
-        """
-        raise NotImplementedError
-
-    def get_last_update(self) -> str:
-        """
-        :return: Date of last modification happened in this library
-        """
-        raise NotImplementedError
-
-
-class IBMPalette(ParentPalette):
+class IBMPalette(PaletteColors):
     """
     IBM Color Palette
     """
 
-    def get_last_update(self):
-        return "10 April 2019"
+    @property
+    def meta(self) -> MetaData:
+        m = MetaData()
+        m.name = "IBM Color Palette"
+        m.core_shade = self.core
+        m.version = 2
+        m.url = "https://www.ibm.com/design/language/elements/color/"
+        m.last_update = "10 April 2019"
+        return m
 
-    def get_version(self):
-        return 2
+    @property
+    def raw_colors(self) -> list:
+        return self.palette_colors
 
     def get_shades(self):
         return self.shades
 
-    def get_core_shade(self):
-        return self.core
-
-    def get_creator_url(self) -> str:
-        return "https://www.ibm.com/design/language/elements/color/"
-
-    def get_all_colors(self):
-        return [Color(x, self.shades, self.core, self.show_warning) for x in
-                self.colors]
-
-    def get_palette_name(self) -> str:
-        return "IBM Color Palette"
-
     shades = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
     core = 50
-    colors = [
+
+    palette_colors = [
         {
             'n': 'red',
             't': TYPE_CORE,
@@ -268,36 +193,31 @@ class IBMPalette(ParentPalette):
     ]
 
 
-class MaterialPalette(ParentPalette):
+class MaterialPalette(PaletteColors):
     """
     Material Design Color Palette
     """
 
-    def get_all_colors(self):
-        return [Color(x, self.shades, self.core, self.show_warning) for x in
-                self.colors]
+    @property
+    def meta(self) -> MetaData:
+        m = MetaData()
+        m.name = "Material Design Colors"
+        m.core_shade = self.core
+        m.version = 1
+        m.url = "https://material.io/tools/color"
+        m.last_update = "7 September 2018"
+        return m
 
-    def get_palette_name(self):
-        return "Material Design Colors"
+    @property
+    def raw_colors(self) -> list:
+        return self.palette_colors
 
-    def get_creator_url(self):
-        return "https://material.io/tools/color"
-
-    def get_shades(self):
+    def get_shades(self) -> list:
         return self.shades
-
-    def get_core_shade(self):
-        return self.core
-
-    def get_version(self):
-        return 1
-
-    def get_last_update(self):
-        return "7 September 2018"
 
     shades = [900, 800, 700, 600, 500, 400, 300, 200, 100, 50]
     core = 500
-    colors = [
+    palette_colors = [
         {
             'n': 'red',
             't': TYPE_CORE,
@@ -426,36 +346,31 @@ class MaterialPalette(ParentPalette):
     ]
 
 
-class ColorBrewer(ParentPalette):
+class ColorBrewer(PaletteColors):
     """
     Color Brewer Color Paletter
     """
 
-    def get_all_colors(self) -> list:
-        return [Color(x, self.shades, self.core, self.show_warning) for x in
-                self.colors]
+    @property
+    def meta(self) -> MetaData:
+        m = MetaData()
+        m.name = "Color Brewer Color Palette"
+        m.core_shade = self.core
+        m.version = 1
+        m.url = "http://colorbrewer2.org/"
+        m.last_update = "12 April 2019"
+        return m
 
-    def get_palette_name(self) -> str:
-        return "Color Brewer Color Palette"
-
-    def get_creator_url(self) -> str:
-        return "http://colorbrewer2.org/"
+    @property
+    def raw_colors(self) -> list:
+        return self.palette_colors
 
     def get_shades(self) -> list:
         return self.shades
 
-    def get_core_shade(self) -> int:
-        return self.core
-
-    def get_version(self) -> int:
-        return 1
-
-    def get_last_update(self) -> str:
-        return "12 April 2019"
-
     shades = [90, 80, 70, 60, 50, 40, 30, 20, 10]
     core = 60
-    colors = [
+    palette_colors = [
         {
             'n': 'blue',
             't': TYPE_CORE,
@@ -505,32 +420,28 @@ class ColorBrewer(ParentPalette):
     ]
 
 
-class ClarityPalette(ParentPalette):
-    def get_all_colors(self) -> list:
-        return [Color(x, self.shades, self.core, self.show_warning) for x in
-                self.colors]
+class ClarityPalette(PaletteColors):
 
-    def get_palette_name(self) -> str:
-        return "VMWare Clarity Color Palette"
+    @property
+    def meta(self) -> MetaData:
+        m = MetaData()
+        m.name = "VMWare Clarity Color Palette"
+        m.core_shade = self.core
+        m.version = 1
+        m.url = "https://vmware.github.io/clarity/documentation/v0.13/color"
+        m.last_update = "12 April 2019"
+        return m
 
-    def get_creator_url(self) -> str:
-        return "https://vmware.github.io/clarity/documentation/v0.13/color"
+    @property
+    def raw_colors(self) -> list:
+        return self.palette_colors
 
     def get_shades(self) -> list:
         return self.shades
 
-    def get_core_shade(self) -> int:
-        return self.core
-
-    def get_version(self) -> int:
-        return 1
-
-    def get_last_update(self) -> str:
-        return "12 April 2019"
-
     shades = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
     core = 70
-    colors = [
+    palette_colors = [
         {
             'n': 'red',
             't': TYPE_CORE,

@@ -12,9 +12,9 @@ This module provides all basic functions and main classes.
 
 """
 
-from SecretColors.__colors import *
-from SecretColors.utils import _warn, deprecated
-
+from SecretColors._colors import *
+from SecretColors._helpers import _warn, deprecated
+import random
 
 def color(func):
     func.__doc__ = "This is cool"
@@ -44,7 +44,7 @@ class Palette:
         return "SecretColors.palette.Palette ({})".format(self.name)
 
     @staticmethod
-    def _get_raw_palette(name: str, show_warning: bool) -> ParentPalette:
+    def _get_raw_palette(name: str, show_warning: bool):
         """
         :param name: Name of the color palette
         :param show_warning: If True, warnings will be shown

@@ -1,5 +1,5 @@
 """
-SecretColors 2019
+SecretColors_old 2019
 Author: Rohit Suratekar
 
 Colors are obtained from following sources
@@ -20,6 +20,14 @@ VMWare Clarity Palette
 https://vmware.github.io/clarity/documentation/v0.13/color
 Core color is considered as 70
 """
+
+#  Copyright (c) SecretBiology  2019.
+#
+#  Library Name: SecretColors
+#  Author: Rohit Suratekar
+#  Website: https://github.com/secretBiology/SecretColors
+#
+#
 
 from SecretColors._models import PaletteColors, MetaData
 from SecretColors._constants import *

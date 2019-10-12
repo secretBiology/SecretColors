@@ -6,3 +6,4 @@
 #
 #
 
+from SecretColors.models._basic import ColorWheel

@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('../'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SecretColors'
+project = 'SecretColors_old'
 copyright = '2019, Rohit Suratekar'
 author = 'Rohit Suratekar'
 
@@ -141,7 +141,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'SecretColors.tex', 'SecretColors Documentation',
+    (master_doc, 'SecretColors_old.tex', 'SecretColors_old Documentation',
      'Rohit Suratekar', 'manual'),
 ]
 
@@ -150,7 +150,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'secretcolors', 'SecretColors Documentation',
+    (master_doc, 'secretcolors', 'SecretColors_old Documentation',
      [author], 1)
 ]
 
@@ -160,8 +160,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'SecretColors', 'SecretColors Documentation',
-     author, 'SecretColors', 'One line description of project.',
+    (master_doc, 'SecretColors_old', 'SecretColors_old Documentation',
+     author, 'SecretColors_old', 'One line description of project.',
      'Miscellaneous'),
 ]
 

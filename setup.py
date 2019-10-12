@@ -4,7 +4,7 @@ with open("PYPI.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="SecretColors",
+    name="SecretColors_old",
     version="1.1.0",
     author="Rohit Suratekar",
     author_email="rohitsuratekar@gmail.com",

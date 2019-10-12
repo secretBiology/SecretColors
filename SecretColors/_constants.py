@@ -1,5 +1,5 @@
 """
-SecretColors 2019
+SecretColors_old 2019
 Author: Rohit Suratekar
 
 All the constants used in this library

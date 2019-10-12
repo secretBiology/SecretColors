@@ -1,5 +1,5 @@
 """
-SecretColors 2019
+SecretColors_old 2019
 Author: Rohit Suratekar
 
 All base models will go here
@@ -8,7 +8,7 @@ import math
 
 from SecretColors._constants import *
 from SecretColors._helpers import Log
-from SecretColors.utils import color_in_between
+from SecretColors_old.utils import color_in_between
 
 
 class MetaData:

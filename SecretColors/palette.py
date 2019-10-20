@@ -8,8 +8,8 @@
 
 import matplotlib.pyplot as plt
 
-from SecretColors.models import ColorWheel
-from SecretColors.utils import hex_to_hsl, hsl_to_hex, color_in_between
+from SecretColors.models import ColorWheel, Color
+from SecretColors.utils import hsl_to_hex, color_in_between
 
 
 def see(color_list: list):
@@ -35,7 +35,4 @@ def color_be(c1, c2):
 
 
 def run():
-    c = ColorWheel("#0062ff")
-    c1 = "#ff00e0"
-    c2 = "#ff9d00"
-    see([c1, color_be(c1, c2), color_in_between(c1, c2, 1)[0], c2])
+    c = 0

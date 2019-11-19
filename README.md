@@ -17,6 +17,25 @@ You can get output of colors in variety of color formats including `hex` , `rgb`
 
 Few sample plots and inspiration behind this library can be found in [WeirdData blog](https://weirddata.github.io/2019/06/11/secret-colors-2.html). 
 
+
+
+|
+<img src="https://user-images.githubusercontent.com/8757115/69130240-72840d00-0ab0-11ea-8ce5-8b715ebef4f6.png" width="60%">|
+|:--:|
+| Default base colors in matplotlib and SecretColors palettes. |
+
+
+|
+<img src="https://user-images.githubusercontent.com/8757115/69130544-fa6a1700-0ab0-11ea-80f4-aaff9e58f804.png" width="60%">|
+|:--:|
+| Simple bar plot with default colors. |
+
+
+|
+<img src="https://user-images.githubusercontent.com/8757115/69130672-31402d00-0ab1-11ea-835d-b161caf4c24a.png" width="60%">|
+|:--:|
+| Histogram comparison with Magenta and Cyan. You can dramatically change colors by just passing single parameter. |
+
 ### Installation 
 
 
@@ -80,6 +99,7 @@ Unlimited color manipulations
     p.blue(alpha=0.3) # Blue with alpha (0.251, 0.988, 0.545, 0.3) Only works in color mode which outputs alpha values
 
 
+
 Flexible functions
 
 
@@ -93,6 +113,7 @@ Flexible functions
     rgb_to_hex(0.181, 0.241, 0.382) # '#2e3d61'
     rgb_to_hsl(0.181, 0.241, 0.382) # (0.617, 0.357, 0.281)
     hsl_to_hex(0.181, 0.241, 0.382) # '#747849'
+
 
 
 Custom and flexible colormaps which can be directly used in `matplotlib` workflow 

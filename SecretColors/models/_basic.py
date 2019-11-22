@@ -4,11 +4,12 @@ Author: Rohit Suratekar
 
 All base models will go here
 """
-import math
+
+import matplotlib.pyplot as plt
 
 from SecretColors.constants import *
 from SecretColors.helpers import Log
-from SecretColors.utils import color_in_between
+from SecretColors.utils import *
 
 
 class MetaData:
@@ -20,7 +21,7 @@ class MetaData:
         self.version = 1
 
 
-class Color:
+class PaletteColor:
     def __init__(self, data, shades, log: Log):
         self.data = data
         self._log = log
@@ -139,7 +140,7 @@ class Color:
             return self.get(self.selected * 100 / self.scaling_factor)
 
 
-class PaletteColors:
+class AllPaletteColors:
 
     def __init__(self, log: Log):
         self._log = log
@@ -183,11 +184,11 @@ class PaletteColors:
         if self._colors is None:
             self._colors = {}
             for c in self.raw_colors:
-                model = Color(c, self.shades, self._log)
+                model = PaletteColor(c, self.shades, self._log)
                 self._colors[model.name] = model
         return self._colors
 
-    def get_color(self, name) -> Color:
+    def get_color(self, name) -> PaletteColor:
         try:
             return self.colors[name]
         except KeyError:
@@ -196,5 +197,66 @@ class PaletteColors:
             return None
 
 
+class Color:
+    def __init__(self, base_color, *, mode=None, log: Log = None):
+        if log is None:
+            log = Log()
+        self._log = log
+        self.r, self.g, self.b = self._change_mode(base_color, mode)
+
+        self.hue, self.saturation, self.lightness = rgb_to_hsl(self.r,
+                                                               self.g,
+                                                               self.b)
+
+    def _change_mode(self, base_color, mode):
+        if mode is None:
+            try:
+                return hex_to_rgb(base_color)
+            except AttributeError:
+                self._log.warn("Assuming RGB color mode")
+                return base_color
+        elif mode == "rgb":
+            return base_color
+        elif mode == "hsv":
+            return hsl_to_rgb(*base_color)
+        else:
+            self._log.error(f"Something went wrong with mode {mode}")
+        return 0, 0, 0
+
+    def _convert(self, h, s, l):
+        raise NotImplementedError
+
+    def saturate(self, percentage: float):
+        return self._convert(self.hue,
+                             self.saturation * percentage / 100,
+                             self.lightness)
+
+    def lighter(self, percentage: float):
+        av = (1 - self.lightness) * percentage / 100
+        return self._convert(self.hue, self.saturation, self.lightness + av)
+
+    def darker(self, percentage: float):
+        av = self.lightness * percentage / 100
+        return self._convert(self.hue, self.saturation, self.lightness - av)
+
+
+class ColorString(Color, str):
+
+    def _convert(self, h, s, l):
+        return hsl_to_hex(h, s, l)
+
+
+class ColorTuple(Color, tuple):
+
+    def _convert(self, h, s, l):
+        return hsb_to_rgb(h, s, l)
+
+
 def run():
-    pass
+    c = ColorString("#ff767c")
+    c2 = ColorString("#6ea6ff")
+    t = ColorTuple((0.1, 0.6, 1))
+    print(type(c))
+    plt.bar([0, 1, 2], [1, 1, 1], color=[c.lighter(50), c, c.darker(30)])
+    print(type(c) )
+    plt.show()

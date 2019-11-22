@@ -103,14 +103,5 @@ class ColorWheel:
         return text_color(self.color)
 
 
-class Color:
-    def __init__(self, name: str):
-        self.name = name.strip().lower()
-        self._all_shades = None
-
-
 def run():
-    from SecretColors.colors import colors
-    from SecretColors.utils import hex_to_hsl
-    for x in colors[0]["c"]:
-        print(hex_to_hsl(x))
+    pass

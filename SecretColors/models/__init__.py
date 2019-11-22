@@ -7,4 +7,4 @@
 #
 
 from SecretColors.models._wheels import ColorWheel
-from SecretColors.models._basic import Color, PaletteColors, MetaData
+from SecretColors.models._basic import ColorString, AllPaletteColors, MetaData

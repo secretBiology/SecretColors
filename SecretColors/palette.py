@@ -8,7 +8,7 @@
 
 import matplotlib.pyplot as plt
 
-from SecretColors.models import ColorWheel, Color
+from SecretColors.models import ColorWheel
 from SecretColors.utils import hsl_to_hex, color_in_between
 
 

@@ -19,11 +19,11 @@ import math
 def _validate(*args):
     for a in args:
         if a > 1:
-            raise Exception(
+            raise ValueError(
                 "Color Values can not be greater than 1. "
                 "please convert them to 0-1 scale")
         if a < 0:
-            raise Exception("Color values can not be negative")
+            raise ValueError("Color values can not be negative")
 
 
 def _sanitize_hex(hex_string: str):
@@ -35,7 +35,11 @@ def _sanitize_hex(hex_string: str):
         hex_string = "{0}{0}{1}{1}{2}{2}".format(*hex_string)
 
     if len(hex_string) % 2 != 0 or len(hex_string) < 6:
-        raise Exception("Invalid Hex code for conversion")
+        raise ValueError(f"Invalid Hex code '{hex_string}' for conversion")
+
+    if len(hex_string) > 8:
+        raise ValueError("Hex code can by maximum 8 character long including "
+                         "alpha channel")
 
     return hex_string
 
@@ -247,8 +251,10 @@ def hex_to_rgb(hex_string: str):
     hex_string = _sanitize_hex(hex_string)
     c = []
     for x in range(0, len(hex_string), 2):
-        c.append(int(hex_string[x: x + 2], 16) / 255)
-
+        try:
+            c.append(int(hex_string[x: x + 2], 16) / 255)
+        except ValueError:
+            raise ValueError(f"{hex_string} is an invalid hex color") from None
     return tuple(c)
 
 

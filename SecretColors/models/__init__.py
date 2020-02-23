@@ -6,5 +6,3 @@
 #
 #
 
-from SecretColors.models._wheels import ColorWheel
-from SecretColors.models._basic import ColorString, AllPaletteColors, MetaData

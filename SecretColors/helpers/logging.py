@@ -1,13 +1,15 @@
-"""
-SecretColors 2019
-Author: Rohit Suratekar
+#  Copyright (c) SecretBiology  2019.
+#
+#  Library Name: SecretColors
+#  Author: Rohit Suratekar
+#  Website: https://github.com/secretBiology/SecretColors
+#
+#  Logging util class
 
-Helper functions and classes
-"""
 
-import functools
 import logging
-import warnings
+
+LOGGING_FORMAT = "%(asctime)s %(filename)s : %(message)s"
 
 
 class Log:
@@ -16,7 +18,7 @@ class Log:
                  add_to_console: bool = True,
                  add_to_file: bool = False,
                  filename: str = "script.log",
-                 logging_format: str = "%(asctime)s %(filename)s : %(message)s"):
+                 logging_format: str = LOGGING_FORMAT):
         self.show_log = show_log
         self.formatter = logging.Formatter(logging_format)
         self.add_to_console = add_to_console
@@ -61,47 +63,3 @@ class Log:
         if self.show_log:
             self.log_object.setLevel(logging.WARN)
             self.log_object.warning(message)
-
-
-def deprecated(message: str = None):
-    """
-    Simple decorator to put deprecation warnings
-    :param message: Message (if any)
-
-    Modified from https://stackoverflow.com/questions/2536307/
-    decorators-in-the-python-standard-lib-deprecated-specifically
-    """
-
-    def decorator(function):
-        @functools.wraps(function)
-        def wrapper(*args, **kwargs):
-            warnings.simplefilter('always',
-                                  DeprecationWarning)  # turn off filter
-
-            m = "'{}' is deprecated. ".format(function.__name__)
-            if message is not None:
-                m += str(message)
-
-            warnings.warn(m, category=DeprecationWarning, stacklevel=2)
-
-            warnings.simplefilter('default',
-                                  DeprecationWarning)  # reset filter
-
-            return function(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-def _warn(message: str, show_warning: bool = True) -> None:
-    """
-    Simple function to generate warning
-    :param message: Message you want to send
-    :param show_warning: If False, warnings will be suppressed
-    """
-    if show_warning:
-        m = message + "\nTo suppress warning use 'show_warning=False' in " \
-                      "constructor of the palette"
-        ##
-        warnings.warn(m)

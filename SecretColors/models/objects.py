@@ -190,7 +190,3 @@ class ColorWheel:
     def text_color(self) -> str:
         return text_color(self.color)
 
-
-def run():
-    w = ColorWheel("f0f0f0")
-    print(w)

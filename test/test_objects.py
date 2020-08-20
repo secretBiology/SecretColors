@@ -4,7 +4,7 @@
 #  Author: Rohit Suratekar
 #  Website: https://github.com/secretBiology/SecretColors
 #
-# Object testing
+# Object testing includes test from model.objects
 
 import pytest
 
@@ -47,7 +47,7 @@ def test_color_object_type(color, is_tuple, rgba, hex_color):
     ("0.3", "0.4", "1")
 ])
 def test_color_type_errors(color):
-    # Test type error
+    # _RawColor type error
     with pytest.raises(TypeError):
         ColorOutput(color)
 
@@ -63,13 +63,12 @@ def test_color_type_errors(color):
     (0.2, 0.5, 0.8, 1, 0.5)
 ])
 def test_color_value_errors(color):
-    # Test value errors
     with pytest.raises(ValueError):
         ColorOutput(color)
 
 
 def test_odd_cases():
-    """Test the odd cases
+    """_RawColor the odd cases
     """
     with pytest.raises(TypeError):
         ColorOutput(1, 0.1, 1)
@@ -77,7 +76,7 @@ def test_odd_cases():
 
 def test_color_objects():
     """
-    Test the characteristics of str and tuple
+    _RawColor the characteristics of str and tuple
     """
     col_str = ColorString("#ffffff")
     col_tuple = ColorTuple((0, 1, 0.6))

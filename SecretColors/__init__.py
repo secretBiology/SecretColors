@@ -5,4 +5,4 @@
 #  Website: https://github.com/secretBiology/SecretColors
 #
 #
-
+from SecretColors.models.palette import Palette

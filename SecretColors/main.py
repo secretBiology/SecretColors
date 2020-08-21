@@ -6,6 +6,6 @@
 #
 #  Main library file
 
-from SecretColors.models.base import run
+from SecretColors.models.palette import run
 
 run()

@@ -92,3 +92,10 @@ class Log:
             module = inspect.getmodule(frame[0])
             filename = os.path.basename(module.__file__)
             self.log_object.debug(message, extra={"script": filename})
+
+    def deprecated(self, message):
+        self.log_object.setLevel(logging.WARN)
+        frame = inspect.stack()[1]
+        module = inspect.getmodule(frame[0])
+        filename = os.path.basename(module.__file__)
+        self.log_object.warning(message, extra={"script": filename})

@@ -9,6 +9,7 @@
 import pytest
 
 from SecretColors.models.base import _RawColor, Color
+from SecretColors.models.objects import ColorString
 
 
 def test_raw_colors():
@@ -55,8 +56,19 @@ def test_shades():
     assert c.name == "test"
     assert c.shade(0) == white
     assert isinstance(c.shade(0), str)
+    assert isinstance(c.shade(50), ColorString)
+    assert isinstance(c.shade(100), ColorString)
     assert c.shade(100) == black
     assert c.values[0] == c2.values[0]
     assert c.shade(50) == c2.shade(50)
-    assert c.shade(50) == "#808080"
+    assert c.shade(50) == "#7f7f7f"
     assert c.shade(49.9999) == c.shade(50.001)
+    assert c.shade(0.001) == white
+    assert c.shade(99.9999) == black
+
+    c3 = Color("h2", [white, black], [33.33, 66.66])
+
+    assert c3.shade(50) == c.shade(50)
+    assert c3.shade(33.2) == white
+    assert c3.shade(66.67) == black
+    assert c3.shade(40.444) == c3.shade(40.44)

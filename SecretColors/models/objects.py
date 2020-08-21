@@ -154,6 +154,7 @@ class ColorWheel:
             return color_list
 
     def complementary(self, is_reversed: bool = False) -> list:
+        # Make in HSV space
         return self._make_color_list(180, is_revered=is_reversed)
 
     def triadic(self, is_reserved: bool = False) -> list:
@@ -189,4 +190,3 @@ class ColorWheel:
 
     def text_color(self) -> str:
         return text_color(self.color)
-

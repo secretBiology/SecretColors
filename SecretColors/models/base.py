@@ -4,17 +4,13 @@
 #  Author: Rohit Suratekar
 #  Website: https://github.com/secretBiology/SecretColors
 #
-#  Main classes will go in this file
+#  Main classes classes related to color and shades will go in this file
 
 import collections
-import math
 
 from SecretColors.helpers.logging import Log
 from SecretColors.models.objects import ColorString
 from SecretColors.utils import color_in_between
-
-test = ['#2c080a', '#570408', '#750e13', '#a51920', '#da1e28',
-        '#fb4b53', '#ff767c', '#ffa4a9', '#fcd0d3', '#fff0f1']
 
 
 class _RawColor:
@@ -63,7 +59,8 @@ class _RawColor:
 class Color:
     def __init__(self, name: str, values: list,
                  shades: list, log: Log = None,
-                 left: str = "#ffffff", right: str = "#000000"):
+                 left: str = "#ffffff", right: str = "#000000",
+                 default: float = 50):
         self.name = name
         self._raw_values = values
         self._shades = shades
@@ -73,6 +70,7 @@ class Color:
         self._values = None
         self.left = left  # Left hand end
         self.right = right  # Right hand end
+        self.default = default  # Default shade
 
         if not isinstance(shades, collections.abc.Iterable) or isinstance(
                 values, str):
@@ -88,11 +86,14 @@ class Color:
                            exception=ValueError)
 
         if min(shades) < 0 or max(shades) > 100:
-            self.log.error("Shade value should be between 0-100",
+            self.log.error("Shade value should be in between 0-100",
                            exception=ValueError)
 
         self.log.debug(f"Color {self.name} is generated with {len(values)} "
                        f"values")
+
+    def __repr__(self):
+        return f"Color({self.name})"
 
     @property
     def values(self):
@@ -103,54 +104,37 @@ class Color:
             # Add left color if 0 is not included
             if min(self._shades) > 0:
                 v.append(_RawColor(self.left, 0, self.log))
+                self.log.debug(f"Added left color to {self.name}")
             # Add right color if 100 is not included
             if max(self._shades) < 100:
+                self.log.debug(f"Added right color to {self.name}")
                 v.append(_RawColor(self.right, 100, self.log))
             v = sorted(v)
             self._values = v
         return self._values
 
+    def get(self) -> ColorString:
+        return self.shade(self.default)
+
     def shade(self, value: float) -> ColorString:
+        self.log.debug(f"Extracting shade '{value}' from '{self.name}'")
+
         if value < 0 or value > 100:
             self.log.error("Shade should be between 0-100",
                            exception=ValueError)
-        dec, top = math.modf(value)
-        top = int(top)
-        dec = round(dec * 100)
-        left_c = self.values[0]
-        right_c = self.values[-1]
+
         for i, s in enumerate(self.values):
-            if top == s and dec == 0:
+            if s.shade == value:
                 return ColorString(s.hex)
-            elif top == s:
-                left_c = s
-                right_c = self.values[i + 1]
-                break
-            elif s > top:
-                left_c = self.values[i - 1]
-                right_c = s
-                break
+            if s.shade > value:
+                left = self.values[i - 1]
+                right = s
+                idx = (value - left.shade) * 100 / (right.shade - left.shade)
+                idx = round(idx)
+                colors = color_in_between(left.hex, right.hex, 99)
+                colors.insert(0, left.hex)
+                colors.append(right.hex)
+                return ColorString(colors[idx])
 
-        # TODO: Implement properly
-        bks = right_c.shade - left_c.shade
-        print(bks, top - left_c.shade)
-        cols = color_in_between(left_c.hex, right_c.hex, bks)
-        cols.insert(0, left_c.hex)
-        cols.append(right_c.hex)
-        # First get colors for 'top'
-        idx = top - left_c.shade
-        c1 = cols[top - 1]
-        if dec == 0:
-            return ColorString(c1)
-        # Now get smaller section of color and do divisions
-        c2 = cols[top]
-        col2 = color_in_between(c1, c2, 98)
-        col2.insert(0, c1)
-        col2.append(c2)
-        return ColorString(col2[dec - 1])
-
-
-def run():
-    c = Color("red", test, list(range(0, 100, 10)))
-    c2 = Color("test", ["#ffffff", "#000000"], [0, 100])
-    c2.shade(50)
+        self.log.error(f"Something went wrong with shade {value}. Please "
+                       f"report it on GitHub", exception=ValueError)

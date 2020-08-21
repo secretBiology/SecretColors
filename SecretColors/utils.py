@@ -474,6 +474,22 @@ def hsl_to_hex(h, s, l):
     return rgb_to_hex(*hsl_to_rgb(h, s, l))
 
 
+def get_complementary(hex_color: str):
+    """
+    Returns complementary color
+
+    >>> get_complementary("#fb4b53") # '#4afaf3'
+
+    :param hex_color: Hex color
+    :return: Complementary Hex color
+    """
+
+    r, g, b = hex_to_rgb(hex_color)
+    k = max([r, g, b]) + min([r, g, b])
+    t = tuple(k - u for u in (r, g, b))
+    return rgb_to_hex(t[0], t[1], t[2])
+
+
 def run():
     a = rgb_to_adobe_rgb(1, 0.5, 0.34)
     print(adobe_rgb_to_rgb(*a))

@@ -4,7 +4,7 @@
 #  Author: Rohit Suratekar
 #  Website: https://github.com/secretBiology/SecretColors
 #
-# Main palette class
+#  Main palette class
 
 from typing import Dict, List, Union
 
@@ -72,7 +72,10 @@ class Palette:
         self.log.info(f"New '{name}' palette is initialized successfully.")
         self._palette = None
         self._colors = None
-        self.seed = seed
+        self._seed = seed
+        if self._seed:
+            self.log.info(f"Random seed set for : {seed}")
+            np.random.seed(self._seed)
 
     @property
     def _value(self) -> ParentPalette:
@@ -124,6 +127,16 @@ class Palette:
             raise StopIteration
 
     @property
+    def seed(self):
+        return self._seed
+
+    @seed.setter
+    def seed(self, value):
+        self._seed = value
+        np.random.seed(value)
+        self.log.info(f"Random seed set for : {value}")
+
+    @property
     def colors(self) -> Dict[str, Color]:
         if self._colors is None:
             colors = {}
@@ -142,7 +155,8 @@ class Palette:
         self.log.deprecated("Deprecated function")
         self.log.error("Sorry! This function is removed from the Palette "
                        "Class in favour of "
-                       "'color_in_between from SecretColors.utils'")
+                       "'color_in_between from SecretColors.utils'",
+                       exception=AttributeError)
 
     def _send(self, colors, **kwargs) -> Union[ColorString, List[ColorString]]:
         # TODO
@@ -207,13 +221,12 @@ class Palette:
                gradient: bool = True,
                avoid: list = None,
                reverse: bool = False,
+               force_list: bool = False,
                print_colors: bool = False, **kwargs) -> List[ColorString]:
 
         _param_deprecation(self.log, "ignore_gray", **kwargs)
         _param_deprecation(self.log, "force_gray", **kwargs)
 
-        if self.seed:
-            np.random.seed(self.seed)
         if avoid is None:
             avoid = ["white", "black"]
         if starting_shade is None:
@@ -230,6 +243,9 @@ class Palette:
         colors = np.random.choice(accepted_colors, no_of_colors)
         # If shade is specified, directly return the selected colors
         if shade is not None:
+            if no_of_colors == 1 and not force_list:
+                return self._send(colors[0].shade(shade), alpha=alpha,
+                                  print_colors=print_colors)
             return self._send([x.shade(shade) for x in colors], alpha=alpha,
                               print_colors=print_colors)
 
@@ -241,6 +257,9 @@ class Palette:
         if reverse:
             shades = reversed(shades)
 
+        if no_of_colors == 1 and not force_list:
+            return self._send(colors[0].shade(shades[0]), alpha=alpha,
+                              print_colors=print_colors)
         return self._send([x[0].shade(x[1]) for x in zip(colors, shades)],
                           alpha=alpha, print_colors=print_colors)
 
@@ -255,8 +274,6 @@ class Palette:
                         **kwargs) -> List[ColorString]:
 
         _param_deprecation(self.log, "ignore_gray", **kwargs)
-        if self.seed:
-            np.random.seed(self.seed)
 
         colors = np.random.choice(list(self.colors.values()), 2)
         if shade is None:
@@ -307,8 +324,6 @@ class Palette:
             if kwargs["gradient"]:
                 colors = self._extract_color_list(name, **kwargs)
             else:
-                if self.seed:
-                    np.random.seed(self.seed)
                 shades = np.random.randint(self._value.get_shades()[-1],
                                            self._value.get_shades()[0],
                                            kwargs["no_of_colors"])
@@ -332,7 +347,216 @@ class Palette:
              ending_shade: float = None):
         return self._common_color("blue", locals())
 
+    @document
+    def green(self, *, shade: float = None, no_of_colors: int = 1,
+              gradient=True, alpha: float = None, starting_shade: float = None,
+              ending_shade: float = None):
+        return self._common_color("green", locals())
+
+    @document
+    def magenta(self, *, shade: float = None, no_of_colors: int = 1,
+                gradient=True, alpha: float = None,
+                starting_shade: float = None,
+                ending_shade: float = None):
+        return self._common_color("magenta", locals())
+
+    @document
+    def purple(self, *, shade: float = None, no_of_colors: int = 1,
+               gradient=True, alpha: float = None,
+               starting_shade: float = None,
+               ending_shade: float = None):
+        return self._common_color("purple", locals())
+
+    @document
+    def cyan(self, *, shade: float = None, no_of_colors: int = 1,
+             gradient=True, alpha: float = None,
+             starting_shade: float = None,
+             ending_shade: float = None):
+        return self._common_color("cyan", locals())
+
+    @document
+    def teal(self, *, shade: float = None, no_of_colors: int = 1,
+             gradient=True, alpha: float = None,
+             starting_shade: float = None,
+             ending_shade: float = None):
+        return self._common_color("teal", locals())
+
+    @document
+    def gray_cool(self, *, shade: float = None, no_of_colors: int = 1,
+                  gradient=True, alpha: float = None,
+                  starting_shade: float = None,
+                  ending_shade: float = None):
+        return self._common_color("cool-gray", locals())
+
+    @document
+    def gray_neutral(self, *, shade: float = None, no_of_colors: int = 1,
+                     gradient=True, alpha: float = None,
+                     starting_shade: float = None,
+                     ending_shade: float = None):
+        return self._common_color("neutral-gray", locals())
+
+    @document
+    def gray(self, *, shade: float = None, no_of_colors: int = 1,
+             gradient=True, alpha: float = None,
+             starting_shade: float = None,
+             ending_shade: float = None):
+        return self._common_color("gray", locals())
+
+    @document
+    def gray_warm(self, *, shade: float = None, no_of_colors: int = 1,
+                  gradient=True, alpha: float = None,
+                  starting_shade: float = None,
+                  ending_shade: float = None):
+        return self._common_color("warm-gray", locals())
+
+    @document
+    def red_orange(self, *, shade: float = None, no_of_colors: int = 1,
+                   gradient=True, alpha: float = None,
+                   starting_shade: float = None,
+                   ending_shade: float = None):
+        return self._common_color("red-orange", locals())
+
+    @document
+    def black(self, *, shade: float = None, no_of_colors: int = 1,
+              gradient=True, alpha: float = None,
+              starting_shade: float = None,
+              ending_shade: float = None):
+        return self._common_color("black", locals())
+
+    @document
+    def white(self, *, shade: float = None, no_of_colors: int = 1,
+              gradient=True, alpha: float = None,
+              starting_shade: float = None,
+              ending_shade: float = None):
+        return self._common_color("white", locals())
+
+    @document
+    def ultramarine(self, *, shade: float = None, no_of_colors: int = 1,
+                    gradient=True, alpha: float = None,
+                    starting_shade: float = None,
+                    ending_shade: float = None):
+        return self._common_color("ultramarine", locals())
+
+    @document
+    def cerulean(self, *, shade: float = None, no_of_colors: int = 1,
+                 gradient=True, alpha: float = None,
+                 starting_shade: float = None,
+                 ending_shade: float = None):
+        return self._common_color("cerulean", locals())
+
+    @document
+    def aqua(self, *, shade: float = None, no_of_colors: int = 1,
+             gradient=True, alpha: float = None,
+             starting_shade: float = None,
+             ending_shade: float = None):
+        return self._common_color("aqua", locals())
+
+    @document
+    def lime(self, *, shade: float = None, no_of_colors: int = 1,
+             gradient=True, alpha: float = None,
+             starting_shade: float = None,
+             ending_shade: float = None):
+        return self._common_color("lime", locals())
+
+    @document
+    def yellow(self, *, shade: float = None, no_of_colors: int = 1,
+               gradient=True, alpha: float = None,
+               starting_shade: float = None,
+               ending_shade: float = None):
+        return self._common_color("yellow", locals())
+
+    @document
+    def gold(self, *, shade: float = None, no_of_colors: int = 1,
+             gradient=True, alpha: float = None,
+             starting_shade: float = None,
+             ending_shade: float = None):
+        return self._common_color("gold", locals())
+
+    @document
+    def orange(self, *, shade: float = None, no_of_colors: int = 1,
+               gradient=True, alpha: float = None,
+               starting_shade: float = None,
+               ending_shade: float = None):
+        return self._common_color("orange", locals())
+
+    @document
+    def peach(self, *, shade: float = None, no_of_colors: int = 1,
+              gradient=True, alpha: float = None,
+              starting_shade: float = None,
+              ending_shade: float = None):
+        return self._common_color("peach", locals())
+
+    @document
+    def violet(self, *, shade: float = None, no_of_colors: int = 1,
+               gradient=True, alpha: float = None,
+               starting_shade: float = None,
+               ending_shade: float = None):
+        return self._common_color("violet", locals())
+
+    @document
+    def indigo(self, *, shade: float = None, no_of_colors: int = 1,
+               gradient=True, alpha: float = None,
+               starting_shade: float = None,
+               ending_shade: float = None):
+        return self._common_color("indigo", locals())
+
+    @document
+    def pink(self, *, shade: float = None, no_of_colors: int = 1,
+             gradient=True, alpha: float = None,
+             starting_shade: float = None,
+             ending_shade: float = None):
+        return self._common_color("pink", locals())
+
+    @document
+    def purple_deep(self, *, shade: float = None, no_of_colors: int = 1,
+                    gradient=True, alpha: float = None,
+                    starting_shade: float = None,
+                    ending_shade: float = None):
+        return self._common_color("deep-purple", locals())
+
+    @document
+    def blue_light(self, *, shade: float = None, no_of_colors: int = 1,
+                   gradient=True, alpha: float = None,
+                   starting_shade: float = None,
+                   ending_shade: float = None):
+        return self._common_color("light-blue", locals())
+
+    @document
+    def green_light(self, *, shade: float = None, no_of_colors: int = 1,
+                    gradient=True, alpha: float = None,
+                    starting_shade: float = None,
+                    ending_shade: float = None):
+        return self._common_color("light-green", locals())
+
+    @document
+    def amber(self, *, shade: float = None, no_of_colors: int = 1,
+              gradient=True, alpha: float = None,
+              starting_shade: float = None,
+              ending_shade: float = None):
+        return self._common_color("amber", locals())
+
+    @document
+    def orange_deep(self, *, shade: float = None, no_of_colors: int = 1,
+                    gradient=True, alpha: float = None,
+                    starting_shade: float = None,
+                    ending_shade: float = None):
+        return self._common_color("deep-orange", locals())
+
+    @document
+    def brown(self, *, shade: float = None, no_of_colors: int = 1,
+              gradient=True, alpha: float = None,
+              starting_shade: float = None,
+              ending_shade: float = None):
+        return self._common_color("brown", locals())
+
+    @document
+    def gray_blue(self, *, shade: float = None, no_of_colors: int = 1,
+                  gradient=True, alpha: float = None,
+                  starting_shade: float = None,
+                  ending_shade: float = None):
+        return self._common_color("blue-gray", locals())
+
 
 def run():
-    p = Palette(PALETTE_CLARITY)
-    print(p.blue())
+    p = Palette()
+    print(p.gray_blue())

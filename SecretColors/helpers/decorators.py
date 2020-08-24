@@ -74,4 +74,9 @@ def document(func):
     doc = _sample_doc.__doc__
     doc = doc.replace("SECRET", func.__name__)
     func.__doc__ = doc
-    return func
+
+    @functools.wraps(func)
+    def wrap(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrap

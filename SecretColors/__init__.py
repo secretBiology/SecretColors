@@ -6,3 +6,4 @@
 #
 #
 from SecretColors.models.palette import Palette
+from SecretColors.models.colormap import ColorMap

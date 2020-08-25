@@ -13,7 +13,7 @@ import numpy as np
 from SecretColors.data.constants import *
 from SecretColors.data.palettes import (IBMPalette, MaterialPalette,
                                         ClarityPalette, ColorBrewer,
-                                        ParentPalette)
+                                        ParentPalette, TableauPalette)
 from SecretColors.helpers.decorators import deprecated, document
 from SecretColors.helpers.logging import Log
 from SecretColors.models.base import Color, ColorString
@@ -28,6 +28,8 @@ def _get_palette(name: str) -> ParentPalette:
         return ClarityPalette()
     elif name == PALETTE_BREWER:
         return ColorBrewer()
+    elif name == PALETTE_TABLEAU:
+        return TableauPalette()
     else:
         return IBMPalette()
 
@@ -185,6 +187,11 @@ class Palette:
                           f"palettes.")
             self._generate_additional_colors()
 
+        if name not in self.colors.keys():
+            if name in SYNONYM.keys():
+                self.log.info(f"{SYNONYM[name]} is used instead {name}")
+                return self.colors[SYNONYM[name]]
+
         # If color is still not present, then it is an error
         if name not in self.colors.keys():
             self.log.error(f"Unable to find '{name}'. Please check "
@@ -203,9 +210,9 @@ class Palette:
         # present in the default shades
 
         if starting_shade is None:
-            starting_shade = self._value.get_shades()[-1]
+            starting_shade = min(self._value.get_shades())
         if ending_shade is None:
-            ending_shade = self._value.get_shades()[0]
+            ending_shade = max(self._value.get_shades())
 
         shades = np.linspace(starting_shade, ending_shade, no_of_colors)
         if reverse:
@@ -230,9 +237,9 @@ class Palette:
         if avoid is None:
             avoid = ["white", "black"]
         if starting_shade is None:
-            starting_shade = self._value.get_shades()[-1]
+            starting_shade = min(self._value.get_shades())
         if ending_shade is None:
-            ending_shade = self._value.get_shades()[0]
+            ending_shade = max(self._value.get_shades())
 
         # remove the restricted colors provided by 'avoid'
         accepted_colors = []
@@ -334,6 +341,40 @@ class Palette:
             if kwargs["shade"]:
                 shade = kwargs["shade"]
             return self._send(color.shade(shade))
+
+    def get(self, color_name: str, *,
+            shade: float = None, no_of_colors: int = 1,
+            gradient=True, alpha: float = None, starting_shade: float = None,
+            ending_shade: float = None):
+        """
+        This is general methode to retrieve the arbitrary color from the
+        palette. It will first check color name present in the current color
+        palette. If it is not present, it will search color name in all
+        other available color palettes. It will also look for common
+        spelling variants of the color through SYNONYM constant from
+        `SecretColors.data.constants` (for example, gray and grey). If any
+        such synonym found, it will return that color.
+
+        :param color_name: Name of the color
+        :param shade: Color Shade (between 0-100). Default will be based on the
+            Palette used. If that is not available 50 will be used.
+        :param no_of_colors: Number of colors (default: 1)
+        :param gradient: If True, if number of colors are greater than 1,
+            then will be arranged in ascending order of their shade value
+        :param alpha: Transparency (between 0-1). Only works in selected
+            color_modes : hexa, ahex, rgba, hsla
+        :param starting_shade: If number of colors are more than 1, you can use
+            this to define the starting shade of the color. This does not work when
+            number of colors is 1
+        :param ending_shade: If number of colors are more than 1, you can use
+            this to define the ending shade of the color. This does not work when
+            number of colors is 1
+        :return: ColorString (special string class)
+        """
+
+        color = self._extract(color_name.lower().strip())
+        print(color)
+        return self._common_color(color.name, locals())
 
     @document
     def red(self, *, shade: float = None, no_of_colors: int = 1,
@@ -558,5 +599,4 @@ class Palette:
 
 
 def run():
-    p = Palette()
-    print(p.gray_blue())
+    pass

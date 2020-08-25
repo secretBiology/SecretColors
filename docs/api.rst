@@ -10,7 +10,7 @@ Palette
 ColorMap
 ==================
 
-.. autoclass:: SecretColors.palette.ColorMap
+.. autoclass:: SecretColors.ColorMap
 	   :members:
 
 

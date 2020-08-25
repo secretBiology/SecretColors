@@ -1,11 +1,8 @@
-#  Copyright (c) SecretBiology  2019.
+#  Copyright (c) SecretBiology  2020.
 #
 #  Library Name: SecretColors
 #  Author: Rohit Suratekar
 #  Website: https://github.com/secretBiology/SecretColors
 #
-#  Main library file
+#
 
-from SecretColors.models.palette import run
-
-run()

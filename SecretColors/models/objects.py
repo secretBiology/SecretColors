@@ -10,7 +10,7 @@ from typing import Union
 
 from SecretColors.utils import (hex_to_rgb, rgb_to_hex,
                                 color_in_between, text_color,
-                                hsl_to_hex, hex_to_hsl)
+                                hsl_to_hex, hex_to_hsl, rgb_to_rgb255)
 
 
 def _validate(color: tuple, base):
@@ -99,17 +99,37 @@ class ColorTuple(ColorOutput, tuple):
 
 
 class ColorWheel:
+    """
+    ColorWheel class is more 'scientific' than using
+    :class:`SecretColors.Palette`. This provides very useful
+    and easy color manipulation tools.
+
+    """
 
     def __init__(self, hex_color: str):
+        """
+        Initialize ColorWheel with Hex color. This will be your base color
+        on which all further manipulations can be done.
+
+        :param hex_color: hex color
+        """
         self._original_hex = hex_color
         self.hue, self.saturation, self.lightness = hex_to_hsl(hex_color)
 
     def reset(self):
+        """Resets all adjustments/manipulation to your original color
+            (which you used while creating this class in
+            :func:`SecretColors.ColorWheel.__init__` )
+        """
         self.hue, self.saturation, self.lightness = hex_to_hsl(
             self._original_hex)
 
     @property
     def color(self) -> str:
+        """Returns current color (which has all the manipulations)
+
+        >>> cw = ColorWheel("#")
+        """
         return hsl_to_hex(self.hue, self.saturation, self.lightness)
 
     def __repr__(self):
@@ -190,3 +210,10 @@ class ColorWheel:
 
     def text_color(self) -> str:
         return text_color(self.color)
+
+
+def run():
+    from SecretColors.utils import rgb_to_xyz, xyz_to_rgb
+    rgb = (0.01, 0.5, 1)
+    xyz = rgb_to_xyz(*rgb)
+    print(xyz_to_rgb(*xyz))

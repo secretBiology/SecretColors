@@ -5,19 +5,25 @@ Palette
 ==================
 
 .. autoclass:: SecretColors.Palette
-	   :members:
+        :members:
 
 ColorMap
 ==================
 
 .. autoclass:: SecretColors.ColorMap
-	   :members:
+        :members:
+
+ColorWheel
+==================
+
+.. autoclass:: SecretColors.ColorWheel
+        :members:
 
 
 Utils
 ===================
 .. automodule:: SecretColors.utils
-	   :members:
+        :members:
 
 Indices and tables
 ==================

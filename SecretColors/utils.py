@@ -14,6 +14,8 @@
 # TODO: HSI conversions
 
 import math
+from typing import Tuple
+from SecretColors.helpers.rxutils import convert_rgb_to_xyz, convert_xyz_to_rgb
 
 
 def _validate(*args):
@@ -24,6 +26,19 @@ def _validate(*args):
                 "please convert them to 0-1 scale")
         if a < 0:
             raise ValueError("Color values can not be negative")
+
+
+def _validate255(*args):
+    for a in args:
+        if not isinstance(a, int):
+            raise ValueError(f"Only integers {int} are allowed for conversion "
+                             f"between RGB255 and others. Your have provided "
+                             f"'{a}' which is {type(a)}")
+
+        if a < 0 or a > 255:
+            raise ValueError(f"Value should be between 0 to 255 for "
+                             f"conversion from RGB255 to other classes. You "
+                             f"have provided '{a}'")
 
 
 def _sanitize_hex(hex_string: str):
@@ -76,7 +91,8 @@ def rgb_to_hsv(r, g, b):
     Converts RGB to HSV
 
     Hue will be normalized and will be on the scale of 0-1 than 0-360
-    Conversion is done by Travis Method
+    Conversion formula is taken from
+    https://www.rapidtables.com/convert/color/rgb-to-hsv.html
 
     :param r: Red (0 to 1)
     :param g: Green (0 to 1)
@@ -88,61 +104,65 @@ def rgb_to_hsv(r, g, b):
     v_min = min(r, g, b)
     v_max = max(r, g, b)
 
-    if v_max == 0:
-        return 0, 0, 0
+    diff = v_max - v_min
 
-    s = (v_max - v_min) / v_max
-    v = v_max
-
-    if s == 0:
-        return 0, 0, v
-
-    r2 = (v_max - r) / (v_max - v_min)
-    g2 = (v_max - g) / (v_max - v_min)
-    b2 = (v_max - b) / (v_max - v_min)
-
-    if v_max == r and v_min == g:
-        h = 5 + b2
-    elif v_max == r and v_min != g:
-        h = 1 - g2
-    elif v_max == g and v_min == b:
-        h = r2 + 1
-    elif v_max == g and v_min != b:
-        h = 3 - b2
+    if diff == 0:
+        h = 0
     elif v_max == r:
-        h = 3 + g2
+        h = ((g - b) / diff) % 6
+    elif v_max == g:
+        h = ((b - r) / diff) + 2
+    elif v_max == b:
+        h = ((r - g) / diff) + 4
     else:
-        h = 5 - r2
+        raise Exception("Something went wrong in converting HSV to RGB")
 
     h = h * 60  # H in 0-360 range
     h = h / 360  # H in 0-1 range
 
+    if v_max == 0:
+        s = 0
+    else:
+        s = diff / v_max
+
+    v = v_max
     return h, s, v
 
 
 def hsv_to_rgb(h, s, v) -> tuple:
+    """
+
+    https://www.rapidtables.com/convert/color/hsv-to-rgb.html
+
+    :param h:
+    :param s:
+    :param v:
+    :return:
+    """
     _validate(h, s, v)
     h = h * 360  # Convert to angle
-    h = h / 60
-    primary = math.floor(h)
-    secondary = h - primary
-    a = (1 - s) * v
-    b = (1 - (s * secondary)) * v
-    c = (1 - (s * (1 - secondary))) * v
-    if primary == 0:
-        return v, c, a
-    elif primary == 1:
-        return b, v, a
-    elif primary == 2:
-        return a, v, c
-    elif primary == 3:
-        return a, b, v
-    elif primary == 4:
-        return c, a, v
-    elif primary == 5:
-        return v, a, b
+
+    c = v * s
+    x = c * (1 - abs(((h / 60) % 2) - 1))
+    m = v - c
+
+    def __adjust(p, q, r):
+        return p + m, q + m, r + m
+
+    if 0 <= h < 60:
+        return __adjust(c, x, 0)
+    elif 60 <= h < 120:
+        return __adjust(x, c, 0)
+    elif 120 <= h < 180:
+        return __adjust(0, c, x)
+    elif 180 <= h < 240:
+        return __adjust(0, x, c)
+    elif 240 <= h < 300:
+        return __adjust(x, 0, c)
+    elif 300 <= h < 360:
+        return __adjust(c, 0, x)
     else:
-        raise Exception("Something went wrong in conversion")
+        raise Exception("Something went wrong in converting HSV to RGB")
 
 
 def rgb_to_hsl(r, g, b) -> tuple:
@@ -239,12 +259,63 @@ def hsl_to_rgb(h, s, l) -> tuple:
     return r, g, b
 
 
-def rgb_to_hex(r, g, b):
+def rgb_to_rgb255(r: float, g: float, b: float) -> Tuple[float, float, float]:
+    """
+    Converts 0-1 based RGB into 0-255 based RGB
+
+    :param r: Red (between 0-1)
+    :param g: Green (between 0-1)
+    :param b: Blue (between 0-1)
+    :return: Red, Green, Blue (between 0-255)
+    """
     _validate(r, g, b)
-    r = int(r * 255)
-    g = int(g * 255)
-    b = int(b * 255)
+    # Here rounding is important as `int` will not consider reminder for
+    # rounding up to nearest neighbour
+    r = int(round(r * 255))
+    g = int(round(g * 255))
+    b = int(round(b * 255))
+    return r, g, b
+
+
+def rgb255_to_hex(r: int, g: int, b: int) -> str:
+    """
+    Converts 0-255 based RGB to Hex
+
+    :param r: Red (between 0-255)
+    :param g: Green (between 0-255)
+    :param b: Blue (between 0-255)
+    :return: Hex color code
+    """
+    _validate255(r, g, b)
     return "#{:02x}{:02x}{:02x}".format(r, g, b)
+
+
+def rgb_to_hex(r: float, g: float, b: float) -> str:
+    _validate(r, g, b)
+    return rgb255_to_hex(*rgb_to_rgb255(r, g, b))
+
+
+def rgb255_to_rgb(r: int, g: int, b: int) -> Tuple[float, float, float]:
+    """
+    Converts 0-255 based RGB to 0-1 based RGB
+
+    :param r: Red (between 0-255)
+    :param g: Green (between 0-255)
+    :param b: Blue (between 0-255)
+    :return: Red, Green, Blue (between 0-1)
+    """
+    _validate255(r, g, b)
+    return r / 255, g / 255, b / 255
+
+
+def rgb255_to_hsv(r: int, g: int, b: int):
+    _validate255(r, g, b)
+    return rgb_to_hsv(*rgb255_to_rgb(r, g, b))
+
+
+def rgb255_to_hsl(r: int, g: int, b: int):
+    _validate255(r, g, b)
+    return rgb_to_hsl(*rgb255_to_rgb(r, g, b))
 
 
 def hex_to_rgb(hex_string: str):
@@ -266,128 +337,70 @@ def hsb_to_rgb(h, s, b):
     return hsv_to_rgb(h, s, b)
 
 
-def rgb_to_xyz(r, g, b):
-    """
-    Convert RGB to XYZ
+def apply_gamma_transform(value):
+    if value > 0.0031308:
+        return 1.055 * (pow(value, (1 / 2.4))) - 0.055
+    else:
+        return 12.92 * value
 
-    X, Y and Z output refer to a D65/2° standard illuminant.
-    Taken from
-    https://www.easyrgb.com/en/math.php
 
-    :param r: Red (0 to 1)
-    :param g: Green (0 to 1)
-    :param b: Blue (0 to 1)
-    :return: X, Y, Z (on the scale of 0 to 1)
+def apply_linear_transform(value):
     """
+    Transforms value from non-linear scale (with gamma transform) to linear
+
+    :param value: Value to be transform (between 0-1)
+    :return: Transformed value (between 0-1)
+    """
+
+    if value > 0.04045:
+        return pow(((value + 0.055) / 1.055), 2.4)
+    else:
+        return value / 12.92
+
+
+def rgb_to_srgb(r, g, b):
     _validate(r, g, b)
-
-    def _adjust(color):
-        if color > 0.04045:
-            return pow(((color + 0.055) / 1.055), 2.4)
-        else:
-            return color / 12.92
-
-    r = _adjust(r)
-    g = _adjust(g)
-    b = _adjust(b)
-
-    x = r * 0.4124 + g * 0.3576 + b * 0.1805
-    y = r * 0.2126 + g * 0.7152 + b * 0.0722
-    z = r * 0.0193 + g * 0.1192 + b * 0.9505
-
-    return _adjust_excess(x, y, z)
+    return (apply_linear_transform(r),
+            apply_linear_transform(g),
+            apply_linear_transform(b))
 
 
-def _get_raw_rgb(x, y, z):
-    r = x * 3.2406 + y * -1.5372 + z * -0.4986
-    g = x * -0.9689 + y * 1.8758 + z * 0.0415
-    b = x * 0.0557 + y * -0.2040 + z * 1.0570
-    return r, g, b
+def srgb_to_rgb(sr, sg, sb):
+    return (apply_gamma_transform(sr),
+            apply_gamma_transform(sg),
+            apply_gamma_transform(sb))
 
 
-def _adjust_excess(x, y, z):
-    if x > 1:
-        x = 1
-    if y > 1:
-        y = 1
-    if z > 1:
-        z = 1
-    return x, y, z
+def rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
+    srgb = rgb_to_srgb(r, g, b)
+    return convert_rgb_to_xyz(*srgb, space="srgb",
+                              reference=reference, clip=clip)
 
 
-def xyz_to_rgb(x, y, z):
-    """
-    Convert XYZ into RGB
-
-    X, Y and Z output refer to a D65/2° standard illuminant.
-    Taken from
-    https://www.easyrgb.com/en/math.php
-
-    :param x: X (0 to 1)
-    :param y: Y (0 to 1)
-    :param z: Z (0 to 1)
-    :return: (Red, Green, Blue) on the scale of 0 to 1
-    """
-    _validate(x, y, z)
-
-    def _adjust(color):
-        if color > 0.0031308:
-            return 1.055 * (pow(color, (1 / 2.4))) - 0.055
-
-    r, g, b, = _get_raw_rgb(x, y, z)
-    r = _adjust(r)
-    g = _adjust(g)
-    b = _adjust(b)
-
-    return _adjust_excess(r, g, b)
+def xyz_to_rgb(x, y, z, *, reference="D65", clip=True):
+    srgb = convert_xyz_to_rgb(x, y, z, space="srgb",
+                              reference=reference, clip=clip)
+    return srgb_to_rgb(*srgb)
 
 
-def xyz_to_adobe_rgb(x, y, z):
-    """
-    Converts XYZ to Adobe RGB (RGB Adobe 1998)
-
-    X, Y and Z output refer to a D65/2° standard illuminant.
-
-    Taken from
-    https://www.easyrgb.com/en/math.php
-
-    :param x:
-    :param y:
-    :param z:
-    :return:
-    """
-    _validate(x, y, z)
-    r, g, b = _get_raw_rgb(x, y, z)
-    r = pow(r, 1 / 2.19921875)
-    g = pow(g, 1 / 2.19921875)
-    b = pow(b, 1 / 2.19921875)
-    return _adjust_excess(r, g, b)
+def srgb_to_xyz(r, g, b, *, reference="D65", clip=True):
+    return convert_rgb_to_xyz(r, g, b, space="srgb",
+                              reference=reference, clip=clip)
 
 
-def adobe_rgb_to_xyz(r, g, b):
-    _validate(r, g, b)
-
-    r = pow(r, 2.19921875)
-    g = pow(g, 2.19921875)
-    b = pow(b, 2.19921875)
-
-    x = r * 0.57667 + g * 0.18555 + b * 0.18819
-    y = r * 0.29738 + g * 0.62735 + b * 0.07527
-    z = r * 0.02703 + g * 0.07069 + b * 0.99110
-
-    return _adjust_excess(x, y, z)
+def xyz_to_srgb(x, y, z, *, reference="D65", clip=True):
+    return convert_xyz_to_rgb(x, y, z, space="srgb",
+                              reference=reference, clip=clip)
 
 
-def rgb_to_adobe_rgb(r, g, b):
-    _validate(r, g, b)
-    x, y, z = rgb_to_xyz(r, g, b)
-    return xyz_to_adobe_rgb(x, y, z)
+def adobe_rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
+    return convert_rgb_to_xyz(r, g, b, space="adobe",
+                              reference=reference, clip=clip)
 
 
-def adobe_rgb_to_rgb(r, g, b):
-    _validate(r, g, b)
-    x, y, z = adobe_rgb_to_xyz(r, g, b)
-    return xyz_to_rgb(x, y, z)
+def xyz_to_adobe_rgb(x, y, z, *, reference="D65", clip=True):
+    return convert_xyz_to_rgb(x, y, z, space="adobe",
+                              reference=reference, clip=clip)
 
 
 def relative_luminance(hex_color: str):
@@ -488,8 +501,3 @@ def get_complementary(hex_color: str):
     k = max([r, g, b]) + min([r, g, b])
     t = tuple(k - u for u in (r, g, b))
     return rgb_to_hex(t[0], t[1], t[2])
-
-
-def run():
-    a = rgb_to_adobe_rgb(1, 0.5, 0.34)
-    print(adobe_rgb_to_rgb(*a))

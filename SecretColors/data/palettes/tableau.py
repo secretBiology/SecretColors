@@ -27,7 +27,9 @@ class TableauPalette(ParentPalette):
         return "Tableau Palette"
 
     def get_creator_url(self) -> str:
-        return "https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm#Version_9.x_(legacy)_color_palette_hex_values"
+        return "https://help.tableau.com/current/pro/desktop/en-us" \
+               "/formatting_create_custom_colors.htm#Version_9.x_(" \
+               "legacy)_color_palette_hex_values "
 
     def get_shades(self) -> list:
         return self.shades

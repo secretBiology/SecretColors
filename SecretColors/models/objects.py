@@ -10,7 +10,8 @@ from typing import Union
 
 from SecretColors.utils import (hex_to_rgb, rgb_to_hex,
                                 color_in_between, text_color,
-                                hsl_to_hex, hex_to_hsl, rgb_to_rgb255)
+                                hsl_to_hex, hex_to_hsl, rgb_to_rgb255,
+                                rgb_to_hsl)
 
 
 def _validate(color: tuple, base):
@@ -43,15 +44,36 @@ class ColorOutput:
                             f"is {type(base)}")
 
         # Validate and get rgba
-        self.r, self.g, self.b, self.a = _validate(self._tuple, base)
+        self.r, self.g, self.b, self._a = _validate(self._tuple, base)
+
+    @property
+    def alpha(self):
+        return self._a
+
+    @alpha.setter
+    def alpha(self, value):
+        self._a = value
 
     @property
     def rgba(self) -> tuple:
-        return self.r, self.g, self.b, self.a
+        return self.r, self.g, self.b, self.alpha
 
     @property
     def rgb(self) -> tuple:
         return self.r, self.g, self.b
+
+    @property
+    def hsl(self) -> tuple:
+        return rgb_to_hsl(self.r, self.g, self.b)
+
+    @property
+    def hsla(self) -> tuple:
+        h, s, l = rgb_to_hsl(self.r, self.g, self.b)
+        return h, s, l, self.alpha
+
+    @property
+    def rgb255(self) -> tuple:
+        return rgb_to_rgb255(self.r, self.g, self.b)
 
     @property
     def hex(self) -> str:
@@ -213,7 +235,8 @@ class ColorWheel:
 
 
 def run():
-    from SecretColors.utils import rgb_to_xyz, xyz_to_rgb
-    rgb = (0.01, 0.5, 1)
-    xyz = rgb_to_xyz(*rgb)
-    print(xyz_to_rgb(*xyz))
+    from SecretColors.utils import rgb_to_hex, hex_to_rgb
+    r, g, b = 0.3, 0.5, 0.7
+    hex_color = rgb_to_hex(r, g, b)  # hex_color: #4c80b2
+    k = hex_to_rgb(hex_color)
+    print(tuple(round(x, 2) for x in k))

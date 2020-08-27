@@ -48,7 +48,6 @@ def _sanitize_hex(hex_string: str):
 
     if len(hex_string) == 3:
         hex_string = "{0}{0}{1}{1}{2}{2}".format(*hex_string)
-
     if len(hex_string) % 2 != 0 or len(hex_string) < 6:
         raise ValueError(f"Invalid Hex code '{hex_string}' for conversion")
 

@@ -24,11 +24,60 @@ This is one of the major update since the conception of this project. Many
  * `starting_shade` and `ending_shade` values (if not provided by user) will
   be set to minimum and maximum shades available in that palette instead 0
    and 100.
+ 
+ ### What's New?
+ * New return class `ColorString` and `ColorTuple`
+ * New `ColorWheel` for more scientific use
+ * New color palette: Tableau
+ * Rewritten `ColorMap` class with new usage and easy colormap access to
+  famous color palettes.
+ * New `Palette.get()` function which supports all X11 and W3 standard names.
+ * Many new RGB space conversions (including *XYZ, adobe, srgb, lab* etc)
+ * Many new utility methods (check documentation for details)
+ * And of course, fixed many bugs!
   
- ### Known Issue
-**Pycharm type-hinting not working for 'color methods'**
+ ### Known Issues
+ #### Pycharm type-hinting not working for 'color methods'
 
 We have shifted to custom decorators for dynamically creating
  documentation of many class methods. However, due to this change
  , Pycharm will not show typehint for 'color methods' It is known [bug
  ](https://youtrack.jetbrains.com/issue/PY-30190) in PyCharm regarding type hinting.
+ 
+ #### Converted RGB/CMYK values are not exact
+ 
+ This issue arises when one performs multiple conversion (specially the one
+  involving floating points). For example, take a look at following code,
+  
+ ```python
+from SecretColors.utils import rgb_to_hex, hex_to_rgb
+
+r, g, b = 0.3, 0.5, 0.7
+hex_color = rgb_to_hex(r, g, b)  # hex_color: #4c80b2
+hex_to_rgb(hex_color) # Retuns (0.2980392156862745, 0.5019607843137255, 0.6980392156862745)
+```
+
+In above code, conversion from RGB to HEX and then from HEX to RGB does not
+ give us exact same output. This issue is very typical of any programming
+  language where we are dealing with float calculations. So you should use
+   some rounding logic if you want to compare it with original color
+
+In case of conversion to HEX, we usually round the floats to nearest
+ integers with default `round` function. 
+ 
+However, our benchmarks and testing suggests that these values are accurate
+ with error of '0.001'. We also check this during our testings. This much
+  precision should be good enough for most of the cases. In case, you want
+   even better precision, we kindly ask you to implement the method by
+    yourself instead depending method provided by `SecretColors`. In future
+    , we plan to take a look at this in more details. But for now, work
+     around is to make some rounding function like following
+ 
+ ```python
+# Use precision for rounding according to your need
+def rounded_rgb(*args):
+    return tuple(round(x,2) for x in args)
+
+rounded_rgb(hex_to_rgb(hex_color)) # returns (0.3, 0.5, 0.7)
+```
+

@@ -18,14 +18,11 @@ ALL_PALETTES = [PALETTE_IBM, PALETTE_MATERIAL, PALETTE_BREWER,
 
 MODE_HEX = "hex"
 MODE_RGB = "rgb"
-MODE_HSL = "hsl"
 MODE_RGBA = "rgba"  # With Transparency
 MODE_AHEX = "ahex"  # With Transparency
-MODE_HSLA = "hsla"  # With Transparency
 MODE_HEX_A = "hexa"  # With Transparency
 
-ALL_COLOR_MODES = [MODE_HEX, MODE_AHEX, MODE_RGB, MODE_RGBA, MODE_HSL,
-                   MODE_HSLA, MODE_HEX_A]
+ALL_COLOR_MODES = [MODE_HEX, MODE_AHEX, MODE_RGB, MODE_RGBA, MODE_HEX_A]
 
 SYNONYM = {
     "grey": "gray",

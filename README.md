@@ -12,10 +12,27 @@ Currently it supports following Color Palettes
 - Google Material Design Color Palette
 - ColorBrewer2 Color Palette
 - VMWare Clarity Color Palette 
+- Tableau Color Palette
 
 You can get output of colors in variety of color formats including `hex` , `rgb` , `hsl`, `rgba` etc. 
 
 Few sample plots and inspiration behind this library can be found in [WeirdData blog](https://weirddata.github.io/2019/06/11/secret-colors-2.html). 
+
+
+
+|<img src="https://user-images.githubusercontent.com/8757115/69130240-72840d00-0ab0-11ea-8ce5-8b715ebef4f6.png" width="60%">|
+|:--:|
+| Default base colors in matplotlib and SecretColors palettes. |
+
+
+|<img src="https://user-images.githubusercontent.com/8757115/69130544-fa6a1700-0ab0-11ea-80f4-aaff9e58f804.png" width="60%">|
+|:--:|
+| Simple bar plot with default colors. |
+
+
+|<img src="https://user-images.githubusercontent.com/8757115/69130672-31402d00-0ab1-11ea-835d-b161caf4c24a.png" width="60%">|
+|:--:|
+| Histogram comparison with Magenta and Cyan. You can dramatically change colors by just passing single parameter. |
 
 ### Installation 
 
@@ -80,6 +97,7 @@ Unlimited color manipulations
     p.blue(alpha=0.3) # Blue with alpha (0.251, 0.988, 0.545, 0.3) Only works in color mode which outputs alpha values
 
 
+
 Flexible functions
 
 
@@ -93,6 +111,7 @@ Flexible functions
     rgb_to_hex(0.181, 0.241, 0.382) # '#2e3d61'
     rgb_to_hsl(0.181, 0.241, 0.382) # (0.617, 0.357, 0.281)
     hsl_to_hex(0.181, 0.241, 0.382) # '#747849'
+
 
 
 Custom and flexible colormaps which can be directly used in `matplotlib` workflow 
@@ -125,15 +144,6 @@ Reverse the direction
 
 
 
-### TODO
-
-- [ ] Out of the box `LinearSegmentedColormap` object 
-- [ ] Out of the box `ListedColormap` object 
-- [ ] More balanced `ColorMap` presets 
-- [ ] Color blind safe palette
-- [ ] Print and Web safe color indicator 
-- [ ] Generate Color Palette from image
-
 ### Contribution and Feedback
 
 Feel free to provide feedback and criticism through GitHub or you can email me [rohitsuratekar@gmail.com ](mailto:rohitsuratekar@gmail.com). If you want to contribute, please send pull request to this repository. 
@@ -141,7 +151,19 @@ Feel free to provide feedback and criticism through GitHub or you can email me [
 ### Acknowledgments
 
 Colors used in this library are partly taken from [IBM Design Language](https://www.ibm.com/design/language/resources/color-library/) , [Google 
-Material Design](https://material.io/design/color/the-color-system.html) , [ColorBrewer](http://colorbrewer2.org/) and [VMWare Clarity ](https://vmware.github.io/clarity/documentation/v0.13/color). 
+Material Design](https://material.io/design/color/the-color-system.html
+) , [ColorBrewer](http://colorbrewer2.org/), [VMWare Clarity ](https://vmware.github.io/clarity/documentation/v0.13/color) and 
+[Tableau](https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm#Version_9.x_(legacy)_color_palette_hex_values) .
+
+Color name data is taken from [X11](https://gitlab.freedesktop.org/xorg/app/rgb/raw/master/rgb.txt) 
+and [W3]( https://www.w3.org/TR/css-color-3/#svg-color). 
+
+RGB colorspace matrices were taken from [Here](http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html) .
+
+Any other specific code or resource used in this library is attributed in
+ respective function or method where it is used. It can be accessible
+  from our online documentation as well.
+
 
 ### License 
 

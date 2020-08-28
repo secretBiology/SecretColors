@@ -142,6 +142,17 @@ Reverse the direction
     plt.pcolor(data, cmap=c.greens(is_reversed=True))
 
 
+### TODO
+ - [ ] CIE XYZ to CIE Lab conversions
+ - [ ] Color Palettes - Latitude, Polaris, Adobe Spectrum
+ - [ ] Direct support for more RGB to XYZ conversions
+ - [ ] Generate Color Palette from image
+ - [x] Color blind safe palette
+ - [ ] ~~Out of the box `LinearSegmentedColormap` object~~ 
+ 
+ We can not implement 'out of the box' colormaps for matplotlib because `matplotlib` checks its
+  `type` before its use. Hence we can not make new class which can be directly
+   act as a substitute.
 
 
 ### Contribution and Feedback

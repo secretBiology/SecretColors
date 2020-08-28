@@ -7,18 +7,18 @@ Palette
 .. autoclass:: SecretColors.Palette
         :members:
 
-ColorMap
-==================
-
-.. autoclass:: SecretColors.ColorMap
-        :members:
-
 ColorWheel
 ==================
 
 .. autoclass:: SecretColors.ColorWheel
         :members:
 
+ColorMaps
+=================
+BrewerMap
+----------------
+.. autoclass:: SecretColors.cmaps.BrewerMap
+        :members:
 
 Utils
 ===================

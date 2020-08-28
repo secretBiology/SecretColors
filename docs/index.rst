@@ -1,4 +1,3 @@
-
 SecretColors
 ========================================
 It is a python `library <https://pypi.org/project/SecretColors/>`_ for fantastic
@@ -16,7 +15,7 @@ source code on `GitHub <https://github.com/secretBiology/SecretColors>`_.
    :maxdepth: 2
    :caption: Contents:
 
-	API Reference <api.rst>
+    API Reference <api.rst>
 
 
 

@@ -41,12 +41,12 @@ def deprecated(message: str = None):
     return decorator
 
 
-def _sample_doc(shade: float = None,
-                no_of_colors: int = 1,
-                gradient=True,
-                alpha: float = None,
-                starting_shade: float = None,
-                ending_shade: float = None):
+def _sample_color(shade: float = None,
+                  no_of_colors: int = 1,
+                  gradient=True,
+                  alpha: float = None,
+                  starting_shade: float = None,
+                  ending_shade: float = None):
     """
     The main function for 'SECRET' color
 
@@ -70,8 +70,8 @@ def _sample_doc(shade: float = None,
     pass
 
 
-def document(func):
-    doc = _sample_doc.__doc__
+def color_docs(func):
+    doc = _sample_color.__doc__
     doc = doc.replace("SECRET", func.__name__)
     func.__doc__ = doc
 
@@ -80,3 +80,42 @@ def document(func):
         return func(*args, **kwargs)
 
     return wrap
+
+
+def _sample_cmap(self, *, no_of_colors: int = None,
+                 is_qualitative: bool = False, is_reversed=False):
+    """
+    This is special method available for SECRETMAP class. This function
+    provides easy access to `SNAME` colormap. You can also use `SECRETMAP(
+    ).get('SNAME')` method to achieve the same result.
+
+    >>> from SecretColors.cmaps import SECRETMAP
+    >>> import matplotlib
+    >>> cm = SECRETMAP(matplotlib)
+    >>> plt.imshow(data, cm=cm.METHOD_NAME()) # Or cm.get('SNAME')
+    >>> plt.show()
+
+    :param no_of_colors: No of colors
+    :param is_qualitative: If True, ColorMap will be qualitative
+    :param is_reversed: If True, ColorMap will be reversed
+    :return: Matplotlib `LinearSegmentedColormap` or `ListedColormap` based
+        on the options provided. You can use this directly in the matplotlib
+    """
+    pass
+
+
+def cmap_docs(name, value):
+    def decorator(func):
+        doc = _sample_cmap.__doc__
+        doc = doc.replace("SECRETMAP", name)
+        doc = doc.replace("SNAME", value)
+        doc = doc.replace("METHOD_NAME", func.__name__)
+        func.__doc__ = doc
+
+        @functools.wraps(func)
+        def wrap(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        return wrap
+
+    return decorator

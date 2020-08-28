@@ -95,6 +95,9 @@ class Color:
     def __repr__(self):
         return f"Color({self.name})"
 
+    def get_all_shades(self):
+        return self._shades
+
     @property
     def values(self):
         if self._values is None:

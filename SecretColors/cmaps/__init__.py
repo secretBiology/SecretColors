@@ -4,12 +4,5 @@
 #  Author: Rohit Suratekar
 #  Website: https://github.com/secretBiology/SecretColors
 #
-#  ColorMap related functions/classes
 
-
-class ColorMap:
-    pass
-
-
-def run():
-    print("here")
+from SecretColors.cmaps.brewer import BrewerMap

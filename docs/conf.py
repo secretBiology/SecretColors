@@ -51,7 +51,8 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx_paramlinks'
 ]
 
 autodoc_member_order = 'bysource'  # Need to NOT sort by alphabetically
@@ -196,8 +197,8 @@ napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = False
 napoleon_include_special_with_doc = False
 napoleon_use_admonition_for_examples = True
-napoleon_use_admonition_for_notes = False
-napoleon_use_admonition_for_references = False
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = True
 napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = True
@@ -206,4 +207,3 @@ napoleon_use_rtype = True
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-

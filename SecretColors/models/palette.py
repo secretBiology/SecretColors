@@ -819,5 +819,9 @@ class Palette:
 
 
 def run():
-    p = Palette()
-    print(p.random_gradient())
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from SecretColors.cmaps import TableauMap
+    tm = TableauMap(matplotlib)
+    plt.imshow(data, cmap=tm.tableau())
+    plt.show()

@@ -15,9 +15,21 @@ ColorWheel
 
 ColorMaps
 =================
+
+ColorMapParent
+----------------
+.. autoclass:: SecretColors.cmaps.parent.ColorMapParent
+        :members:
+
 BrewerMap
 ----------------
 .. autoclass:: SecretColors.cmaps.BrewerMap
+        :members:
+
+
+TableauMap
+----------------
+.. autoclass:: SecretColors.cmaps.TableauMap
         :members:
 
 Utils

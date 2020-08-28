@@ -85,9 +85,10 @@ def color_docs(func):
 def _sample_cmap(self, *, no_of_colors: int = None,
                  is_qualitative: bool = False, is_reversed=False):
     """
-    This is special method available for SECRETMAP class. This function
-    provides easy access to `SNAME` colormap. You can also use `SECRETMAP(
-    ).get('SNAME')` method to achieve the same result.
+    This is special method available for :class:`SecretColors.cmaps.SECRETMAP`
+    class. This function provides easy access to `SNAME` colormap. You can
+    also use :func:`~SecretColors.cmaps.SECRETMAP().get`
+    method to achieve the same result.
 
     >>> from SecretColors.cmaps import SECRETMAP
     >>> import matplotlib

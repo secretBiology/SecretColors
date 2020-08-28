@@ -11,11 +11,27 @@ from SecretColors.helpers.logging import Log
 import numpy as np
 
 
-class ColorParent:
+class ColorMapParent:
+    """
+    Main ColorMap class which will be inherited by all ColorMap objects
+    """
+
     def __init__(self, matplotlib,
                  palette: Palette = None,
                  log: Log = None,
                  seed=None):
+        """
+        Initializing of any ColorMap.
+
+        ..  warning::
+
+            Avoid using :paramref:`palette` when using subclasses.
+
+        :param matplotlib: matplotlib object from matplotlib library
+        :param palette: Palette from which you want colors
+        :param log: Log class
+        :param seed: Seed for random number generation
+        """
         self._mat = matplotlib
         if log is None:
             log = Log()
@@ -28,9 +44,10 @@ class ColorParent:
         if seed is not None:
             np.random.seed(seed)
             self.log.info(f"Random seed set for : {seed}")
+        self.no_of_colors = 10
 
     @property
-    def data(self):
+    def data(self) -> dict:
         raise NotImplementedError
 
     @property
@@ -51,6 +68,13 @@ class ColorParent:
     def palette(self, palette: Palette):
         self._palette = palette
         self.log.info(f"ColorMap is now using '{palette.name}' palette")
+
+    @property
+    def get_all(self) -> list:
+        if self.data is None:
+            return []
+        else:
+            return list(self.data.keys())
 
     def _get_linear_segment(self, color_list: list):
         """
@@ -131,6 +155,43 @@ class ColorParent:
 
         return colors
 
+    def _default(self, name, backup, kwargs):
+        del kwargs['self']
+        if "starting_shade" not in kwargs:
+            kwargs["starting_shade"] = None
+        if "ending_shade" not in kwargs:
+            kwargs["ending_shade"] = None
+
+        no_of_colors = kwargs['no_of_colors'] or self.no_of_colors
+        bak_name = backup or name
+
+        colors = self._get_colors(key=name,
+                                  no_of_colors=no_of_colors,
+                                  backup=bak_name,
+                                  staring_shade=kwargs['starting_shade'],
+                                  ending_shade=kwargs['ending_shade'])
+
+        return self._derive_map(colors,
+                                is_qualitative=kwargs['is_qualitative'],
+                                is_reversed=kwargs['is_reversed'])
+
+    def _special_maps(self, name, backup, kwargs):
+        if name not in self.data.keys():
+            self.log.error(f"There is no '{name}' colormap in our "
+                           f"database. Following special colormaps are"
+                           f" available in current class :"
+                           f" {list(self.data.keys())}")
+        no_of_colors = kwargs['no_of_colors'] or self.no_of_colors
+        cols = list(self.data[name].keys())
+        if 'type' in cols:
+            cols.remove('type')
+        cols = [int(x) for x in cols]
+        if no_of_colors not in cols:
+            self.log.error(f"Sorry, for {name} colormap, 'no_of_colors' "
+                           f"argument can "
+                           f"only take these values: {cols}.")
+        return self._default(name, backup, kwargs)
+
     def from_list(self, color_list: list, is_qualitative: bool = False,
                   is_reversed=False):
         """
@@ -143,42 +204,75 @@ class ColorParent:
         """
         return self._derive_map(color_list, is_qualitative, is_reversed)
 
-    def greens(self, starting_shade: float = None, ending_shade: float = None,
-               no_of_colors: int = 10,
-               is_qualitative: bool = False, is_reversed=False):
+    def get(self, name: str, *, no_of_colors: int = None,
+            is_qualitative: bool = False, is_reversed=False):
         """
-        :param starting_shade: Minimum shade
-        :param ending_shade: Maximum shade
-        :param no_of_colors: Number of colors to make colormap
-        :param is_qualitative: True if colormap is qualitative
-        :param is_reversed: Reverses the order of color in Colormap
-        :return: Matplotlib cmap wrapper
+        Get arbitrary color map from current ColorMap object
+
+        Number of colors is probably the most important parameter in the
+        colormap classes. In this library each colormap data is structured
+        in the form of dictionary. You can check which all colormaps are
+        available by :attr:`~SecretColors.cmaps.parent.ColorMapParent
+        .get_all` property
+
+        .. note::
+
+            Subsequent indented lines comprise
+            the body of the topic, and are
+            interpreted as body elements.
+
+
+
+        :param name: Exact Name of the Colormap
+        :type name: str
+
+        :param no_of_colors: Number of colors. (See discussion above)
+        :type no_of_colors: int
+
+        :param is_qualitative:
+        :param is_reversed:
+        :return:
         """
+        return self._special_maps(name, None, locals())
 
-        colors = self._get_colors('green', 10, 'green',
-                                  starting_shade,
-                                  ending_shade)
-        return self._derive_map(colors, is_qualitative, is_reversed)
+    def greens(self, *, starting_shade: float = None,
+               ending_shade: float = None,
+               no_of_colors: int = None,
+               is_qualitative: bool = False,
+               is_reversed=False):
+        return self._default(None, "green", locals())
 
-    def reds(self, starting_shade: float = None, ending_shade: float = None,
-             no_of_colors: int = 10,
-             is_qualitative: bool = False, is_reversed=False):
-        """
-        :param starting_shade: Minimum shade
-        :param ending_shade: Maximum shade
-        :param no_of_colors: Number of colors to make colormap
-        :param is_qualitative: True if colormap is qualitative
-        :param is_reversed: Reverses the order of color in Colormap
-        :return: Matplotlib cmap wrapper
-        """
+    def reds(self, *, starting_shade: float = None,
+             ending_shade: float = None,
+             no_of_colors: int = None,
+             is_qualitative: bool = False,
+             is_reversed=False):
+        return self._default(None, "red", locals())
 
-        if starting_shade is None:
-            starting_shade = min(self.palette.colors['red'].get_all_shades())
-        if ending_shade is None:
-            ending_shade = max(self.palette.colors['red'].get_all_shades())
+    def oranges(self, *, starting_shade: float = None,
+                ending_shade: float = None,
+                no_of_colors: int = None,
+                is_qualitative: bool = False,
+                is_reversed=False):
+        return self._default(None, "orange", locals())
 
-        return self._derive_map(self.palette.red(
-            no_of_colors=no_of_colors,
-            starting_shade=starting_shade,
-            ending_shade=ending_shade
-        ), is_qualitative, is_reversed)
+    def purples(self, *, starting_shade: float = None,
+                ending_shade: float = None,
+                no_of_colors: int = None,
+                is_qualitative: bool = False,
+                is_reversed=False):
+        return self._default(None, "purple", locals())
+
+    def grays(self, *, starting_shade: float = None,
+              ending_shade: float = None,
+              no_of_colors: int = None,
+              is_qualitative: bool = False,
+              is_reversed=False):
+        return self._default(None, "gray", locals())
+
+    def blues(self, *, starting_shade: float = None,
+              ending_shade: float = None,
+              no_of_colors: int = None,
+              is_qualitative: bool = False,
+              is_reversed=False):
+        return self._default(None, "blue", locals())

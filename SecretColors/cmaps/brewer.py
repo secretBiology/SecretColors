@@ -8,57 +8,32 @@
 
 from SecretColors.data.cmaps.brewer import BREWER_DATA
 from SecretColors.data.constants import PALETTE_BREWER
-from SecretColors.cmaps.parent import ColorParent
+from SecretColors.cmaps.parent import ColorMapParent
 from SecretColors.models.palette import Palette
 from SecretColors.helpers.decorators import cmap_docs
 
+MP_NAME = "BrewerMap"
 
-class BrewerMap(ColorParent):
+
+class BrewerMap(ColorMapParent):
+    """
+    ColorBrewer2 Colormaps
+
+    ..  hlist::
+        :columns: 3
+
+        * something
+        * another
+    """
 
     def __init__(self, matplotlib):
         super().__init__(matplotlib)
         self.palette = Palette(PALETTE_BREWER)
+        self.no_of_colors = 9
 
     @property
     def data(self):
         return BREWER_DATA
-
-    def _default(self, name, backup, kwargs):
-        del kwargs['self']
-        if "starting_shade" not in kwargs:
-            kwargs["starting_shade"] = None
-        if "ending_shade" not in kwargs:
-            kwargs["ending_shade"] = None
-
-        no_of_colors = kwargs['no_of_colors'] or 9
-        bak_name = backup or name
-
-        colors = self._get_colors(key=name,
-                                  no_of_colors=no_of_colors,
-                                  backup=bak_name,
-                                  staring_shade=kwargs['starting_shade'],
-                                  ending_shade=kwargs['ending_shade'])
-
-        return self._derive_map(colors,
-                                is_qualitative=kwargs['is_qualitative'],
-                                is_reversed=kwargs['is_reversed'])
-
-    def _special_maps(self, name, backup, kwargs):
-        if name not in self.data.keys():
-            self.log.error(f"There is no '{name}' colormap in our "
-                           f"database. Following special colormaps are"
-                           f" available in current class :"
-                           f" {list(self.data.keys())}")
-        no_of_colors = kwargs['no_of_colors'] or 9
-        cols = list(self.data[name].keys())
-        if 'type' in cols:
-            cols.remove('type')
-        cols = [int(x) for x in cols]
-        if no_of_colors not in cols:
-            self.log.error(f"Sorry, for {name} colormap, 'no_of_colors' "
-                           f"argument can "
-                           f"only take these values: {cols}.")
-        return self._default(name, backup, kwargs)
 
     def greens(self, *, starting_shade: float = None,
                ending_shade: float = None,
@@ -102,165 +77,149 @@ class BrewerMap(ColorParent):
               is_reversed=False):
         return self._default("Blues", "blue", locals())
 
-    def get(self, name: str, *, no_of_colors: int = None,
-            is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps(name, None, locals())
-
     # Other special maps
 
-    @cmap_docs('BrewerMap', "Spectral")
+    @cmap_docs(MP_NAME, "Spectral")
     def spectral(self, *, no_of_colors: int = None,
                  is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Spectral", None, locals())
 
-    @cmap_docs('BrewerMap', "RgYlGn")
+    @cmap_docs(MP_NAME, "RgYlGn")
     def rd_yl_gn(self, *, no_of_colors: int = None,
                  is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("RdYlGn", None, locals())
 
-    @cmap_docs('BrewerMap', "RdBu")
+    @cmap_docs(MP_NAME, "RdBu")
     def rd_bu(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("RdBu", None, locals())
 
-    @cmap_docs('BrewerMap', "PiYG")
+    @cmap_docs(MP_NAME, "PiYG")
     def pi_yg(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("PiYG", None, locals())
 
-    @cmap_docs('BrewerMap', "PRGn")
+    @cmap_docs(MP_NAME, "PRGn")
     def pr_gn(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("PRGn", None, locals())
 
-    @cmap_docs('BrewerMap', "RdYlBu")
+    @cmap_docs(MP_NAME, "RdYlBu")
     def rd_yl_bu(self, *, no_of_colors: int = None,
                  is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("RdYlBu", None, locals())
 
-    @cmap_docs('BrewerMap', "BrBG")
+    @cmap_docs(MP_NAME, "BrBG")
     def br_bg(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("BrBG", None, locals())
 
-    @cmap_docs('BrewerMap', "RdGy")
+    @cmap_docs(MP_NAME, "RdGy")
     def rd_gy(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("RdGy", None, locals())
 
-    @cmap_docs('BrewerMap', "PuOr")
+    @cmap_docs(MP_NAME, "PuOr")
     def pu_or(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("PuOr", None, locals())
 
-    @cmap_docs('BrewerMap', "Set1")
+    @cmap_docs(MP_NAME, "Set1")
     def set1(self, *, no_of_colors: int = None,
              is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Set1", None, locals())
 
-    @cmap_docs('BrewerMap', "Set2")
+    @cmap_docs(MP_NAME, "Set2")
     def set2(self, *, no_of_colors: int = 8,
              is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Set2", None, locals())
 
-    @cmap_docs('BrewerMap', "Accent")
+    @cmap_docs(MP_NAME, "Accent")
     def accent(self, *, no_of_colors: int = 8,
                is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Accent", None, locals())
 
-    @cmap_docs('BrewerMap', "Set3")
+    @cmap_docs(MP_NAME, "Set3")
     def set3(self, *, no_of_colors: int = None,
              is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Set3", None, locals())
 
-    @cmap_docs('BrewerMap', "Dark2")
+    @cmap_docs(MP_NAME, "Dark2")
     def dark2(self, *, no_of_colors: int = 8,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Dark2", None, locals())
 
-    @cmap_docs('BrewerMap', "Paired")
+    @cmap_docs(MP_NAME, "Paired")
     def paired(self, *, no_of_colors: int = None,
                is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Paired", None, locals())
 
-    @cmap_docs('BrewerMap', "Pastel2")
+    @cmap_docs(MP_NAME, "Pastel2")
     def pastel2(self, *, no_of_colors: int = 8,
                 is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Pastel2", None, locals())
 
-    @cmap_docs('BrewerMap', "Pastel1")
+    @cmap_docs(MP_NAME, "Pastel1")
     def pastel1(self, *, no_of_colors: int = None,
                 is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("Pastel1", None, locals())
 
-    @cmap_docs('BrewerMap', "OrRd")
+    @cmap_docs(MP_NAME, "OrRd")
     def or_rd(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("OrRd", None, locals())
 
-    @cmap_docs('BrewerMap', "PuBU")
+    @cmap_docs(MP_NAME, "PuBU")
     def pu_bu(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("PuBu", None, locals())
 
-    @cmap_docs('BrewerMap', "BuPu")
+    @cmap_docs(MP_NAME, "BuPu")
     def bu_pu(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("BuPu", None, locals())
 
-    @cmap_docs('BrewerMap', "BuGn")
+    @cmap_docs(MP_NAME, "BuGn")
     def bu_gn(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("BuGn", None, locals())
 
-    @cmap_docs('BrewerMap', "YlOrBr")
+    @cmap_docs(MP_NAME, "YlOrBr")
     def yl_or_br(self, *, no_of_colors: int = None,
                  is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("YlOrBr", None, locals())
 
-    @cmap_docs('BrewerMap', "YlGn")
+    @cmap_docs(MP_NAME, "YlGn")
     def yl_gn(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("YlGn", None, locals())
 
-    @cmap_docs('BrewerMap', "RdPu")
+    @cmap_docs(MP_NAME, "RdPu")
     def rd_pu(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("RdPu", None, locals())
 
-    @cmap_docs('BrewerMap', "YlGnBu")
+    @cmap_docs(MP_NAME, "YlGnBu")
     def yl_gn_bu(self, *, no_of_colors: int = None,
                  is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("YlGnBu", None, locals())
 
-    @cmap_docs('BrewerMap', "GnBu")
+    @cmap_docs(MP_NAME, "GnBu")
     def gn_bu(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("GnBu", None, locals())
 
-    @cmap_docs('BrewerMap', "YlOrRd")
+    @cmap_docs(MP_NAME, "YlOrRd")
     def yl_or_rd(self, *, no_of_colors: int = 8,
                  is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("YlOrRd", None, locals())
 
-    @cmap_docs('BrewerMap', "PuRd")
+    @cmap_docs(MP_NAME, "PuRd")
     def pu_rd(self, *, no_of_colors: int = None,
               is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("PuRd", None, locals())
 
-    @cmap_docs('BrewerMap', "PuBuGn")
+    @cmap_docs(MP_NAME, "PuBuGn")
     def pu_bu_gn(self, *, no_of_colors: int = None,
                  is_qualitative: bool = False, is_reversed=False):
         return self._special_maps("PuBuGn", None, locals())
-
-
-def run():
-    import matplotlib
-    import numpy as np
-    import matplotlib.pyplot as plt
-    b = BrewerMap(matplotlib)
-    data = np.random.rand(6, 6)
-    cmap = b.grays()
-    plt.imshow(data, cmap=cmap)
-    plt.colorbar()
-    plt.show()

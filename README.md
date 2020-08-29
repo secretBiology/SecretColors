@@ -120,11 +120,12 @@ Custom and flexible colormaps which can be directly used in `matplotlib` workflo
     import matplotlib
     import matplotlib.pylab as plt
     import numpy as np
-    from SecretColors import Palette, ColorMap
+    from SecretColors.cmaps import ColorMap
+    from SecretColors import Palette
     p = Palette()
     c = ColorMap(matplotlib, p)
     data = np.random.rand(100, 100)
-    plt.pcolor(data, cmap=c.warm())
+    plt.pcolor(data, cmap=c.greens())
     plt.show()
 
 

@@ -17,13 +17,80 @@ MP_NAME = "BrewerMap"
 
 class BrewerMap(ColorMapParent):
     """
-    ColorBrewer2 Colormaps
+    ColorBrewer2 is probably one of the best known colormap, special in the
+    cartography community. It provides very robust and nice color maps which
+    many people use in their daily visualization needs. We provide all the
+    functionality of ColorBrewer maps in this class. You can take a look at
+    their `site <https://colorbrewer2.org/>`_ for more details.
 
-    ..  hlist::
-        :columns: 3
+    Simplest way to use this class in your ``matplotlib`` workflow is following
 
-        * something
-        * another
+    ..  code-block:: python
+        :emphasize-lines: 5
+
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from SecretColors.cmaps import BrewerMap
+        bm = BrewerMap(matplotlib)
+        plt.imshow(data, cmap=bm.spectral())
+        plt.show()
+
+    Here, :func:`~SecretColors.cmaps.BrewerMap.spectral` is one of
+    the available standard color map in this class. If you know the exact
+    name of the color map, you can use following as well
+
+    ..  code-block:: python
+
+        plt.imshow(data, cmap= bm.get("Spectral")) # Alternate way
+        bm.get_all  # Gives you all available colormaps
+        bm.data # Returns available color data
+
+    To know which all color maps are available in current class you can use
+    ``get_all`` attribute. These methods can be heavily
+    customized. Take a look at
+    :class:`~SecretColors.cmaps.parent.ColorMapParent` documentation.
+
+    .. admonition:: List of available colormaps in BrewerMap
+
+        ..  hlist::
+            :columns: 3
+
+            * Spectral
+            * RdYlGn
+            * RdBu
+            * PiYG
+            * PRGn
+            * RdYlBu
+            * BrBG
+            * RdGy
+            * PuOr
+            * Set2
+            * Accent
+            * Set1
+            * Set3
+            * Dark2
+            * Paired
+            * Pastel2
+            * Pastel1
+            * OrRd
+            * PuBu
+            * BuPu
+            * Oranges
+            * BuGn
+            * YlOrBr
+            * YlGn
+            * Reds
+            * RdPu
+            * Greens
+            * YlGnBu
+            * Purples
+            * GnBu
+            * Greys
+            * YlOrRd
+            * PuRd
+            * Blues
+            * PuBuGn
+
     """
 
     def __init__(self, matplotlib):

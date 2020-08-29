@@ -9,11 +9,12 @@ This is one of the major update since the conception of this project. Many
    `ColorTuple` (depending on `color_mode`) which are subclasses of `str` and
     `tuple` respectively. This will NOT change anything in your workflow. Check the full documentation for its
       use cases.
- * `SecretColors.palettes` is now `SecretColors.models.palettes`. However, if
+ * `SecretColors.palettes` is now `SecretColors.models.palettes.Palette
+ `. However, if
   you have used `from SecretColors import palette`, your code will NOT be
    impacted. We recommend importing this way.
- * `ColorMap` is now `SecretColors.models.colormap`. You should import it as
-  `from SecretColors import ColorMap`
+ * `ColorMap` is now `SecretColors.cmaps.ColorMap`. You should import it as
+  `from SecretColors.cmaps import ColorMap`
  * `Palette.color_between` is now deprecated. Use `utils.color_in_between
  ` instead. Using this function will raise `AttributeError`.
  * Using shade value less than 0 or greater than 100 will throw a `ValueError`.

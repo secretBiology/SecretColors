@@ -5,6 +5,8 @@ color palettes. You can read more about it from its GitHub `website
 <https://github.com/secretBiology/SecretColors>`_. It can be installed via
 following PyPi distribution
 
+.. code-block:: console
+
     pip install SecretColors
 
 This document contains full API reference of the library. There are few

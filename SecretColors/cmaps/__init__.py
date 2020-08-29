@@ -7,3 +7,4 @@
 
 from SecretColors.cmaps.brewer import BrewerMap
 from SecretColors.cmaps.tableau import TableauMap
+from SecretColors.cmaps.parent import ColorMap

@@ -16,9 +16,16 @@ ColorWheel
 ColorMaps
 =================
 
+.. include:: map_intro.rst
+
 ColorMapParent
 ----------------
 .. autoclass:: SecretColors.cmaps.parent.ColorMapParent
+        :members:
+
+ColorMap
+----------------
+.. autoclass:: SecretColors.cmaps.ColorMap
         :members:
 
 BrewerMap

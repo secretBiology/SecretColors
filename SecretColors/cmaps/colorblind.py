@@ -4,12 +4,10 @@
 #  Author: Rohit Suratekar
 #  Website: https://github.com/secretBiology/SecretColors
 #
-#  ColorMap related functions/classes
+#  Color map safe for colorblind people
+#
+#  Resources:
+#  https://davidmathlogic.com/colorblind/#%23D81B60-%231E88E5-%23FFC107-%23004D40
 
 
-class ColorMap:
-    pass
 
-
-def run():
-    print("here")

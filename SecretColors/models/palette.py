@@ -50,11 +50,77 @@ def _param_deprecation(log: Log, item: str, **kwargs):
 
 
 class Palette:
+    """
+    :paramref:`Palette` is main class of this library. It provides easy
+    access to huge variety of color manipulations. Entire class is based on
+    internal color database which has been developed based on many Design
+    Systems and famous color palettes. Essentially, we made a simple utility
+    which can copy paste colors from famoud color palettes ;)
+
+    Currently this library supports following Palettes which can be provided
+    at the time of generation of Palette Object.
+
+    * **ibm** - IBM Color Palette v2 + v1 [*Default*]
+    * **material** - Google Material Design Color Palettes
+    * **brewer** - ColorBrewer Color Palette
+    * **clarity** - VMWare Clarity Palette
+    * **tableau** - Tableau Color Palette
+
+    .. code-block:: python
+        :emphasize-lines: 2, 5
+
+        from SecretColors import Palette
+        p = Palette() # Generates Default color palette i.e. IBM Color Palette
+        ibm = Palette("ibm") # Generates IBM Palette
+        ibm.red() # Returns '#fb4b53'
+        material = Palette("material") # Generates Material Palette
+        material.red() # Returns '#f44336'
+
+    You can specify *color_mode* to control color output format. Currently
+    this library supports following color modes
+
+    * **hex** - Hex Format [*Default*]
+    * **rgb** - RGB Format (values between 0 to 1)
+    * **rgba** - RGB with Alpha/Transparency (values between 0 to 1)
+    * **ahex** - Hex with Alpha/Transparency (Appended before hex)
+    * **hexa** - Hex with Alpha/Transparency (Appended after hex)
+
+    .. code-block:: python
+
+        p1 = Palette() # Default Color mode (hex)
+        p1.green() # '#24a148'
+        p2 = Palette(color_mode="hexa")
+        p2.green() # '#24a148ff'
+        p3 = Palette(color_mode="ahex")
+        p3.green() # '#ff24a148'
+        p4 = Palette(color_mode="rgb")
+        p4.green() # (0.141, 0.631, 0.282)
+        p5 = Palette(color_mode="rgba")
+        p5.green() # '(0.141, 0.282, 0.631, 1)'
+
+    Note: *matplotlib* can accepts "hex", "rgb" or "hexa"
+
+    """
+
     def __init__(self, name: str = PALETTE_IBM,
                  color_mode: str = MODE_HEX, *,
                  show_warning: bool = False,
                  seed: float = None,
                  log: Log = None, **kwargs):
+
+        """
+        Initialize the Palette class
+
+        :param name: Name of the palette (default: ibm)
+        :type name: str
+        :param color_mode: Color mode which will define the output format of each color (default: hex)
+        :type color_mode: str
+        :param show_warning: If True, log will be shown. (default: False)
+        :type show_warning: bool
+        :param seed: Seed for Numpy random number generator
+        :param log: Log Object
+        :param kwargs: Other Arguments (useful if you are subclassing)
+        """
 
         _validate_object(name, str, "name")
         _validate_object(color_mode, str, "color_mode")
@@ -92,6 +158,7 @@ class Palette:
     def name(self) -> str:
         """
         :return: Name of the current palette
+        :rtype: str
         """
         return self._palette_name
 
@@ -99,6 +166,7 @@ class Palette:
     def version(self):
         """
         :return: Version of palette used in SecretColors library
+        :rtype: str
         """
         return self._value.get_version()
 
@@ -106,11 +174,15 @@ class Palette:
     def creator_url(self) -> str:
         """
         :return: URL citing original creator
+        :rtype: str
         """
         return self._value.get_creator_url()
 
     @property
     def get_color_dict(self) -> dict:
+        """ Returns dictionary of color names and their respective default
+        shades
+        """
         d = {}
         for x in self.colors.values():
             d[x.name] = self._send(x.get())
@@ -118,6 +190,8 @@ class Palette:
 
     @property
     def get_color_list(self) -> list:
+        """Returns list of all colors with their default shade
+        """
         return [self._send(x.get()) for x in self.colors.values()]
 
     def __iter__(self):
@@ -133,16 +207,26 @@ class Palette:
 
     @property
     def seed(self):
+        """Current random seed (if any)"""
         return self._seed
 
     @seed.setter
     def seed(self, value):
+        """
+        Set seed for Numpy random number generator
+
+        :param value: Seed value
+        """
         self._seed = value
         np.random.seed(value)
         self.log.info(f"Random seed set for : {value}")
 
     @property
     def colors(self) -> Dict[str, Color]:
+        """
+        Returns dictionary of all colorname and their respective
+        :class:`~SecretColors.models.base.Color` class.
+        """
         if self._colors is None:
             colors = {}
             for c, v in self._value.get_all_colors().items():
@@ -358,14 +442,27 @@ class Palette:
                               print_colors=print_colors)
 
         # Select the shade
-        shades = np.random.randint(starting_shade, ending_shade, no_of_colors)
+
+        # First check if we can return one of the standard shade.
+        # This will provide proper palette shade and will also reduce the
+        # computation time of all conversion
+
+        possible_shades = [x for x in self._value.get_shades() if
+                           starting_shade <= x <= ending_shade]
+
+        if no_of_colors <= len(possible_shades):
+            shades = np.random.choice(possible_shades,
+                                      no_of_colors, replace=False)
+        else:
+            shades = np.random.randint(starting_shade, ending_shade,
+                                       no_of_colors)
         # If gradient is true, sort the shades
         if gradient:
             shades = list(sorted(shades))
         if reverse:
             shades = list(reversed(shades))
 
-        if use_only_shade:
+        if use_only_shade and shade is not None:
             shades = [shade for _ in range(len(shades))]
 
         if no_of_colors == 1 and not force_list:
@@ -817,11 +914,3 @@ class Palette:
                   ending_shade: float = None):
         return self._common_color("blue-gray", locals())
 
-
-def run():
-    import matplotlib
-    import matplotlib.pyplot as plt
-    from SecretColors.cmaps import TableauMap
-    tm = TableauMap(matplotlib)
-    plt.imshow(data, cmap=tm.tableau())
-    plt.show()

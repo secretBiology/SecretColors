@@ -59,16 +59,40 @@ def _sanitize_hex(hex_string: str):
 
 
 def rgb_to_cmy(r, g, b) -> tuple:
+    """
+    Converts RGB to CMY (both between 0-1)
+
+    :param r: Red
+    :param g: Green
+    :param b: Blue
+    :return: Cyan, Magenta, Yellow
+    """
     _validate(r, g, b)
     return 1 - r, 1 - g, 1 - b
 
 
 def cmy_to_rgb(c, m, y) -> tuple:
+    """
+    Converts CMY to RGB (both between 0-1)
+
+    :param c: Cyan
+    :param m: Magenta
+    :param y: Yellow
+    :return: Red, Green, Blue
+    """
     _validate(c, m, y)
     return 1 - c, 1 - m, 1 - y
 
 
 def cmy_to_cmyk(c, m, y) -> tuple:
+    """
+    Converts CMY to CMYK (both between 0-1)
+
+    :param c: Cyan
+    :param m: Magenta
+    :param y: Yellow
+    :return: Cyan, Magenta, Yellow, Black
+    """
     _validate(c, m, y)
     b = min(c, m, y)
     c2 = (c - b) / (1 - b)
@@ -78,6 +102,15 @@ def cmy_to_cmyk(c, m, y) -> tuple:
 
 
 def cmyk_to_cmy(c, m, y, k):
+    """
+    Converts CMYK to CMY (both between 0-1)
+
+    :param c: Cyan
+    :param m: Magenta
+    :param y: Yellow
+    :param k: Black
+    :return: Cyan, Magenta, Black
+    """
     _validate(c, m, y, k)
     c2 = min(1, c * (1 - k) + k)
     m2 = min(1, m * (1 - k) + k)
@@ -130,13 +163,15 @@ def rgb_to_hsv(r, g, b):
 
 def hsv_to_rgb(h, s, v) -> tuple:
     """
+    Converts HSV to RGB (both between 0-1)
 
+    Conversion calculation from:
     https://www.rapidtables.com/convert/color/hsv-to-rgb.html
 
-    :param h:
-    :param s:
-    :param v:
-    :return:
+    :param h: Hue
+    :param s: Saturation
+    :param v: Value
+    :return: Red, Green, Blue
     """
     _validate(h, s, v)
     h = h * 360  # Convert to angle
@@ -308,16 +343,38 @@ def rgb255_to_rgb(r: int, g: int, b: int) -> Tuple[float, float, float]:
 
 
 def rgb255_to_hsv(r: int, g: int, b: int):
+    """
+    Converts 0-255 based RGB to HSV (0-1 based)
+
+    :param r: Red (between 0-255)
+    :param g: Green (between 0-255)
+    :param b: Blue (between 0-255)
+    :return: Hue, Saturation, Value (0-1 based)
+    """
     _validate255(r, g, b)
     return rgb_to_hsv(*rgb255_to_rgb(r, g, b))
 
 
 def rgb255_to_hsl(r: int, g: int, b: int):
+    """
+    Converts 0-255 based RGB to HSL (0-1 based)
+
+    :param r: Red (between 0-255)
+    :param g: Green (between 0-255)
+    :param b: Blue (between 0-255)
+    :return: Hue, Saturation, Lightness (0-1 based)
+    """
     _validate255(r, g, b)
     return rgb_to_hsl(*rgb255_to_rgb(r, g, b))
 
 
 def hex_to_rgb(hex_string: str):
+    """
+    Converts Hex to RGB (0-1)
+
+    :param hex_string: Hex string
+    :return: Red, Green, Blue (between 0-1)
+    """
     hex_string = _sanitize_hex(hex_string)
     c = []
     for x in range(0, len(hex_string), 2):
@@ -329,14 +386,37 @@ def hex_to_rgb(hex_string: str):
 
 
 def rgb_to_hsb(r, g, b):
+    """
+    Converts RGB to HSB (both between 1-0)
+
+    :param r: Red
+    :param g: Green
+    :param b: Blue
+    :return: Hue, Saturation, Brightness (between 0-1)
+    """
     return rgb_to_hsv(r, g, b)
 
 
 def hsb_to_rgb(h, s, b):
+    """
+    Converts HSB to RGB (both between 0-1)
+
+    :param h: Hue
+    :param s: Saturation
+    :param b: Brightness
+    :return: Red, Green, Blue (between 0-1)
+    """
     return hsv_to_rgb(h, s, b)
 
 
 def apply_gamma_transform(value):
+    """
+    Transforms values from linear scale to non-linea by applying gamma
+    transform.
+
+    :param value: Values to be transformed
+    :return: Transformed values
+    """
     if value > 0.0031308:
         return 1.055 * (pow(value, (1 / 2.4))) - 0.055
     else:
@@ -358,6 +438,14 @@ def apply_linear_transform(value):
 
 
 def rgb_to_srgb(r, g, b):
+    """
+    Converts RGB to sRGB
+
+    :param r: Red
+    :param g: Green
+    :param b: Blue
+    :return: sRed, sGreen, sBlue
+    """
     _validate(r, g, b)
     return (apply_linear_transform(r),
             apply_linear_transform(g),
@@ -365,39 +453,107 @@ def rgb_to_srgb(r, g, b):
 
 
 def srgb_to_rgb(sr, sg, sb):
+    """
+    Converts sRGB to RGB
+
+    :param sr: sRed
+    :param sg: sGreen
+    :param sb: sBlue
+    :return: Red, Green, Blue
+    """
     return (apply_gamma_transform(sr),
             apply_gamma_transform(sg),
             apply_gamma_transform(sb))
 
 
 def rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
+    """
+    Converts RGB (0-1) to CIE-XYZ
+
+    :param r: Red
+    :param g: Green
+    :param b: Blue
+    :param reference: White reference (default: D65)
+    :param clip: If True, values below 0 and above 1 will be clipped
+    :return: CIE-X, CIE-Y, CIE-Z
+    """
     srgb = rgb_to_srgb(r, g, b)
     return convert_rgb_to_xyz(*srgb, space="srgb",
                               reference=reference, clip=clip)
 
 
 def xyz_to_rgb(x, y, z, *, reference="D65", clip=True):
+    """
+    Converts CIE-XYZ to RGB (0-1)
+
+    :param x: CIE-X
+    :param y: CIE-Y
+    :param z: CIE-Z
+    :param reference: White reference (default: D65)
+    :param clip: If True, values below 0 and above 1 will be clipped
+    :return: Red, Green Blue
+    """
     srgb = convert_xyz_to_rgb(x, y, z, space="srgb",
                               reference=reference, clip=clip)
     return srgb_to_rgb(*srgb)
 
 
 def srgb_to_xyz(r, g, b, *, reference="D65", clip=True):
+    """
+    Converts sRGB to CIE-XYZ
+
+    :param r: sRed
+    :param g: sGreen
+    :param b: sBlue
+    :param reference: White reference (default: D65)
+    :param clip: If True, values above 1 and below 0 will be clipped
+    :return: CIE-X, CIE-Y, CIE-Z
+    """
     return convert_rgb_to_xyz(r, g, b, space="srgb",
                               reference=reference, clip=clip)
 
 
 def xyz_to_srgb(x, y, z, *, reference="D65", clip=True):
+    """
+    Converts CIE-XYZ to sRGB
+
+    :param x: CIE-X
+    :param y: CIE-Y
+    :param z: CIE-Z
+    :param reference: White reference (default: D65)
+    :param clip: If True, values below 0 and above 1 will be clipped
+    :return: sRed, sGreen sBlue
+    """
     return convert_xyz_to_rgb(x, y, z, space="srgb",
                               reference=reference, clip=clip)
 
 
 def adobe_rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
+    """
+     Converts adobe-RGB to CIE-XYZ
+
+     :param r: adobe-Red
+     :param g: adobe-Green
+     :param b: adobe-Blue
+     :param reference: White reference (default: D65)
+     :param clip: If True, values above 1 and below 0 will be clipped
+     :return: CIE-X, CIE-Y, CIE-Z
+     """
     return convert_rgb_to_xyz(r, g, b, space="adobe",
                               reference=reference, clip=clip)
 
 
 def xyz_to_adobe_rgb(x, y, z, *, reference="D65", clip=True):
+    """
+    Converts CIE-XYZ to adobe-RGB
+
+    :param x: CIE-X
+    :param y: CIE-Y
+    :param z: CIE-Z
+    :param reference: White reference (default: D65)
+    :param clip: If True, values below 0 and above 1 will be clipped
+    :return: adobe-Red, adobe-Green adobe-Blue
+    """
     return convert_xyz_to_rgb(x, y, z, space="adobe",
                               reference=reference, clip=clip)
 
@@ -479,10 +635,24 @@ def color_in_between(c1, c2, no_of_colors=1) -> list:
 
 
 def hex_to_hsl(hex_string):
+    """
+    Converts HEX to HSL (0-1)
+
+    :param hex_string: Hex String
+    :return: Heu, Saturation, Lightness (between 0-1)
+    """
     return rgb_to_hsl(*hex_to_rgb(hex_string))
 
 
 def hsl_to_hex(h, s, l):
+    """
+    Converts HSL (between 0-1) into Hex string
+
+    :param h: Hue
+    :param s: Saturation
+    :param l: Lightness
+    :return: Hex String
+    """
     return rgb_to_hex(*hsl_to_rgb(h, s, l))
 
 
@@ -500,3 +670,55 @@ def get_complementary(hex_color: str):
     k = max([r, g, b]) + min([r, g, b])
     t = tuple(k - u for u in (r, g, b))
     return rgb_to_hex(t[0], t[1], t[2])
+
+
+def simulate_green_blindness(r, g, b):
+    """
+    Adjust RGB values such that it can 'simulate' Green blindness
+
+    Conversion formula taken from
+    https://personal.sron.nl/~pault/#sec:colour_blindness
+
+    :param r: Red
+    :param g: Green
+    :param b: Blue
+    :return: Red, Green, Blue (seen by Green-Blind person)
+    """
+    _validate(r, g, b)
+
+    r2, g2, b2 = rgb_to_rgb255(*rgb_to_srgb(r, g, b))
+
+    r = pow((4211 + pow(g2 * 0.677, 2.2) + pow(r2 * 0.2802, 2.2)), 1 / 2.2)
+    g = pow((4211 + pow(g2 * 0.677, 2.2) + pow(r2 * 0.2802, 2.2)), 1 / 2.2)
+    b = pow((4211 +
+             pow(b2 * 0.95724, 2.2) +
+             pow(g2 * 0.02138, 2.2) -
+             pow(r2 * 0.02138, 2.2)), 1 / 2.2)
+
+    r2, g2, b2 = rgb255_to_rgb(int(round(r)), int(round(g)), int(round(b)))
+    return srgb_to_rgb(r2, g2, b2)
+
+
+def simulate_red_blindness(r, g, b):
+    """
+    Adjust RGB values such that it can 'simulate' Red blindness
+
+    Conversion formula taken from
+    https://personal.sron.nl/~pault/#sec:colour_blindness
+
+    :param r: Red
+    :param g: Green
+    :param b: Blue
+    :return: Red, Green, Blue (seen by Red-Blind person)
+    """
+    _validate(r, g, b)
+
+    r2, g2, b2 = rgb_to_rgb255(*rgb_to_srgb(r, g, b))
+    r = pow((782.7 + pow(g2 * 0.8806, 2.2) + pow(r2 * 0.1115, 2.2)), 1 / 2.2)
+    g = pow((782.7 + pow(g2 * 0.8806, 2.2) + pow(r2 * 0.1115, 2.2)), 1 / 2.2)
+    b = pow((782.7 +
+             pow(b2 * 0.992052, 2.2) -
+             pow(g2 * 0.003974, 2.2) +
+             pow(r2 * 0.003974, 2.2)), 1 / 2.2)
+    r2, g2, b2 = rgb255_to_rgb(int(round(r)), int(round(g)), int(round(b)))
+    return srgb_to_rgb(r2, g2, b2)

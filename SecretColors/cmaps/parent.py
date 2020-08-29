@@ -6,14 +6,26 @@
 #
 #
 
-from SecretColors.models.palette import Palette
-from SecretColors.helpers.logging import Log
 import numpy as np
+
+from SecretColors.data.constants import DIV_COLOR_PAIRS
+from SecretColors.helpers.logging import Log
+from SecretColors.models.palette import Palette
+from typing import List
 
 
 class ColorMapParent:
     """
-    Main ColorMap class which will be inherited by all ColorMap objects
+
+    This is parent class which will be inherited by all ColorMap objects. It
+    includes all basic methods which will be common to all the ColorMaps.
+
+    ..  danger::
+        Do not use this class in your workflow. This class is intended as a
+        parent class which you can inherit to make new colormaps. For
+        general purpose use, you should use
+        :class:`~SecretColors.cmaps.ColorMap` instead.
+
     """
 
     def __init__(self, matplotlib,
@@ -23,13 +35,14 @@ class ColorMapParent:
         """
         Initializing of any ColorMap.
 
-        ..  warning::
-
-            Avoid using :paramref:`palette` when using subclasses.
-
         :param matplotlib: matplotlib object from matplotlib library
+
         :param palette: Palette from which you want colors
+        :type palette: Palette
+
         :param log: Log class
+        :type log: Log
+
         :param seed: Seed for random number generation
         """
         self._mat = matplotlib
@@ -48,6 +61,12 @@ class ColorMapParent:
 
     @property
     def data(self) -> dict:
+        """Returns all available ColorMap data. This is valid ONLY for
+        special subclass (e.g. BrewerMap). It will return None for 'ColorMap'
+        class.
+
+        :rtype: dict
+        """
         raise NotImplementedError
 
     @property
@@ -56,21 +75,45 @@ class ColorMapParent:
 
     @seed.setter
     def seed(self, value):
+        """
+        Seed for Numpy random number generator
+
+        :param value: Seed value
+        """
         self._seed = value
         np.random.seed(value)
         self.log.info(f"Random seed set for : {value}")
 
     @property
-    def palette(self):
+    def palette(self) -> Palette:
+        """
+        :return: Returns current palette from which colors are drawn
+        :rtype: Palette
+        """
         return self._palette
 
     @palette.setter
     def palette(self, palette: Palette):
+        """
+        Set Palette from which colors will be drawn
+
+        Note: Do not set this for special subclasses (like BrewerMap)
+
+        :param palette: Color Palette
+        :type palette: Palette
+
+        """
         self._palette = palette
         self.log.info(f"ColorMap is now using '{palette.name}' palette")
 
     @property
     def get_all(self) -> list:
+        """Returns list of available special colormaps. This works only with
+        special subclasses like BrewerMap.
+
+        :return: List of colormap names
+        :rtype: List[str]
+        """
         if self.data is None:
             return []
         else:
@@ -155,8 +198,57 @@ class ColorMapParent:
 
         return colors
 
+    def get_colors(self, name: str, no_of_colors: int) -> list:
+        """
+        This is easy way to get the available colors in current colormap
+
+        .. code-block:: python
+
+            cm = BrewerMap(matplotlib)
+            cm.get_colors('Spectral', 9) # Returns 9 'Spectral' colors from BrewerMap colormap
+
+
+        .. warning::
+
+            Be careful in using :paramref:`no_of_colors` argument. It actually
+            points
+            to number of colors available in given colormap. For example,
+            'Tableau' map from :class:`~SecretColors.cmaps.TableauMap`
+            contains two list of colors, 10 and 20. So you need to enter
+            either 10 or 20. Any other number will raise ValueError. You can
+            check which all options are available by :attr:`get_all`
+            property. More about this can be read in documentation of
+            :func:`~SecretColors.cmaps.parent.ColorMapParent.get` function.
+
+        :param name: Name of the special colormap
+        :type name: str
+        :param no_of_colors: Number of colors (see warning above)
+        :type no_of_colors: int
+        :return: List of colors
+        :rtype: List[str]
+
+        :raises: ValueError (if used on
+            :class:`~SecretColors.cmaps.ColorMap` or wrong
+            :paramref:`no_of_colors` provided)
+        """
+        if self.data is not None:
+            if name not in self.data.keys():
+                self.log.error(f"'{name}' is not available in current "
+                               f"colormap. Following are allowed arguments "
+                               f"here: {self.get_all}")
+            if str(no_of_colors) not in self.data[name].keys():
+                n = list(self.data[name].keys())
+                if "type" in n:
+                    n.remove("type")
+                n = [int(x) for x in n]
+                self.log.error(f"Currently following number of colors are "
+                               f"allowed for {name}. : {n}")
+            return self.data[name][no_of_colors]
+        return []
+
     def _default(self, name, backup, kwargs):
-        del kwargs['self']
+        if "self" in kwargs:
+            del kwargs['self']
         if "starting_shade" not in kwargs:
             kwargs["starting_shade"] = None
         if "ending_shade" not in kwargs:
@@ -209,18 +301,25 @@ class ColorMapParent:
         """
         Get arbitrary color map from current ColorMap object
 
-        Number of colors is probably the most important parameter in the
+        :paramref:`no_of_colors` is probably the most important parameter in the
         colormap classes. In this library each colormap data is structured
-        in the form of dictionary. You can check which all colormaps are
-        available by :attr:`~SecretColors.cmaps.parent.ColorMapParent
-        .get_all` property
+        in the form of dictionary as shown below::
 
-        .. note::
+            data = { 'map_name' : {
+                    '10': [c1, c2, ... c10],
+                    '5' : [b1, b2, ... b5],
+                    ...
+                    'type': Type of colormap
+                }
+            }
 
-            Subsequent indented lines comprise
-            the body of the topic, and are
-            interpreted as body elements.
+        In above example, if you want to access list [c1, c2...c10], you can
+        do following,
 
+        >>> YourMap().get('map_name',no_of_colors=10) # Returns [c1, c2 ...c10]
+
+        You can check which all colormaps are
+        available by :attr:`~SecretColors.cmaps.parent.ColorMapParent.get_all` property
 
 
         :param name: Exact Name of the Colormap
@@ -229,10 +328,22 @@ class ColorMapParent:
         :param no_of_colors: Number of colors. (See discussion above)
         :type no_of_colors: int
 
-        :param is_qualitative:
-        :param is_reversed:
-        :return:
+        :param is_qualitative: If True, listed colormap will be returned. (
+            default: False)
+        :type is_qualitative: bool
+
+        :param is_reversed: If True, colormap will be reversed. (default:
+            False)
+        :type is_reversed: bool
+
+        :return: Colormap object
+        :rtype: :class:`matplotlib.colors.ListedColormap` or :class:`matplotlib.colors.LinearSegmentedColormap`
         """
+        if self.data is None:
+            self.log.error(f"This method can only be used with special "
+                           f"colormap. If you are using 'ColorMap' class "
+                           f"directly. You can only use standard maps. or "
+                           f"create your own.")
         return self._special_maps(name, None, locals())
 
     def greens(self, *, starting_shade: float = None,
@@ -276,3 +387,130 @@ class ColorMapParent:
               is_qualitative: bool = False,
               is_reversed=False):
         return self._default(None, "blue", locals())
+
+    def random_divergent(self, is_qualitative=False, is_reversed=False):
+        names = []
+        if self.data is not None:
+            for k in self.data:
+                if self.data[k]["type"] == "div":
+                    names.append(k)
+
+        if len(names) > 0:
+            np.random.shuffle(names)
+            keys = list(self.data[names[0]].keys())
+            keys.remove("type")
+            np.random.shuffle(keys)
+            kwargs = locals()
+            kwargs["no_of_colors"] = int(keys[0])
+            return self._special_maps(names[0], None, kwargs)
+        else:
+            names = [x for x in DIV_COLOR_PAIRS]
+            np.random.shuffle(names)
+            cols = []
+            for c in names[0]:
+                for s in c[1]:
+                    cols.append(self.palette.get(c[0], shade=s))
+            return self.from_list(cols)
+
+
+class ColorMap(ColorMapParent):
+    """
+    This is simple wrapper around
+    :class:`~SecretColors.cmaps.parent.ColorMapParent`. This wrapper let you
+    utilize all methods from its parent class. For all general purpose use,
+    you should use this class. If you want more specialized ColorMaps,
+    use their respective classes. Following is the simplest use where you
+    want to visualize your data in typical 'greens' palette
+
+    .. code-block:: python
+
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from SecretColors.cmaps import ColorMap
+        import numpy as np
+
+        cm = ColorMap(matplotlib)
+        data = np.random.rand(5, 5)
+        plt.imshow(data, cmap=cm.greens())
+        plt.colorbar()
+        plt.show()
+
+    You can easily change standard colormaps like following
+
+    .. code-block:: python
+
+        cm.reds()  # Reds colormap
+        cm.oranges() # Oranges colormap
+        cm.blues()  # Blues colormap
+        cm.grays()  # Grays colormap
+
+    All standard colormaps accepts following basic options (which should be
+    provided as a named arguments)
+
+        - :no_of_colors: Number of colors you want in your
+            colormap. It usually defines how smaooth your color gradient will be
+        - :starting_shade: What will be the first shade of your colormap
+        - :ending_shade: What will be the last shade of your colormap
+        - :is_qualitative: If True,
+            :class:`matplotlib.colors.ListedColormap` will be used instead
+            :class:`matplotlib.colors.LinearSegmentedColormap`. Essentially it
+            will provide discrete colormap instead linear
+        - :is_reversed: If True, colormap will be reversed
+
+    .. code-block:: python
+
+        cm.purples(no_of_colors=8)
+        cm.greens(starting_shade=30, ending_shade=80)
+        cm.blues(is_qualitative=True)
+        cm.reds(ending_shade=50, is_reversed=True, no_of_colors=5)
+
+    You can mix-and-match every argument. Essentially there are infinite
+    possibilities.
+
+    If you want even more fine-tune control over your colormap, you can use
+    your own colormaps by :func:`~SecretColors.cmaps.parent.ColorMapParent
+    .from_list` method.
+
+    .. code-block:: python
+
+        cm = ColorMap(matplotlib)
+        p = Palette()
+        my_colors = [p.red(shade=30), p.white(), p.blue(shade=60)]
+        my_cmap = cm.from_list(my_colors)
+        plt.imshow(data, cmap=my_cmap)
+
+    We have some in-build color lists for divergent colormaps. You can use
+    :func:`~SecretColors.cmaps.parent.ColorMapParent.random_divergent` for
+    its easy access. Read :class:`~SecretColors.cmaps.parent.ColorMapParent`
+    documentation for more details on helper functions.
+
+    If you like colors from specific :class:`~SecretColors.Palette`, you can
+    easily switch all colors with single line
+
+    .. code-block:: python
+
+        cm = ColorMap(matplotlib)
+        cm.palette = Palette("material") # Material Palette colors will be used.
+        cm.palette = Palette("brewer") # ColorBrewer colors will be used.
+
+
+    .. tip::
+        For "brewer" and "tableau", you should prefer using
+        :class:`~SecretColors.cmaps.BrewerMap` and
+        :class:`~SecretColors.cmaps.TableauMap` intsead just changing
+        palette here. As these classes will provide you much more additional
+        methods which are only available in those classes.
+
+
+    """
+
+    @property
+    def data(self) -> dict:
+        return None
+
+
+def run():
+    from SecretColors.data.cmaps.brewer import BREWER_DATA
+
+    for b in BREWER_DATA:
+        print(f"* {b}")

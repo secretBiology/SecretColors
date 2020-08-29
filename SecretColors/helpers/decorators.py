@@ -90,11 +90,14 @@ def _sample_cmap(self, *, no_of_colors: int = None,
     also use :func:`~SecretColors.cmaps.SECRETMAP().get`
     method to achieve the same result.
 
-    >>> from SecretColors.cmaps import SECRETMAP
-    >>> import matplotlib
-    >>> cm = SECRETMAP(matplotlib)
-    >>> plt.imshow(data, cm=cm.METHOD_NAME()) # Or cm.get('SNAME')
-    >>> plt.show()
+    ..  code-block:: python
+        :emphasize-lines: 4
+
+        from SecretColors.cmaps import SECRETMAP
+        import matplotlib
+        cm = SECRETMAP(matplotlib)
+        plt.imshow(data, cm=cm.METHOD_NAME()) # Or cm.get('SNAME')
+        plt.show()
 
     :param no_of_colors: No of colors
     :param is_qualitative: If True, ColorMap will be qualitative

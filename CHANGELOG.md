@@ -1,9 +1,9 @@
 # Changelog
 # v1.2.0
-This is one of the major update since the conception of this project. Many
+This is one of the major updates since the conception of this project. Many
  changes are essential for robust functionality and proper code maintenance
  . This
- has introduced following important changes
+ has introduced the following important changes
  * Probably the most important change in this version is return values. Any
   color you generate with this library will return `ColorString` or
    `ColorTuple` (depending on `color_mode`) which are subclasses of `str` and
@@ -58,22 +58,24 @@ hex_color = rgb_to_hex(r, g, b)  # hex_color: #4c80b2
 hex_to_rgb(hex_color) # Retuns (0.2980392156862745, 0.5019607843137255, 0.6980392156862745)
 ```
 
-In above code, conversion from RGB to HEX and then from HEX to RGB does not
- give us exact same output. This issue is very typical of any programming
-  language where we are dealing with float calculations. So you should use
+In the above code, conversion from RGB to HEX and then from HEX to RGB does 
+not give us the same output. This issue is very typical of any programming
+ language where we are dealing with float calculations. So you should use
    some rounding logic if you want to compare it with original color
 
 In case of conversion to HEX, we usually round the floats to nearest
  integers with default `round` function. 
  
-However, our benchmarks and testing suggests that these values are accurate
- with error of '0.001'. We also check this during our testings. This much
-  precision should be good enough for most of the cases. In case, you want
-   even better precision, we kindly ask you to implement the method by
-    yourself instead depending method provided by `SecretColors`. In future
-    , we plan to take a look at this in more details. But for now, work
-     around is to make some rounding function like following
+However, our benchmarks and testing suggest that these values are accurate 
+with an error of '0.001'. We also check this during our testings. This much 
+precision should be good enough for most of the cases. In case, you want even 
+better precision, we kindly ask you to implement the method by yourself 
+instead of a depending method provided by `SecretColors`. In future, 
+we plan to take a look at this in more details. But for now, 
+the workaround is to make some rounding function like following
  
+
+
  ```python
 # Use precision for rounding according to your need
 def rounded_rgb(*args):
@@ -82,3 +84,5 @@ def rounded_rgb(*args):
 rounded_rgb(hex_to_rgb(hex_color)) # returns (0.3, 0.5, 0.7)
 ```
 
+Note: All CIE-XYZ conversion and colorblind simulation functions are still in
+ beta-testing. Do not use them in your production code

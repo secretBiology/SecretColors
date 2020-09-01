@@ -14,7 +14,7 @@ Currently it supports following Color Palettes
 - VMWare Clarity Color Palette 
 - Tableau Color Palette
 
-You can get output of colors in variety of color formats including `hex` , `rgb` , `hsl`, `rgba` etc. 
+You can get output of colors in variety of color formats including `hex` , `rgb`, `rgba` etc. 
 
 Few sample plots and inspiration behind this library can be found in [WeirdData blog](https://weirddata.github.io/2019/06/11/secret-colors-2.html). 
 
@@ -155,6 +155,9 @@ Reverse the direction
   `type` before its use. Hence we can not make new class which can be directly
    act as a substitute.
 
+
+Note: All CIE-XYZ conversion and colorblind simulation functions are still in
+ beta-testing. Do not use them in your production code
 
 ### Contribution and Feedback
 

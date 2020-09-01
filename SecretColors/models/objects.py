@@ -343,11 +343,3 @@ class ColorWheel:
         :return: White of Black color (based on contrast)
         """
         return text_color(self.color)
-
-
-def run():
-    cw = ColorWheel("#fa4d56")  # Initialize your 'base color'
-    cw.make_darker(30)  # Make current color darker by 30%
-    print(cw.color)  # Prints #df0612, darker shade of #fa4d56
-    cw.make_lighter(10)  # Make current color lighter by 30%
-    print(cw.color)  # Prints #f80915, lighter shade of #df0612

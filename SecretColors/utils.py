@@ -418,7 +418,7 @@ def apply_gamma_transform(value):
     :return: Transformed values
     """
     if value > 0.0031308:
-        return 1.055 * (pow(value, (1 / 2.4))) - 0.055
+        return (pow(1.055 * value, (1 / 2.4))) - 0.055
     else:
         return 12.92 * value
 
@@ -441,6 +441,9 @@ def rgb_to_srgb(r, g, b):
     """
     Converts RGB to sRGB
 
+    Note: This function is still in beta-testing. Do not use in your
+    production code.
+
     :param r: Red
     :param g: Green
     :param b: Blue
@@ -456,6 +459,9 @@ def srgb_to_rgb(sr, sg, sb):
     """
     Converts sRGB to RGB
 
+    Note: This function is still in beta-testing. Do not use in your
+    production code.
+
     :param sr: sRed
     :param sg: sGreen
     :param sb: sBlue
@@ -468,7 +474,10 @@ def srgb_to_rgb(sr, sg, sb):
 
 def rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
     """
-    Converts RGB (0-1) to CIE-XYZ
+    Converts Linear-RGB (0-1) to CIE-XYZ
+
+    Note: This function is still in beta-testing. Do not use in your
+    production code.
 
     :param r: Red
     :param g: Green
@@ -477,14 +486,16 @@ def rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
     :param clip: If True, values below 0 and above 1 will be clipped
     :return: CIE-X, CIE-Y, CIE-Z
     """
-    srgb = rgb_to_srgb(r, g, b)
-    return convert_rgb_to_xyz(*srgb, space="srgb",
+    return convert_rgb_to_xyz(r, g, b, space="srgb",
                               reference=reference, clip=clip)
 
 
 def xyz_to_rgb(x, y, z, *, reference="D65", clip=True):
     """
-    Converts CIE-XYZ to RGB (0-1)
+    Converts CIE-XYZ to Linear-RGB (0-1)
+
+    Note: This function is still in beta-testing. Do not use in your
+    production code.
 
     :param x: CIE-X
     :param y: CIE-Y
@@ -493,37 +504,6 @@ def xyz_to_rgb(x, y, z, *, reference="D65", clip=True):
     :param clip: If True, values below 0 and above 1 will be clipped
     :return: Red, Green Blue
     """
-    srgb = convert_xyz_to_rgb(x, y, z, space="srgb",
-                              reference=reference, clip=clip)
-    return srgb_to_rgb(*srgb)
-
-
-def srgb_to_xyz(r, g, b, *, reference="D65", clip=True):
-    """
-    Converts sRGB to CIE-XYZ
-
-    :param r: sRed
-    :param g: sGreen
-    :param b: sBlue
-    :param reference: White reference (default: D65)
-    :param clip: If True, values above 1 and below 0 will be clipped
-    :return: CIE-X, CIE-Y, CIE-Z
-    """
-    return convert_rgb_to_xyz(r, g, b, space="srgb",
-                              reference=reference, clip=clip)
-
-
-def xyz_to_srgb(x, y, z, *, reference="D65", clip=True):
-    """
-    Converts CIE-XYZ to sRGB
-
-    :param x: CIE-X
-    :param y: CIE-Y
-    :param z: CIE-Z
-    :param reference: White reference (default: D65)
-    :param clip: If True, values below 0 and above 1 will be clipped
-    :return: sRed, sGreen sBlue
-    """
     return convert_xyz_to_rgb(x, y, z, space="srgb",
                               reference=reference, clip=clip)
 
@@ -531,6 +511,10 @@ def xyz_to_srgb(x, y, z, *, reference="D65", clip=True):
 def adobe_rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
     """
      Converts adobe-RGB to CIE-XYZ
+
+
+    Note: This function is still in beta-testing. Do not use in your
+    production code.
 
      :param r: adobe-Red
      :param g: adobe-Green
@@ -546,6 +530,9 @@ def adobe_rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
 def xyz_to_adobe_rgb(x, y, z, *, reference="D65", clip=True):
     """
     Converts CIE-XYZ to adobe-RGB
+
+    Note: This function is still in beta-testing. Do not use in your
+    production code.
 
     :param x: CIE-X
     :param y: CIE-Y
@@ -614,7 +601,6 @@ def color_in_between(c1, c2, no_of_colors=1) -> list:
     >>> color_in_between("#fb4b53", "#408bfc") # ['#9d6aa7']
     >>> color_in_between("#fb4b53", "#408bfc", 3) # ['#cc5a7d', '#9d6aa7', '#6e7ad1']
 
-
     :param c1: Hex of first color
     :param c2: Hex of second color
     :param no_of_colors: How many colors in between? [Default :1]
@@ -679,6 +665,9 @@ def simulate_green_blindness(r, g, b):
     Conversion formula taken from
     https://personal.sron.nl/~pault/#sec:colour_blindness
 
+    Note: This function is still in beta-testing. Do not use in your
+    production code.
+
     :param r: Red
     :param g: Green
     :param b: Blue
@@ -706,6 +695,9 @@ def simulate_red_blindness(r, g, b):
     Conversion formula taken from
     https://personal.sron.nl/~pault/#sec:colour_blindness
 
+    Note: This function is still in beta-testing. Do not use in your
+    production code.
+
     :param r: Red
     :param g: Green
     :param b: Blue
@@ -722,3 +714,9 @@ def simulate_red_blindness(r, g, b):
              pow(r2 * 0.003974, 2.2)), 1 / 2.2)
     r2, g2, b2 = rgb255_to_rgb(int(round(r)), int(round(g)), int(round(b)))
     return srgb_to_rgb(r2, g2, b2)
+
+
+def run():
+    r, g, b = 0.9339861535887517, 0.8860409576833747, 0.9749859185188849
+    xyz = rgb_to_xyz(r, g, b)
+    print(xyz_to_rgb(*xyz))

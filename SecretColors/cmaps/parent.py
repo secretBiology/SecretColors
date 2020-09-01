@@ -210,7 +210,7 @@ class ColorMapParent:
 
         .. warning::
 
-            Be careful in using :paramref:`no_of_colors` argument. It actually
+            Be careful in using `no_of_colors` argument. It actually
             points
             to number of colors available in given colormap. For example,
             'Tableau' map from :class:`~SecretColors.cmaps.TableauMap`
@@ -229,7 +229,7 @@ class ColorMapParent:
 
         :raises: ValueError (if used on
             :class:`~SecretColors.cmaps.ColorMap` or wrong
-            :paramref:`no_of_colors` provided)
+            `no_of_colors` provided)
         """
         if self.data is not None:
             if name not in self.data.keys():
@@ -301,7 +301,7 @@ class ColorMapParent:
         """
         Get arbitrary color map from current ColorMap object
 
-        :paramref:`no_of_colors` is probably the most important parameter in the
+        `no_of_colors` is probably the most important parameter in the
         colormap classes. In this library each colormap data is structured
         in the form of dictionary as shown below::
 

@@ -8,6 +8,7 @@ Currently it supports following Color Palettes
 - Google Material Design Color Palette
 - ColorBrewer2 Color Palette
 - VMWare Clarity Color Palette 
+- Tableau Color Palette
 
 You can get output of colors in variety of color formats including `hex` , `rgb` , `hsl`, `rgba` etc. 
 

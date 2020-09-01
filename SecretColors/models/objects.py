@@ -302,7 +302,7 @@ class ColorWheel:
         """
         Generate list of analogous colors. Out of which, one will be your
         current color. Location of where current color should be in these 3
-        colors can be decided by :paramref:`loc` argument.
+        colors can be decided by `loc` argument.
 
         :param loc: Location of current color in the analogous colors.
             Available options: [first, middle, last]. (default: first)

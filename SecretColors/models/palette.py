@@ -51,11 +51,12 @@ def _param_deprecation(log: Log, item: str, **kwargs):
 
 class Palette:
     """
-    :paramref:`Palette` is main class of this library. It provides easy
+    :class:`~SecretColors.Palette` is main class of this library. It provides
+    easy
     access to huge variety of color manipulations. Entire class is based on
     internal color database which has been developed based on many Design
     Systems and famous color palettes. Essentially, we made a simple utility
-    which can copy paste colors from famoud color palettes ;)
+    which can copy paste colors from famous color palettes ;)
 
     Currently this library supports following Palettes which can be provided
     at the time of generation of Palette Object.
@@ -913,4 +914,3 @@ class Palette:
                   starting_shade: float = None,
                   ending_shade: float = None):
         return self._common_color("blue-gray", locals())
-

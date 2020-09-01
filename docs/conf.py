@@ -51,8 +51,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon',
-    'sphinx_paramlinks'
+    'sphinx.ext.napoleon'
 ]
 
 autodoc_member_order = 'bysource'  # Need to NOT sort by alphabetically

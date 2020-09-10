@@ -1,0 +1,7 @@
+# Running Tests
+pluggy>= 0.9
+tox
+pytest==6.0.1
+coveralls
+pytest-cov
+safety>=1.8.5

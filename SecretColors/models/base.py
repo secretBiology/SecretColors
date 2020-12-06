@@ -137,7 +137,7 @@ class Color:
                 colors = color_in_between(left.hex, right.hex, 99)
                 colors.insert(0, left.hex)
                 colors.append(right.hex)
-                return ColorString(colors[idx])
+                return ColorString(colors[int(idx)])
 
         self.log.error(f"Something went wrong with shade {value}. Please "
                        f"report it on GitHub", exception=ValueError)

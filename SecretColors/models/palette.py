@@ -195,6 +195,81 @@ class Palette:
         """
         return [self._send(x.get()) for x in self.colors.values()]
 
+    def cycle(self, version: int = 1, skip_first: int = 0):
+        """
+        Creates infinite color cycle
+
+        Inspiration is taken from : https://tsitsul.in/blog/coloropt/
+
+        >>> color_cycle = Palette().cycle()
+        >>> next(color_cycle) # First Color
+        >>> next(color_cycle) # Next Color
+
+        This will go infinitely. After few colors it will start repeating.
+        You can get qualitative colors like following
+
+        >>> my_colors = [next(color_cycle) for x in range(10)] # Ten colors
+
+        You may use in the for loop. However, be careful. It is infinite
+        cycle. You need to break the loop by yourself.
+
+        ..  danger::
+            This method creates inifinite number of colors. Be careful while using it in the loop
+
+        :param skip_first: number of colors to be skipped from start. Only
+        works for first 18 colors.
+        :param version: color sequence version
+        """
+        selected = [self.red(),
+                    self.blue(),
+                    self.yellow(shade=30),
+                    self.green(),
+                    self.teal(shade=40),
+                    self.magenta(),
+                    self.orange(shade=30),
+                    self.red(shade=30),
+                    self.indigo(),
+                    self.cyan(shade=30),
+                    self.brown(shade=30),
+                    self.green(shade=30),
+                    self.gray(shade=40),
+                    self.amber(shade=30),
+                    self.aqua(shade=40),
+                    self.red_orange(shade=40),
+                    self.cerulean(shade=40),
+                    self.green_light()
+                    ]
+
+        if skip_first < len(selected):
+            for i in range(skip_first):
+                selected.pop(0)
+
+        # First default colors
+        for c in selected:
+            yield c
+
+        # Define colors
+        objs = [self.yellow, self.red, self.blue, self.green, self.teal,
+                self.magenta, self.orange, self.red, self.indigo, self.cyan,
+                self.brown, self.green, self.gray, self.amber, self.aqua,
+                self.red_orange, self.cerulean, self.green_light]
+        start_shade = 40
+
+        # Start infinite
+        initial_offset = 0
+        while True:
+            for c in objs:
+                if c(shade=start_shade) not in selected:
+                    yield c(shade=start_shade)
+                    selected.append(c(shade=start_shade))
+            start_shade += 5
+            if start_shade > 100:
+                start_shade = initial_offset + 10
+                initial_offset += 1
+                if initial_offset > 80:
+                    initial_offset = 0
+                    selected = []
+
     def __iter__(self):
         return self
 

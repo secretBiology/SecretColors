@@ -243,7 +243,11 @@ class ColorMapParent:
                 n = [int(x) for x in n]
                 self.log.error(f"Currently following number of colors are "
                                f"allowed for {name}. : {n}")
-            return self.data[name][no_of_colors]
+            if str(no_of_colors) in self.data[name]:
+                return self.data[name][str(no_of_colors)]
+            else:
+                raise KeyError(
+                    f"This palette did not have this key '{no_of_colors}'")
         return []
 
     def _default(self, name, backup, kwargs):

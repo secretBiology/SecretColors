@@ -1,4 +1,7 @@
 # Changelog
+# v1.2.5
+New Color Palette `material-accent` which supports accent colors of Google 
+Material Design Color Palette.
 # v1.2.3
 Added new method to `Palette` class. `Palette.cycle()` will return a 
 generator to produce infinite color cycle. Read documentation for 

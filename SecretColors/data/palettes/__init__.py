@@ -10,7 +10,7 @@
 
 from SecretColors.data.palettes.parent import ParentPalette
 from SecretColors.data.palettes.ibm import IBMPalette
-from SecretColors.data.palettes.material import MaterialPalette
+from SecretColors.data.palettes.material import MaterialPalette, MaterialAccentPalette
 from SecretColors.data.palettes.clarity import ClarityPalette
 from SecretColors.data.palettes.brewer import ColorBrewer
 from SecretColors.data.palettes.tableau import TableauPalette

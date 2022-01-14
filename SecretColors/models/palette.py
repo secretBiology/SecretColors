@@ -13,7 +13,7 @@ import numpy as np
 from SecretColors.data.constants import *
 from SecretColors.data.names.w3 import W3_DATA
 from SecretColors.data.names.x11 import X11_DATA
-from SecretColors.data.palettes import (IBMPalette, MaterialPalette,
+from SecretColors.data.palettes import (IBMPalette, MaterialPalette, MaterialAccentPalette,
                                         ClarityPalette, ColorBrewer,
                                         ParentPalette, TableauPalette)
 from SecretColors.helpers.decorators import deprecated, color_docs
@@ -27,6 +27,8 @@ def _get_palette(name: str) -> ParentPalette:
     name = name.strip().lower()
     if name == PALETTE_MATERIAL:
         return MaterialPalette()
+    elif name == PALETTE_MATERIAL_ACCENT:
+        return MaterialAccentPalette()
     elif name == PALETTE_CLARITY:
         return ClarityPalette()
     elif name == PALETTE_BREWER:
@@ -56,13 +58,14 @@ class Palette:
     access to huge variety of color manipulations. Entire class is based on
     internal color database which has been developed based on many Design
     Systems and famous color palettes. Essentially, we made a simple utility
-    which can copy paste colors from famous color palettes ;)
+    which can copy and paste colors from famous color palettes ;)
 
-    Currently this library supports following Palettes which can be provided
+    Currently, this library supports following Palettes which can be provided
     at the time of generation of Palette Object.
 
     * **ibm** - IBM Color Palette v2 + v1 [*Default*]
     * **material** - Google Material Design Color Palettes
+    * **material-accent** - Accent colors of Google Material Design Color Palettes
     * **brewer** - ColorBrewer Color Palette
     * **clarity** - VMWare Clarity Palette
     * **tableau** - Tableau Color Palette
@@ -77,12 +80,12 @@ class Palette:
         material = Palette("material") # Generates Material Palette
         material.red() # Returns '#f44336'
 
-    You can specify *color_mode* to control color output format. Currently
+    You can specify *color_mode* to control color output format. Currently,
     this library supports following color modes
 
     * **hex** - Hex Format [*Default*]
-    * **rgb** - RGB Format (values between 0 to 1)
-    * **rgba** - RGB with Alpha/Transparency (values between 0 to 1)
+    * **rgb** - RGB Format (values between 0 and 1)
+    * **rgba** - RGB with Alpha/Transparency (values between 0 and 1)
     * **ahex** - Hex with Alpha/Transparency (Appended before hex)
     * **hexa** - Hex with Alpha/Transparency (Appended after hex)
 
@@ -149,10 +152,13 @@ class Palette:
             self.log.info(f"Random seed set for : {seed}")
             np.random.seed(self._seed)
 
+    def __str__(self):
+        return f"Palette({self.name})"
+
     @property
     def _value(self) -> ParentPalette:
         if self._palette is None:
-            self._palette = _get_palette(self._palette_name)
+            self._palette = _get_palette(self.name)
         return self._palette
 
     @property

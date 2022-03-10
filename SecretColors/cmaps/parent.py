@@ -6,7 +6,7 @@
 #
 #
 
-import numpy as np
+import random
 
 from SecretColors.data.constants import DIV_COLOR_PAIRS
 from SecretColors.helpers.logging import Log
@@ -55,7 +55,7 @@ class ColorMapParent:
         self._palette = palette
         self._seed = seed
         if seed is not None:
-            np.random.seed(seed)
+            random.seed(seed)
             self.log.info(f"Random seed set for : {seed}")
         self.no_of_colors = 10
 
@@ -76,12 +76,12 @@ class ColorMapParent:
     @seed.setter
     def seed(self, value):
         """
-        Seed for Numpy random number generator
+        Seed for random number generator
 
         :param value: Seed value
         """
         self._seed = value
-        np.random.seed(value)
+        random.seed(value)
         self.log.info(f"Random seed set for : {value}")
 
     @property
@@ -396,16 +396,16 @@ class ColorMapParent:
                     names.append(k)
 
         if len(names) > 0:
-            np.random.shuffle(names)
+            random.shuffle(names)
             keys = list(self.data[names[0]].keys())
             keys.remove("type")
-            np.random.shuffle(keys)
+            random.shuffle(keys)
             kwargs = locals()
             kwargs["no_of_colors"] = int(keys[0])
             return self._special_maps(names[0], None, kwargs)
         else:
             names = [x for x in DIV_COLOR_PAIRS]
-            np.random.shuffle(names)
+            random.shuffle(names)
             cols = []
             for c in names[0]:
                 for s in c[1]:

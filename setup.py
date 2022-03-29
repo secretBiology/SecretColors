@@ -12,7 +12,7 @@ with open("PYPI.md", "r") as fh:
 
 setuptools.setup(
     name="SecretColors",
-    version="1.2.5",
+    version="1.2.6",
     author="Rohit Suratekar",
     author_email="rohitsuratekar@gmail.com",
     description="A small package for fantastic color palette",
@@ -25,8 +25,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-    ],
-    install_requires=[
-        "numpy"
     ],
 )

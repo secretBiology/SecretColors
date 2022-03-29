@@ -6,9 +6,8 @@
 #
 #  Main palette class
 
+import random
 from typing import Dict, List
-
-import numpy as np
 
 from SecretColors.data.constants import *
 from SecretColors.data.names.w3 import W3_DATA
@@ -150,7 +149,7 @@ class Palette:
         self._seed = seed
         if self._seed:
             self.log.info(f"Random seed set for : {seed}")
-            np.random.seed(self._seed)
+            random.seed(self._seed)
 
     def __str__(self):
         return f"Palette({self.name})"
@@ -300,7 +299,7 @@ class Palette:
         :param value: Seed value
         """
         self._seed = value
-        np.random.seed(value)
+        random.seed(value)
         self.log.info(f"Random seed set for : {value}")
 
     @property
@@ -428,7 +427,8 @@ class Palette:
         if ending_shade is None:
             ending_shade = max(self._value.get_shades())
 
-        shades = np.linspace(starting_shade, ending_shade, no_of_colors)
+        shades = [starting_shade + x * (ending_shade - starting_shade) / no_of_colors
+                  for x in range(no_of_colors)]
         if reverse:
             shades = reversed(shades)
 
@@ -514,7 +514,9 @@ class Palette:
             if x.name not in avoid:
                 accepted_colors.append(x)
         # Select random colors
-        colors = np.random.choice(accepted_colors, no_of_colors)
+        colors = []
+        for i in range(no_of_colors):
+            colors.append(random.choice(accepted_colors))
         # If shade is specified, directly return the selected colors
         if shade is not None:
             if no_of_colors == 1 and not force_list:
@@ -531,13 +533,13 @@ class Palette:
 
         possible_shades = [x for x in self._value.get_shades() if
                            starting_shade <= x <= ending_shade]
-
+        shades = []
         if no_of_colors <= len(possible_shades):
-            shades = np.random.choice(possible_shades,
-                                      no_of_colors, replace=False)
+            for i in range(no_of_colors):
+                shades.append(random.choice(possible_shades))
         else:
-            shades = np.random.randint(starting_shade, ending_shade,
-                                       no_of_colors)
+            for i in range(no_of_colors):
+                shades = random.randint(starting_shade, ending_shade)
         # If gradient is true, sort the shades
         if gradient:
             shades = list(sorted(shades))
@@ -591,7 +593,9 @@ class Palette:
 
         _param_deprecation(self.log, "ignore_gray", **kwargs)
 
-        colors = np.random.choice(list(self.colors.values()), 2)
+        colors = set()
+        colors.add(random.choice(list(self.colors.values())))
+        colors.add(random.choice(list(self.colors.values())))
         if shade is None:
             shade = self._value.get_core_shade()
         colors = [x.shade(shade) for x in colors]
@@ -640,9 +644,12 @@ class Palette:
             if kwargs["gradient"]:
                 colors = self._extract_color_list(name, **kwargs)
             else:
-                shades = np.random.randint(self._value.get_shades()[-1],
-                                           self._value.get_shades()[0],
-                                           kwargs["no_of_colors"])
+                shades = []
+                for i in range(int(kwargs["no_of_colors"])):
+                    shades.append(random.randint(
+                        self._value.get_shades()[-1],
+                        self._value.get_shades()[0]
+                    ))
                 colors = [color.shade(x) for x in shades]
             return self._send(colors, **kwargs)
         else:

@@ -44,6 +44,19 @@ def _validate_object(obj, cls, item_name):
                         f"provided {type(obj)}")
 
 
+def _linspace(st, sp, n):
+    """
+    Mimics numpy.linspace function
+    Taken from : https://stackoverflow.com/a/12334459
+    """
+    if n == 1:
+        yield sp
+        return
+    h = (sp - st) / (n - 1)
+    for i in range(n):
+        yield st + h * i
+
+
 def _param_deprecation(log: Log, item: str, **kwargs):
     if item in kwargs:
         log.deprecated(f"'{item}' argument is deprecated and it will have no "
@@ -427,8 +440,8 @@ class Palette:
         if ending_shade is None:
             ending_shade = max(self._value.get_shades())
 
-        shades = [starting_shade + x * (ending_shade - starting_shade) / no_of_colors
-                  for x in range(no_of_colors)]
+        shades = list(_linspace(starting_shade, ending_shade, no_of_colors))
+
         if reverse:
             shades = reversed(shades)
 

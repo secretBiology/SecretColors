@@ -1,4 +1,17 @@
 # Changelog
+# v1.2.5
+New Color Palette `material-accent` which supports accent colors of Google 
+Material Design Color Palette.
+# v1.2.3
+Added new method to `Palette` class. `Palette.cycle()` will return a 
+generator to produce infinite color cycle. Read documentation for 
+further 
+details. 
+# v1.2.2
+Fixed bug where `Palette.random()` raising error if `no_of_colors` 
+parameter is greater than one.
+# v1.2.1
+Removed the restrictions from `numpy` version [ see [Issue](https://github.com/secretBiology/SecretColors/issues/4) ]
 # v1.2.0
 This is one of the major updates since the conception of this project. Many
  changes are essential for robust functionality and proper code maintenance

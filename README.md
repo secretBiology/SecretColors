@@ -8,11 +8,12 @@ Library generated for making plots with better color palette. It uses  famous co
 
 Currently it supports following Color Palettes
 
-- IBM Color Palette
-- Google Material Design Color Palette
-- ColorBrewer2 Color Palette
-- VMWare Clarity Color Palette 
-- Tableau Color Palette
+- IBM Color Palette (`ibm`)
+- Google Material Design Color Palette (`material`)
+- Google Material Design Accent Color Palette (`material-accent`)
+- ColorBrewer2 Color Palette (`brewer`)
+- VMWare Clarity Color Palette  (`clarity`)
+- Tableau Color Palette (`tableau`)
 
 You can get output of colors in variety of color formats including `hex` , `rgb`, `rgba` etc. 
 

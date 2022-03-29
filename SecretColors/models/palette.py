@@ -12,7 +12,7 @@ from typing import Dict, List
 from SecretColors.data.constants import *
 from SecretColors.data.names.w3 import W3_DATA
 from SecretColors.data.names.x11 import X11_DATA
-from SecretColors.data.palettes import (IBMPalette, MaterialPalette,
+from SecretColors.data.palettes import (IBMPalette, MaterialPalette, MaterialAccentPalette,
                                         ClarityPalette, ColorBrewer,
                                         ParentPalette, TableauPalette)
 from SecretColors.helpers.decorators import deprecated, color_docs
@@ -26,6 +26,8 @@ def _get_palette(name: str) -> ParentPalette:
     name = name.strip().lower()
     if name == PALETTE_MATERIAL:
         return MaterialPalette()
+    elif name == PALETTE_MATERIAL_ACCENT:
+        return MaterialAccentPalette()
     elif name == PALETTE_CLARITY:
         return ClarityPalette()
     elif name == PALETTE_BREWER:
@@ -55,13 +57,14 @@ class Palette:
     access to huge variety of color manipulations. Entire class is based on
     internal color database which has been developed based on many Design
     Systems and famous color palettes. Essentially, we made a simple utility
-    which can copy paste colors from famous color palettes ;)
+    which can copy and paste colors from famous color palettes ;)
 
-    Currently this library supports following Palettes which can be provided
+    Currently, this library supports following Palettes which can be provided
     at the time of generation of Palette Object.
 
     * **ibm** - IBM Color Palette v2 + v1 [*Default*]
     * **material** - Google Material Design Color Palettes
+    * **material-accent** - Accent colors of Google Material Design Color Palettes
     * **brewer** - ColorBrewer Color Palette
     * **clarity** - VMWare Clarity Palette
     * **tableau** - Tableau Color Palette
@@ -76,12 +79,12 @@ class Palette:
         material = Palette("material") # Generates Material Palette
         material.red() # Returns '#f44336'
 
-    You can specify *color_mode* to control color output format. Currently
+    You can specify *color_mode* to control color output format. Currently,
     this library supports following color modes
 
     * **hex** - Hex Format [*Default*]
-    * **rgb** - RGB Format (values between 0 to 1)
-    * **rgba** - RGB with Alpha/Transparency (values between 0 to 1)
+    * **rgb** - RGB Format (values between 0 and 1)
+    * **rgba** - RGB with Alpha/Transparency (values between 0 and 1)
     * **ahex** - Hex with Alpha/Transparency (Appended before hex)
     * **hexa** - Hex with Alpha/Transparency (Appended after hex)
 
@@ -148,10 +151,13 @@ class Palette:
             self.log.info(f"Random seed set for : {seed}")
             random.seed(self._seed)
 
+    def __str__(self):
+        return f"Palette({self.name})"
+
     @property
     def _value(self) -> ParentPalette:
         if self._palette is None:
-            self._palette = _get_palette(self._palette_name)
+            self._palette = _get_palette(self.name)
         return self._palette
 
     @property
@@ -193,6 +199,81 @@ class Palette:
         """Returns list of all colors with their default shade
         """
         return [self._send(x.get()) for x in self.colors.values()]
+
+    def cycle(self, version: int = 1, skip_first: int = 0):
+        """
+        Creates infinite color cycle
+
+        Inspiration is taken from : https://tsitsul.in/blog/coloropt/
+
+        >>> color_cycle = Palette().cycle()
+        >>> next(color_cycle) # First Color
+        >>> next(color_cycle) # Next Color
+
+        This will go infinitely. After few colors it will start repeating.
+        You can get qualitative colors like following
+
+        >>> my_colors = [next(color_cycle) for x in range(10)] # Ten colors
+
+        You may use in the for loop. However, be careful. It is infinite
+        cycle. You need to break the loop by yourself.
+
+        ..  danger::
+            This method creates inifinite number of colors. Be careful while using it in the loop
+
+        :param skip_first: number of colors to be skipped from start. Only
+        works for first 18 colors.
+        :param version: color sequence version
+        """
+        selected = [self.red(),
+                    self.blue(),
+                    self.yellow(shade=30),
+                    self.green(),
+                    self.teal(shade=40),
+                    self.magenta(),
+                    self.orange(shade=30),
+                    self.red(shade=30),
+                    self.indigo(),
+                    self.cyan(shade=30),
+                    self.brown(shade=30),
+                    self.green(shade=30),
+                    self.gray(shade=40),
+                    self.amber(shade=30),
+                    self.aqua(shade=40),
+                    self.red_orange(shade=40),
+                    self.cerulean(shade=40),
+                    self.green_light()
+                    ]
+
+        if skip_first < len(selected):
+            for i in range(skip_first):
+                selected.pop(0)
+
+        # First default colors
+        for c in selected:
+            yield c
+
+        # Define colors
+        objs = [self.yellow, self.red, self.blue, self.green, self.teal,
+                self.magenta, self.orange, self.red, self.indigo, self.cyan,
+                self.brown, self.green, self.gray, self.amber, self.aqua,
+                self.red_orange, self.cerulean, self.green_light]
+        start_shade = 40
+
+        # Start infinite
+        initial_offset = 0
+        while True:
+            for c in objs:
+                if c(shade=start_shade) not in selected:
+                    yield c(shade=start_shade)
+                    selected.append(c(shade=start_shade))
+            start_shade += 5
+            if start_shade > 100:
+                start_shade = initial_offset + 10
+                initial_offset += 1
+                if initial_offset > 80:
+                    initial_offset = 0
+                    selected = []
 
     def __iter__(self):
         return self

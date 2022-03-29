@@ -151,3 +151,102 @@ class MaterialPalette(ParentPalette):
         },
 
     ]
+
+
+class MaterialAccentPalette(ParentPalette):
+    """
+    Material Design Color Palette with Accent Designs
+    """
+
+    def get_all_colors(self) -> dict:
+        return {x["n"]: x["c"] for x in self.colors}
+
+    def get_palette_name(self):
+        return "Material Design Colors"
+
+    def get_creator_url(self):
+        return "https://material.io/design/color/the-color-system.html#tools-for-picking-colors"
+
+    def get_shades(self):
+        return self.shades
+
+    def get_core_shade(self):
+        return self.core
+
+    def get_version(self):
+        return 1
+
+    def get_last_update(self):
+        return "14 January 2022"
+
+    # shades = [700, 400, 200, 100]
+    # We will directly use the normalized shades instead handling it in class
+    shades = [70, 40, 20, 10]
+    core = 20
+    colors = [
+        {
+            'n': 'red',
+            'c': ["#d50000", "#ff1744", "#ff5252", "#ff8a80"]
+        },
+        {
+            'n': 'pink',
+            'c': ['#c51162', '#f50057', '#ff4081', '#ff80ab']
+        },
+        {
+            'n': 'purple',
+            'c': ['#aa00ff', '#d500f9', '#e040fb', '#ea80fc']
+        },
+        {
+            'n': 'deep-purple',
+            'c': ['#6200ea', '#651fff', '#7c4dff', '#b388ff']
+        },
+        {
+            'n': 'indigo',
+            'c': ['#304ffe', '#3d5afe', '#536dfe', '#8c9eff']
+        },
+        {
+            'n': 'blue',
+            'c': ['#2962ff', '#2979ff', '#448aff', '#82b1ff']
+        },
+        {
+            'n': 'light-blue',
+            'c': ['#0091ea', '#00b0ff', '#40c4ff', '#80d8ff']
+        },
+        {
+            'n': 'cyan',
+            'c': ['#00b8d4', '#00e5ff', '#18ffff', '#84ffff']
+        },
+        {
+            'n': 'teal',
+            'c': ['#00bfa5', '#1de9b6', '#64ffda', '#a7ffeb']
+        },
+        {
+            'n': 'green',
+            'c': ['#00c853', '#00e676', '#69f0ae', '#b9f6ca']
+        },
+        {
+            'n': 'light-green',
+            'c': ['#64dd17', '#76ff03', '#b2ff59', '#ccff90']
+        },
+        {
+            'n': 'lime',
+            'c': ['#aeea00', '#c6ff00', '#eeff41', '#f4ff81']
+        },
+        {
+            'n': 'yellow',
+            'c': ['#ffd600', '#ffea00', '#ffff00', '#ffff8d']
+        },
+        {
+            'n': 'amber',
+            'c': ['#ffab00', '#ffc400', '#ffd740', '#ffe57f']
+        },
+        {
+            'n': 'orange',
+            'c': ['#ff6d00', '#ff9100', '#ffab40', '#ffd180']
+        },
+        {
+            'n': 'deep-orange',
+            'c': ['#dd2c00', '#ff3d00', '#ff6e40', '#ff9e80']
+        }
+
+    ]

@@ -1,4 +1,6 @@
 # Changelog
+# v1.2.6
+Removed dependency on `numpy` (Thanks to [ri0t](https://github.com/ri0t))
 # v1.2.5
 New Color Palette `material-accent` which supports accent colors of Google 
 Material Design Color Palette.

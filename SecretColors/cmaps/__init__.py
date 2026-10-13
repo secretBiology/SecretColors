@@ -5,6 +5,11 @@
 #  Website: https://github.com/secretBiology/SecretColors
 #
 
+from SecretColors.cmaps.maps import (DEFAULT_PREFIX, available, cmap, colors,
+                                     register)
 from SecretColors.cmaps.brewer import BrewerMap
 from SecretColors.cmaps.tableau import TableauMap
 from SecretColors.cmaps.parent import ColorMap
+
+__all__ = ["available", "colors", "cmap", "register", "DEFAULT_PREFIX",
+           "ColorMap", "BrewerMap", "TableauMap"]

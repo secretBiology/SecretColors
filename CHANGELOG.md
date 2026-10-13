@@ -1,20 +1,118 @@
 # Changelog
-# v1.2.6
+## v2.0.0
+### New palettes and features
+* New palettes: Adobe Spectrum (`Palette("spectrum")`) and Flexport Latitude
+  (`Palette("latitude")`).
+* `SecretColors.image.extract_palette()` generates a color palette from an
+  image (needs `pip install "SecretColors[image]"`).
+* CIE-L\*a\*b\* support: `xyz_to_lab`, `lab_to_xyz`, `rgb_to_lab`,
+  `lab_to_rgb`, `hex_to_lab`, `lab_to_hex`, `lab_to_lch`, `lch_to_lab`.
+* `delta_e()` measures perceptual color difference (CIEDE2000 or CIE76).
+* `rgb_to_xyz` / `xyz_to_rgb` accept `space=` for all 16 supported RGB
+  colorspaces (e.g. `pro_photo`, `wide_gamut`, `apple`). `rgb_spaces()`
+  lists them. Unknown colorspace or white reference raises `ValueError`
+  (earlier `AttributeError`).
+* `distinct_colors(n)` picks colors which stay distinct for normal vision,
+  protanopia and deuteranopia and have enough contrast with the background.
+  `check_colors()` reports how distinct any set of colors is.
+* `Palette.cycle()` yields colorblind-safe distinct colors in the same order
+  as `distinct_colors()`, so it can be used directly in loops. Earlier
+  sequence had red next to green and low contrast yellow. New `background`
+  and `colorblind_safe` arguments.
+* WCAG accessibility: `contrast_ratio()` and `is_readable()`.
+  `relative_luminance()` accepts RGB tuples as well.
+* Perceptual mixing: `mix()`, and `space="lab"` / `"lch"` option in
+  `color_in_between()`, `ColorString.blend()`, `cmaps.colors()` and
+  `cmaps.cmap()` for smoother gradients. `blend()` accepts `ratio`.
+* Colors, lists of colors, palettes and `ColorWheel` show swatches in Jupyter
+  notebooks. Functions returning several colors return `ColorList`, a
+  regular `list` subclass. `ColorWheel.color` returns `ColorString`.
+### New colormap API
+* `SecretColors.cmaps.register()` registers every colormap (and its
+  reversed `_r` version) in matplotlib with `sc.` prefix. Use them by name
+  anywhere matplotlib colormap names are accepted, e.g.
+  `plt.imshow(data, cmap="sc.greens")`.
+* `SecretColors.cmaps.cmap(name, ...)` returns matplotlib colormap object
+  directly. matplotlib is imported automatically, no need to pass it.
+* `SecretColors.cmaps.colors(name, ...)` returns plain hex colors which can
+  be used with any library (plotly, bokeh, altair, seaborn, CSS). It does not
+  need matplotlib.
+* `SecretColors.cmaps.available()` lists all colormap names.
+* Colorblind safe colormaps (Okabe-Ito `cud` and Paul Tol's schemes) are
+  now accessible.
+* Diverging and sequential colormaps can be interpolated to any number of
+  colors and cropped with `start` / `end`.
+* `ColorMap`, `BrewerMap` and `TableauMap` work as before. Passing
+  `matplotlib` to them is optional now.
+### Bug fixes
+* Fixed invalid color in Paul Tol's `tol_bu_rd` colormap.
+* `hexa` / `ahex` color modes now encode alpha on the 0-255 scale. Earlier,
+  fully opaque colors were written as `64` (~39% opacity) instead of `ff`.
+* `Palette.random()` no longer crashes when more colors are requested than
+  the number of standard shades available.
+* Iterating over a `Palette` (`for c in Palette()`) works.
+* `Palette.random_gradient()` no longer randomly raises `IndexError`.
+* `shade=0` is respected instead of being treated as "not provided".
+* Fixed sRGB gamma transform (`apply_gamma_transform`).
+* `hsv_to_rgb` accepts hue value of 1.
+* `cmy_to_cmyk(1, 1, 1)` returns pure black instead of raising
+  `ZeroDivisionError`.
+* `relative_luminance` / `text_color` accept 8-character hex codes.
+* `xyz_to_rgb` / `xyz_to_adobe_rgb` accept XYZ values greater than 1, and
+  `rgb_to_xyz` / `adobe_rgb_to_xyz` no longer clip XYZ values at 1.
+* `simulate_red_blindness` / `simulate_green_blindness` now follow the
+  published formula.
+* `ColorWheel.rotate_saturation` / `rotate_lightness` clamp between 0-100%
+  instead of wrapping (e.g. white no longer turns black).
+* `ColorMap.random_divergent()` respects `is_qualitative` and `is_reversed`.
+* `BrewerMap` and `TableauMap` accept `log` and `seed` arguments like
+  `ColorMap`.
+### Behaviour changes
+* Unknown palette names raise `ValueError` instead of silently falling back
+  to IBM palette.
+* `ColorString` / `ColorTuple` no longer override `+`. Normal string / tuple
+  concatenation works again. Use `ColorString.blend(other)` to mix colors.
+* Looking up colors from other palettes or named colors (e.g. `Palette.get
+  ("amber")`) no longer adds them to `Palette.colors`, `get_color_list` or
+  the pool used by `Palette.random()`.
+* `seed` in `Palette` and `ColorMap` uses a private random generator; global
+  `random` state is not modified anymore.
+* Logging uses the `SecretColors` logger, attaches handlers only once and no
+  longer changes global `warnings` filters.
+* ColorMap errors raise `ValueError` instead of bare `Exception`.
+* `rgb_to_srgb` / `srgb_to_rgb` are deprecated in favour of correctly named
+  `srgb_to_linear` / `linear_to_srgb`.
+* `Palette.get_color_dict` / `Palette.get_color_list` are deprecated in
+  favour of `Palette.color_dict` / `Palette.color_list`.
+* Removed `Palette.color_between` (deprecated since v1.2.0, use
+  `SecretColors.utils.color_in_between`) and `Palette.cmap_from` (deprecated
+  since v1.2.0, use `ColorMap.from_list`).
+### Packaging
+* Moved to `pyproject.toml` (hatchling) and [uv](https://docs.astral.sh/uv/).
+  `setup.py` and `requirements*.txt` are removed.
+* Requires Python 3.10+. Tested on Python 3.10 - 3.14.
+* Optional extras: `pip install "SecretColors[matplotlib]"` (colormap
+  objects), `"SecretColors[image]"` (palettes from images) or
+  `"SecretColors[all]"` (everything). The core library has no dependencies.
+* `SecretColors.__version__` is available.
+* New documentation with user guide, palette and colormap galleries, upgrade
+  guide and light / dark theme: https://secretcolors.readthedocs.io
+## v1.2.6
 Removed dependency on `numpy` (Thanks to [ri0t](https://github.com/ri0t))
-# v1.2.5
+## v1.2.5
 New Color Palette `material-accent` which supports accent colors of Google 
 Material Design Color Palette.
-# v1.2.3
+## v1.2.3
 Added new method to `Palette` class. `Palette.cycle()` will return a 
 generator to produce infinite color cycle. Read documentation for 
 further 
 details. 
-# v1.2.2
+## v1.2.2
 Fixed bug where `Palette.random()` raising error if `no_of_colors` 
 parameter is greater than one.
-# v1.2.1
+## v1.2.1
 Removed the restrictions from `numpy` version [ see [Issue](https://github.com/secretBiology/SecretColors/issues/4) ]
-# v1.2.0
+## v1.2.0
 This is one of the major updates since the conception of this project. Many
  changes are essential for robust functionality and proper code maintenance
  . This

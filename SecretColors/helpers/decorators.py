@@ -22,18 +22,11 @@ def deprecated(message: str = None):
     def decorator(function):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
-            warnings.simplefilter('always',
-                                  DeprecationWarning)  # turn off filter
-
             m = "'{}' is deprecated. ".format(function.__name__)
             if message is not None:
                 m += str(message)
 
             warnings.warn(m, category=DeprecationWarning, stacklevel=2)
-
-            warnings.simplefilter('default',
-                                  DeprecationWarning)  # reset filter
-
             return function(*args, **kwargs)
 
         return wrapper
@@ -91,12 +84,11 @@ def _sample_cmap(self, *, no_of_colors: int = None,
     method to achieve the same result.
 
     ..  code-block:: python
-        :emphasize-lines: 4
+        :emphasize-lines: 3
 
         from SecretColors.cmaps import SECRETMAP
-        import matplotlib
-        cm = SECRETMAP(matplotlib)
-        plt.imshow(data, cm=cm.METHOD_NAME()) # Or cm.get('SNAME')
+        cm = SECRETMAP()
+        plt.imshow(data, cmap=cm.METHOD_NAME()) # Or cm.get('SNAME')
         plt.show()
 
     :param no_of_colors: No of colors

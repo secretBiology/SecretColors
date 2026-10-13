@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "SecretColors"
+version = "2.0.0"
+description = "A small package for fantastic color palette"
+readme = "PYPI.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Rohit Suratekar", email = "rohitsuratekar@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = []
+keywords = ["color", "palette", "colormap", "matplotlib", "visualization"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+
+[project.optional-dependencies]
+matplotlib = ["matplotlib>=3.10"]
+image = ["pillow>=11.0"]
+all = ["matplotlib>=3.10", "pillow>=11.0"]
+
+[project.urls]
+Homepage = "https://github.com/secretBiology/SecretColors"
+Documentation = "https://secretcolors.readthedocs.io"
+Changelog = "https://github.com/secretBiology/SecretColors/blob/master/CHANGELOG.md"
+Issues = "https://github.com/secretBiology/SecretColors/issues"
+
+[dependency-groups]
+test = ["pytest>=9.0", "pytest-cov>=7.0", "matplotlib>=3.10", "pillow>=11.0"]
+docs = ["sphinx>=8.1", "furo>=2025.0", "myst-parser>=4.0", "sphinx-copybutton>=0.5.2", "sphinx-design>=0.6"]
+dev = [{ include-group = "test" }, "tox>=4.65", "tox-uv>=1.36"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["SecretColors"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "SecretColors",
+    "test",
+    "README.md",
+    "PYPI.md",
+    "CHANGELOG.md",
+    "LICENSE",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+addopts = "-ra"

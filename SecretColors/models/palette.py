@@ -7,24 +7,28 @@
 #  Main palette class
 
 import random
-from typing import Dict, List
+from typing import Dict, Optional
 
 from SecretColors.data.constants import *
 from SecretColors.data.names.w3 import W3_DATA
 from SecretColors.data.names.x11 import X11_DATA
 from SecretColors.data.palettes import (IBMPalette, MaterialPalette, MaterialAccentPalette,
                                         ClarityPalette, ColorBrewer,
-                                        ParentPalette, TableauPalette)
+                                        ParentPalette, TableauPalette,
+                                        SpectrumPalette, LatitudePalette)
 from SecretColors.helpers.decorators import deprecated, color_docs
 from SecretColors.helpers.logging import Log
 from SecretColors.models.base import Color
-from SecretColors.models.objects import ColorString, ColorTuple
+from SecretColors.models.objects import (ColorList, ColorString,
+                                         ColorTuple, _swatch_html)
 from SecretColors.utils import get_complementary, color_in_between
 
 
 def _get_palette(name: str) -> ParentPalette:
     name = name.strip().lower()
-    if name == PALETTE_MATERIAL:
+    if name == PALETTE_IBM:
+        return IBMPalette()
+    elif name == PALETTE_MATERIAL:
         return MaterialPalette()
     elif name == PALETTE_MATERIAL_ACCENT:
         return MaterialAccentPalette()
@@ -34,8 +38,12 @@ def _get_palette(name: str) -> ParentPalette:
         return ColorBrewer()
     elif name == PALETTE_TABLEAU:
         return TableauPalette()
-    else:
-        return IBMPalette()
+    elif name == PALETTE_SPECTRUM:
+        return SpectrumPalette()
+    elif name == PALETTE_LATITUDE:
+        return LatitudePalette()
+    raise ValueError(f"Unknown palette '{name}'. Currently available "
+                     f"palettes: {ALL_PALETTES}")
 
 
 def _validate_object(obj, cls, item_name):
@@ -81,6 +89,8 @@ class Palette:
     * **brewer** - ColorBrewer Color Palette
     * **clarity** - VMWare Clarity Palette
     * **tableau** - Tableau Color Palette
+    * **spectrum** - Adobe Spectrum Color Palette
+    * **latitude** - Flexport Latitude Color Palette
 
     .. code-block:: python
         :emphasize-lines: 2, 5
@@ -88,7 +98,7 @@ class Palette:
         from SecretColors import Palette
         p = Palette() # Generates Default color palette i.e. IBM Color Palette
         ibm = Palette("ibm") # Generates IBM Palette
-        ibm.red() # Returns '#fb4b53'
+        ibm.red() # Returns '#fa4d56'
         material = Palette("material") # Generates Material Palette
         material.red() # Returns '#f44336'
 
@@ -112,7 +122,7 @@ class Palette:
         p4 = Palette(color_mode="rgb")
         p4.green() # (0.141, 0.631, 0.282)
         p5 = Palette(color_mode="rgba")
-        p5.green() # '(0.141, 0.282, 0.631, 1)'
+        p5.green() # (0.141, 0.631, 0.282, 1)
 
     Note: *matplotlib* can accepts "hex", "rgb" or "hexa"
 
@@ -133,7 +143,8 @@ class Palette:
         :type color_mode: str
         :param show_warning: If True, log will be shown. (default: False)
         :type show_warning: bool
-        :param seed: Seed for Numpy random number generator
+        :param seed: Seed for the random number generator of this palette.
+            Global :mod:`random` state is never modified.
         :param log: Log Object
         :param kwargs: Other Arguments (useful if you are subclassing)
         """
@@ -148,6 +159,9 @@ class Palette:
             _validate_object(log, Log, "log")
 
         self.log = log
+        if self._palette_name not in ALL_PALETTES:
+            self.log.error(f"Unknown palette '{name}'. Currently available "
+                           f"palettes: {ALL_PALETTES}", exception=ValueError)
         self.color_mode = color_mode.strip().lower()
         if self.color_mode not in ALL_COLOR_MODES:
             self.log.error(f"Unknown color_mode '{color_mode}'. Currently "
@@ -159,13 +173,20 @@ class Palette:
         self.log.info(f"New '{name}' palette is initialized successfully.")
         self._palette = None
         self._colors = None
+        self._additional = None
         self._seed = seed
-        if self._seed:
+        self._rng = random.Random(seed)
+        if seed is not None:
             self.log.info(f"Random seed set for : {seed}")
-            random.seed(self._seed)
 
     def __str__(self):
         return f"Palette({self.name})"
+
+    def _repr_html_(self) -> str:
+        colors = {name: color.get() for name, color in self.colors.items()}
+        return (f"<b>{self}</b>" +
+                _swatch_html(list(colors.values()),
+                             [f"{n} {c}" for n, c in colors.items()]))
 
     @property
     def _value(self) -> ParentPalette:
@@ -198,106 +219,76 @@ class Palette:
         return self._value.get_creator_url()
 
     @property
-    def get_color_dict(self) -> dict:
+    def color_dict(self) -> dict:
         """ Returns dictionary of color names and their respective default
         shades
         """
-        d = {}
-        for x in self.colors.values():
-            d[x.name] = self._send(x.get())
-        return d
+        return {x.name: self._send(x.get()) for x in self.colors.values()}
 
     @property
-    def get_color_list(self) -> list:
+    def color_list(self) -> list:
         """Returns list of all colors with their default shade
         """
-        return [self._send(x.get()) for x in self.colors.values()]
+        return ColorList(self._send(x.get()) for x in self.colors.values())
 
-    def cycle(self, version: int = 1, skip_first: int = 0):
+    @property
+    @deprecated("Use 'color_dict' instead.")
+    def get_color_dict(self) -> dict:
+        """Deprecated alias of :attr:`color_dict`"""
+        return self.color_dict
+
+    @property
+    @deprecated("Use 'color_list' instead.")
+    def get_color_list(self) -> list:
+        """Deprecated alias of :attr:`color_list`"""
+        return self.color_list
+
+    def cycle(self, version: int = 1, skip_first: int = 0, *,
+              background: str = "#ffffff", colorblind_safe: bool = True):
         """
-        Creates infinite color cycle
-
-        Inspiration is taken from : https://tsitsul.in/blog/coloropt/
+        Creates an infinite cycle of distinct colors from the current
+        palette. Use it when you do not know in advance how many colors you
+        need.
 
         >>> color_cycle = Palette().cycle()
-        >>> next(color_cycle) # First Color
-        >>> next(color_cycle) # Next Color
+        >>> next(color_cycle)       # '#8a3ffc'
+        >>> next(color_cycle)       # '#b3901f'
 
-        This will go infinitely. After few colors it will start repeating.
-        You can get qualitative colors like following
+        >>> for color, data in zip(Palette().cycle(), datasets):
+        ...     plt.plot(data, color=color)
 
-        >>> my_colors = [next(color_cycle) for x in range(10)] # Ten colors
-
-        You may use in the for loop. However, be careful. It is infinite
-        cycle. You need to break the loop by yourself.
+        Colors come in the same order as
+        :func:`~SecretColors.distinct_colors`: each next color is the one
+        most distinct from the colors before it, also for colorblind readers,
+        and has enough contrast with the background. When all colors of the
+        palette are used, the cycle starts again from the first color.
 
         ..  danger::
-            This method creates inifinite number of colors. Be careful while using it in the loop
+            The cycle never ends. Use it with ``zip``, ``islice`` or break
+            the loop yourself.
 
-        :param skip_first: number of colors to be skipped from start. Only
-        works for first 18 colors.
-        :param version: color sequence version
+        :param version: Kept for backward compatibility. It has no effect.
+        :param skip_first: Number of colors to skip from the start
+        :param background: Background color of the plot (default: white).
+            Use e.g. '#161616' for dark themes.
+        :param colorblind_safe: If True (default), colors are kept apart for
+            people with red or green colorblindness
         """
-        selected = [self.red(),
-                    self.blue(),
-                    self.yellow(shade=30),
-                    self.green(),
-                    self.teal(shade=40),
-                    self.magenta(),
-                    self.orange(shade=30),
-                    self.red(shade=30),
-                    self.indigo(),
-                    self.cyan(shade=30),
-                    self.brown(shade=30),
-                    self.green(shade=30),
-                    self.gray(shade=40),
-                    self.amber(shade=30),
-                    self.aqua(shade=40),
-                    self.red_orange(shade=40),
-                    self.cerulean(shade=40),
-                    self.green_light()
-                    ]
+        from SecretColors.selection import _distinct_order
 
-        if skip_first < len(selected):
-            for i in range(skip_first):
-                selected.pop(0)
-
-        # First default colors
-        for c in selected:
-            yield c
-
-        # Define colors
-        objs = [self.yellow, self.red, self.blue, self.green, self.teal,
-                self.magenta, self.orange, self.red, self.indigo, self.cyan,
-                self.brown, self.green, self.gray, self.amber, self.aqua,
-                self.red_orange, self.cerulean, self.green_light]
-        start_shade = 40
-
-        # Start infinite
-        initial_offset = 0
+        order = _distinct_order(self.name, bool(colorblind_safe), background,
+                                3.0, (40, 70), False)
+        if not order:
+            self.log.error(f"No colors of '{self.name}' palette have enough "
+                           f"contrast with background '{background}'",
+                           exception=ValueError)
+        index = max(0, int(skip_first))
         while True:
-            for c in objs:
-                if c(shade=start_shade) not in selected:
-                    yield c(shade=start_shade)
-                    selected.append(c(shade=start_shade))
-            start_shade += 5
-            if start_shade > 100:
-                start_shade = initial_offset + 10
-                initial_offset += 1
-                if initial_offset > 80:
-                    initial_offset = 0
-                    selected = []
+            yield self._send(ColorString(order[index % len(order)]))
+            index += 1
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
-        self.__iter_index += 1
-        try:
-            return self.get_color_list[self.__iter_index - 1]
-        except IndexError:
-            self.__iter_index = 0
-            raise StopIteration
+        return iter(self.color_list)
 
     @property
     def seed(self):
@@ -307,12 +298,12 @@ class Palette:
     @seed.setter
     def seed(self, value):
         """
-        Set seed for Numpy random number generator
+        Set seed for the random number generator of this palette
 
         :param value: Seed value
         """
         self._seed = value
-        random.seed(value)
+        self._rng.seed(value)
         self.log.info(f"Random seed set for : {value}")
 
     @property
@@ -331,16 +322,6 @@ class Palette:
             self.log.info(f"All colors from '{self.name}' palette generated")
         return self._colors
 
-    @deprecated(
-        "This function is deprecated in favour of 'color_in_between from "
-        "SecretColors.utils'")
-    def color_between(self, *args, **kwargs):
-        self.log.deprecated("Deprecated function")
-        self.log.error("Sorry! This function is removed from the Palette "
-                       "Class in favour of "
-                       "'color_in_between from SecretColors.utils'",
-                       exception=AttributeError)
-
     def _convert(self, value: ColorString, alpha=None):
         if alpha is not None:
             if alpha < 0 or alpha > 1:
@@ -356,7 +337,7 @@ class Palette:
         elif self.color_mode == MODE_RGB:
             return ColorTuple(value.rgb)
         elif self.color_mode == MODE_HEX_A or self.color_mode == MODE_AHEX:
-            a = int(round(value.alpha * 100))
+            a = int(round(value.alpha * 255))
             if self.color_mode == MODE_HEX_A:
                 n = "{}{:02x}".format(value.hex, a)
             else:
@@ -385,67 +366,56 @@ class Palette:
                 print(c1)
             return c1
         else:
-            c2 = [self._convert(x, alpha=alpha) for x in colors]
+            c2 = ColorList(self._convert(x, alpha=alpha) for x in colors)
             if pc:
                 print(c2)
             return c2
 
-    def _generate_additional_colors(self):
-        # First get names of all available colors
-        previous = len(self.colors.keys())
-        for p in [_get_palette(x) for x in ALL_PALETTES]:
-            for c, v in p.get_all_colors().items():
-                if c not in self.colors.keys():
+    @property
+    def _additional_colors(self) -> Dict[str, Color]:
+        if self._additional is None:
+            additional = {}
+            for p in [_get_palette(x) for x in ALL_PALETTES if x != self.name]:
+                for c, v in p.get_all_colors().items():
+                    if c in self.colors or c in additional:
+                        continue
                     cr = Color(c, v, p.get_shades())
                     cr.default = p.get_core_shade()
-                    self._colors[c] = cr
-                    self.log.info(
-                        f"Color '{c}' extracted from '{p.get_palette_name()}'")
+                    additional[c] = cr
+            self._additional = additional
+            self.log.info(f"{len(additional)} colors from other palettes "
+                          f"are available for lookup")
+        return self._additional
 
-        self.log.info(f"Total of {len(self.colors) - previous} new colors "
-                      f"added to the current color list")
+    def _find(self, name: str) -> Optional[Color]:
+        key = name.strip().lower()
+        candidates = [key]
+        if key in SYNONYM:
+            candidates.append(SYNONYM[key])
+        for c in candidates:
+            if c in self.colors:
+                return self.colors[c]
+            if c in self._additional_colors:
+                self.log.warn(f"Color '{c}' is not available in "
+                              f"'{self.name}' palette. Using it from other "
+                              f"palettes.")
+                return self._additional_colors[c]
+        return None
 
     def _extract(self, name: str) -> Color:
-        name = name.strip()
-        if name not in self.colors.keys():
-            self.log.warn(f"Color '{name}' not found in current palette. "
-                          f"Checking if it is present in other available "
-                          f"palettes.")
-            self._generate_additional_colors()
-
-        if name not in self.colors.keys():
-            if name in SYNONYM.keys():
-                self.log.info(f"{SYNONYM[name]} is used instead {name}")
-                return self.colors[SYNONYM[name]]
-
-        # If color is still not present, then it is an error
-        if name not in self.colors.keys():
+        color = self._find(name)
+        if color is None:
             self.log.error(f"Unable to find '{name}'. Please check "
                            f"spelling error. Currently available colors: "
                            f"{list(self.colors.keys())}", exception=KeyError)
+        return color
 
-        return self.colors[name]
-
-    def _extract_color_list(self, name, no_of_colors: int, *,
-                            starting_shade: float = None,
-                            ending_shade: float = None,
-                            reverse: bool = False,
-                            **kwargs) -> List[ColorString]:
-
-        # If staring and ending shades are not provided, take the ones
-        # present in the default shades
-
+    def _shade_range(self, starting_shade, ending_shade):
         if starting_shade is None:
             starting_shade = min(self._value.get_shades())
         if ending_shade is None:
             ending_shade = max(self._value.get_shades())
-
-        shades = list(_linspace(starting_shade, ending_shade, no_of_colors))
-
-        if reverse:
-            shades = reversed(shades)
-
-        return [self._extract(name).shade(s) for s in shades]
+        return starting_shade, ending_shade
 
     def random(self, no_of_colors: int = 1, *,
                shade: float = None,
@@ -505,68 +475,46 @@ class Palette:
         _param_deprecation(self.log, "ignore_gray", **kwargs)
         _param_deprecation(self.log, "force_gray", **kwargs)
 
+        if no_of_colors < 1:
+            self.log.error("'no_of_colors' should be at least 1",
+                           exception=ValueError)
         if seed is not None:
             self.seed = seed
         if avoid is None:
             avoid = ["white", "black"]
 
-        use_only_shade = True
-        if shade is not None and starting_shade is not None:
-            use_only_shade = False
-        if shade is not None and ending_shade is not None:
-            use_only_shade = False
+        accepted_colors = [x for x in self.colors.values()
+                           if x.name not in avoid]
+        if len(accepted_colors) == 0:
+            self.log.error("No colors left to choose from after applying "
+                           "'avoid'", exception=ValueError)
+        colors = [self._rng.choice(accepted_colors)
+                  for _ in range(no_of_colors)]
 
-        if starting_shade is None:
-            starting_shade = min(self._value.get_shades())
-        if ending_shade is None:
-            ending_shade = max(self._value.get_shades())
-
-        # remove the restricted colors provided by 'avoid'
-        accepted_colors = []
-        for x in self.colors.values():
-            if x.name not in avoid:
-                accepted_colors.append(x)
-        # Select random colors
-        colors = []
-        for i in range(no_of_colors):
-            colors.append(random.choice(accepted_colors))
-        # If shade is specified, directly return the selected colors
-        if shade is not None:
-            if no_of_colors == 1 and not force_list:
-                return self._send(colors[0].shade(shade), alpha=alpha,
-                                  print_colors=print_colors)
-            return self._send([x.shade(shade) for x in colors], alpha=alpha,
-                              print_colors=print_colors)
-
-        # Select the shade
-
-        # First check if we can return one of the standard shade.
-        # This will provide proper palette shade and will also reduce the
-        # computation time of all conversion
-
-        possible_shades = [x for x in self._value.get_shades() if
-                           starting_shade <= x <= ending_shade]
-        shades = []
-        if no_of_colors <= len(possible_shades):
-            for i in range(no_of_colors):
-                shades.append(random.choice(possible_shades))
+        range_given = starting_shade is not None or ending_shade is not None
+        if shade is not None and not (no_of_colors > 1 and range_given):
+            shades = [shade] * no_of_colors
         else:
-            for i in range(no_of_colors):
-                shades = random.randint(starting_shade, ending_shade)
-        # If gradient is true, sort the shades
-        if gradient:
-            shades = list(sorted(shades))
-        if reverse:
-            shades = list(reversed(shades))
+            low, high = sorted(self._shade_range(starting_shade,
+                                                 ending_shade))
+            # Prefer the palette's own shades when there are enough of them
+            possible_shades = [x for x in self._value.get_shades()
+                               if low <= x <= high]
+            if no_of_colors <= len(possible_shades):
+                shades = [self._rng.choice(possible_shades)
+                          for _ in range(no_of_colors)]
+            else:
+                shades = [self._rng.uniform(low, high)
+                          for _ in range(no_of_colors)]
+            if gradient:
+                shades = sorted(shades)
+            if reverse:
+                shades = list(reversed(shades))
 
-        if use_only_shade and shade is not None:
-            shades = [shade for _ in range(len(shades))]
-
+        result = [c.shade(s) for c, s in zip(colors, shades)]
         if no_of_colors == 1 and not force_list:
-            return self._send(colors[0].shade(shades[0]), alpha=alpha,
-                              print_colors=print_colors)
-        return self._send([x[0].shade(x[1]) for x in zip(colors, shades)],
-                          alpha=alpha, print_colors=print_colors)
+            result = result[0]
+        return self._send(result, alpha=alpha, print_colors=print_colors)
 
     def random_balanced(self, no_of_colors: int = 1):
         """
@@ -606,9 +554,8 @@ class Palette:
 
         _param_deprecation(self.log, "ignore_gray", **kwargs)
 
-        colors = set()
-        colors.add(random.choice(list(self.colors.values())))
-        colors.add(random.choice(list(self.colors.values())))
+        pool = list(self.colors.values())
+        colors = self._rng.sample(pool, 2) if len(pool) > 1 else pool * 2
         if shade is None:
             shade = self._value.get_core_shade()
         colors = [x.shade(shade) for x in colors]
@@ -626,50 +573,29 @@ class Palette:
         mid_colors.append(colors[1])
         return self._send(mid_colors, alpha=alpha, print_colors=print_colors)
 
-    @staticmethod
-    @deprecated("This method will be removed from Palette class in future. "
-                "Please use ColorMap class for this purpose")
-    def cmap_from(matplotlib, hex_color_list: list):
-        """Creates custom cmap from given hex_color list.
-        Use :class:`~ColorMap` for more refined control. Color inputs should
-        be HEX format.
+    def _common_color(self, name, **options):
+        return self._render(self._extract(name), **options)
 
-        :param matplotlib: matplotlib object (https://matplotlib.org/)
-        :param hex_color_list: List of colors in Hex format
-        :return: *LinearSegmentedColormap* segment which can be used with
-            *matplotlib* plots.
-        """
-        if type(hex_color_list) is not list:
-            raise Exception("Please provide list of colors")
-        try:
-            return matplotlib.colors.LinearSegmentedColormap.from_list(
-                "cMap_secret_colors", hex_color_list)
-        except AttributeError:
-            raise Exception("Add 'matplotlib' as a first argument. For "
-                            "example, import matplotlib; palette.cmap_from("
-                            "matplotlib, "
-                            "palette.red());")
+    def _render(self, color: Color, *, shade: float = None,
+                no_of_colors: int = 1, gradient: bool = True,
+                alpha: float = None, starting_shade: float = None,
+                ending_shade: float = None):
+        if no_of_colors < 1:
+            self.log.error("'no_of_colors' should be at least 1",
+                           exception=ValueError)
+        if no_of_colors == 1:
+            if shade is None:
+                shade = color.default
+            return self._send(color.shade(shade), alpha=alpha)
 
-    def _common_color(self, name, kwargs):
-        del kwargs["self"]
-        color = self._extract(name)
-        if kwargs["no_of_colors"] > 1:
-            if kwargs["gradient"]:
-                colors = self._extract_color_list(name, **kwargs)
-            else:
-                shades = []
-                for i in range(int(kwargs["no_of_colors"])):
-                    shades.append(random.randint(
-                        self._value.get_shades()[-1],
-                        self._value.get_shades()[0]
-                    ))
-                colors = [color.shade(x) for x in shades]
-            return self._send(colors, **kwargs)
+        low, high = self._shade_range(starting_shade, ending_shade)
+        if gradient:
+            shades = list(_linspace(low, high, int(no_of_colors)))
         else:
-            shade = color.default
-            if kwargs["shade"]:
-                shade = kwargs["shade"]
-            return self._send(color.shade(shade), **kwargs)
+            low, high = sorted((low, high))
+            shades = [self._rng.uniform(low, high)
+                      for _ in range(int(no_of_colors))]
+        return self._send([color.shade(s) for s in shades], alpha=alpha)
 
     def _named_color(self, name: str, system: str, strict: bool):
         both = [W3_DATA, X11_DATA]
@@ -688,7 +614,8 @@ class Palette:
                            f"available naming datasets. Please check "
                            f"spelling mistake. This search is case sensitive"
                            f" if 'strict_search' option is enabled.")
-        return Color(name, [self.white(), data[name], self.black()],
+        return Color(name, [self._extract("white").get(), data[name],
+                            self._extract("black").get()],
                      [0, 50, 100])
 
     def get(self, color_name: str, *,
@@ -775,243 +702,329 @@ class Palette:
             raise ValueError("Currently only two naming systems are "
                              "supported: 'w3' and 'x11'")
 
-        try:
-            if strict_search:
-                raise KeyError()
-            if color_name not in self.colors:
-                self._generate_additional_colors()
-            if color_name not in self.colors:
-                if color_name in SYNONYM.keys():
-                    color_name = SYNONYM[color_name]
-                else:
-                    raise KeyError()
-            color = self._extract(color_name.lower().strip())
-            self.log.warn(f"Color {color_name} is not available in current "
-                          f"palette, searching in named list")
-        except KeyError:
-            color = self._named_color(color_name,
+        color = None if strict_search else self._find(color_name)
+        if color is None:
+            color = self._named_color(color_name.strip(),
                                       naming.strip().lower(), strict_search)
-            self._colors[color.name] = color
 
-        return self._common_color(color.name, locals())
+        return self._render(color, shade=shade, no_of_colors=no_of_colors,
+                            gradient=gradient, alpha=alpha,
+                            starting_shade=starting_shade,
+                            ending_shade=ending_shade)
 
     @color_docs
     def red(self, *, shade: float = None, no_of_colors: int = 1,
             gradient=True, alpha: float = None, starting_shade: float = None,
             ending_shade: float = None):
-        return self._common_color("red", locals())
+        return self._common_color("red", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def blue(self, *, shade: float = None, no_of_colors: int = 1,
              gradient=True, alpha: float = None, starting_shade: float = None,
              ending_shade: float = None):
-        return self._common_color("blue", locals())
+        return self._common_color("blue", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def green(self, *, shade: float = None, no_of_colors: int = 1,
               gradient=True, alpha: float = None, starting_shade: float = None,
               ending_shade: float = None):
-        return self._common_color("green", locals())
+        return self._common_color("green", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def magenta(self, *, shade: float = None, no_of_colors: int = 1,
                 gradient=True, alpha: float = None,
                 starting_shade: float = None,
                 ending_shade: float = None):
-        return self._common_color("magenta", locals())
+        return self._common_color("magenta", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def purple(self, *, shade: float = None, no_of_colors: int = 1,
                gradient=True, alpha: float = None,
                starting_shade: float = None,
                ending_shade: float = None):
-        return self._common_color("purple", locals())
+        return self._common_color("purple", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def cyan(self, *, shade: float = None, no_of_colors: int = 1,
              gradient=True, alpha: float = None,
              starting_shade: float = None,
              ending_shade: float = None):
-        return self._common_color("cyan", locals())
+        return self._common_color("cyan", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def teal(self, *, shade: float = None, no_of_colors: int = 1,
              gradient=True, alpha: float = None,
              starting_shade: float = None,
              ending_shade: float = None):
-        return self._common_color("teal", locals())
+        return self._common_color("teal", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def gray_cool(self, *, shade: float = None, no_of_colors: int = 1,
                   gradient=True, alpha: float = None,
                   starting_shade: float = None,
                   ending_shade: float = None):
-        return self._common_color("cool-gray", locals())
+        return self._common_color("cool-gray", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def gray_neutral(self, *, shade: float = None, no_of_colors: int = 1,
                      gradient=True, alpha: float = None,
                      starting_shade: float = None,
                      ending_shade: float = None):
-        return self._common_color("neutral-gray", locals())
+        return self._common_color("neutral-gray", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def gray(self, *, shade: float = None, no_of_colors: int = 1,
              gradient=True, alpha: float = None,
              starting_shade: float = None,
              ending_shade: float = None):
-        return self._common_color("gray", locals())
+        return self._common_color("gray", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def gray_warm(self, *, shade: float = None, no_of_colors: int = 1,
                   gradient=True, alpha: float = None,
                   starting_shade: float = None,
                   ending_shade: float = None):
-        return self._common_color("warm-gray", locals())
+        return self._common_color("warm-gray", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def red_orange(self, *, shade: float = None, no_of_colors: int = 1,
                    gradient=True, alpha: float = None,
                    starting_shade: float = None,
                    ending_shade: float = None):
-        return self._common_color("red-orange", locals())
+        return self._common_color("red-orange", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def black(self, *, shade: float = None, no_of_colors: int = 1,
               gradient=True, alpha: float = None,
               starting_shade: float = None,
               ending_shade: float = None):
-        return self._common_color("black", locals())
+        return self._common_color("black", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def white(self, *, shade: float = None, no_of_colors: int = 1,
               gradient=True, alpha: float = None,
               starting_shade: float = None,
               ending_shade: float = None):
-        return self._common_color("white", locals())
+        return self._common_color("white", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def ultramarine(self, *, shade: float = None, no_of_colors: int = 1,
                     gradient=True, alpha: float = None,
                     starting_shade: float = None,
                     ending_shade: float = None):
-        return self._common_color("ultramarine", locals())
+        return self._common_color("ultramarine", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def cerulean(self, *, shade: float = None, no_of_colors: int = 1,
                  gradient=True, alpha: float = None,
                  starting_shade: float = None,
                  ending_shade: float = None):
-        return self._common_color("cerulean", locals())
+        return self._common_color("cerulean", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def aqua(self, *, shade: float = None, no_of_colors: int = 1,
              gradient=True, alpha: float = None,
              starting_shade: float = None,
              ending_shade: float = None):
-        return self._common_color("aqua", locals())
+        return self._common_color("aqua", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def lime(self, *, shade: float = None, no_of_colors: int = 1,
              gradient=True, alpha: float = None,
              starting_shade: float = None,
              ending_shade: float = None):
-        return self._common_color("lime", locals())
+        return self._common_color("lime", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def yellow(self, *, shade: float = None, no_of_colors: int = 1,
                gradient=True, alpha: float = None,
                starting_shade: float = None,
                ending_shade: float = None):
-        return self._common_color("yellow", locals())
+        return self._common_color("yellow", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def gold(self, *, shade: float = None, no_of_colors: int = 1,
              gradient=True, alpha: float = None,
              starting_shade: float = None,
              ending_shade: float = None):
-        return self._common_color("gold", locals())
+        return self._common_color("gold", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def orange(self, *, shade: float = None, no_of_colors: int = 1,
                gradient=True, alpha: float = None,
                starting_shade: float = None,
                ending_shade: float = None):
-        return self._common_color("orange", locals())
+        return self._common_color("orange", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def peach(self, *, shade: float = None, no_of_colors: int = 1,
               gradient=True, alpha: float = None,
               starting_shade: float = None,
               ending_shade: float = None):
-        return self._common_color("peach", locals())
+        return self._common_color("peach", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def violet(self, *, shade: float = None, no_of_colors: int = 1,
                gradient=True, alpha: float = None,
                starting_shade: float = None,
                ending_shade: float = None):
-        return self._common_color("violet", locals())
+        return self._common_color("violet", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def indigo(self, *, shade: float = None, no_of_colors: int = 1,
                gradient=True, alpha: float = None,
                starting_shade: float = None,
                ending_shade: float = None):
-        return self._common_color("indigo", locals())
+        return self._common_color("indigo", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def pink(self, *, shade: float = None, no_of_colors: int = 1,
              gradient=True, alpha: float = None,
              starting_shade: float = None,
              ending_shade: float = None):
-        return self._common_color("pink", locals())
+        return self._common_color("pink", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def purple_deep(self, *, shade: float = None, no_of_colors: int = 1,
                     gradient=True, alpha: float = None,
                     starting_shade: float = None,
                     ending_shade: float = None):
-        return self._common_color("deep-purple", locals())
+        return self._common_color("deep-purple", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def blue_light(self, *, shade: float = None, no_of_colors: int = 1,
                    gradient=True, alpha: float = None,
                    starting_shade: float = None,
                    ending_shade: float = None):
-        return self._common_color("light-blue", locals())
+        return self._common_color("light-blue", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def green_light(self, *, shade: float = None, no_of_colors: int = 1,
                     gradient=True, alpha: float = None,
                     starting_shade: float = None,
                     ending_shade: float = None):
-        return self._common_color("light-green", locals())
+        return self._common_color("light-green", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def amber(self, *, shade: float = None, no_of_colors: int = 1,
               gradient=True, alpha: float = None,
               starting_shade: float = None,
               ending_shade: float = None):
-        return self._common_color("amber", locals())
+        return self._common_color("amber", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def orange_deep(self, *, shade: float = None, no_of_colors: int = 1,
                     gradient=True, alpha: float = None,
                     starting_shade: float = None,
                     ending_shade: float = None):
-        return self._common_color("deep-orange", locals())
+        return self._common_color("deep-orange", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def brown(self, *, shade: float = None, no_of_colors: int = 1,
               gradient=True, alpha: float = None,
               starting_shade: float = None,
               ending_shade: float = None):
-        return self._common_color("brown", locals())
+        return self._common_color("brown", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)
 
     @color_docs
     def gray_blue(self, *, shade: float = None, no_of_colors: int = 1,
                   gradient=True, alpha: float = None,
                   starting_shade: float = None,
                   ending_shade: float = None):
-        return self._common_color("blue-gray", locals())
+        return self._common_color("blue-gray", shade=shade,
+                                  no_of_colors=no_of_colors, gradient=gradient,
+                                  alpha=alpha, starting_shade=starting_shade,
+                                  ending_shade=ending_shade)

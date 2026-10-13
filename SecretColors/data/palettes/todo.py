@@ -4,13 +4,9 @@
 #  Author: Rohit Suratekar
 #  Website: https://github.com/secretBiology/SecretColors
 #
-#  All TODO
+#  Palettes which are not included
 #
-#  Latitude Color Palette
-#  https://www.flexport.com/design/design-language/color-system
-#
-#  Polaris
-#  https://polaris.shopify.com/design/colors#navigation
-#
-#  Adobe Spectrum
-#  https://spectrum.adobe.com/page/color/
+#  Shopify Polaris
+#  https://polaris.shopify.com/design/colors
+#  Polaris license only allows use for applications which integrate with
+#  Shopify, hence its colors can not be redistributed in this library.

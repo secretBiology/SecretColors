@@ -106,3 +106,6 @@ venv.bak/
 .idea/
 test.py
 .DS_Store
+
+# Serena Related
+.serena/*

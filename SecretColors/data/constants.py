@@ -12,10 +12,13 @@ PALETTE_MATERIAL_ACCENT = "material-accent"
 PALETTE_BREWER = "brewer"
 PALETTE_CLARITY = "clarity"
 PALETTE_TABLEAU = "tableau"
+PALETTE_SPECTRUM = "spectrum"
+PALETTE_LATITUDE = "latitude"
 
 # Order of following palette will be used to extract the additional color
 ALL_PALETTES = [PALETTE_IBM, PALETTE_MATERIAL, PALETTE_MATERIAL_ACCENT, PALETTE_BREWER,
-                PALETTE_CLARITY, PALETTE_TABLEAU]
+                PALETTE_CLARITY, PALETTE_TABLEAU, PALETTE_SPECTRUM,
+                PALETTE_LATITUDE]
 
 MODE_HEX = "hex"
 MODE_RGB = "rgb"

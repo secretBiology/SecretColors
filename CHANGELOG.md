@@ -76,7 +76,9 @@
 * Moved to `pyproject.toml` (hatchling) and [uv](https://docs.astral.sh/uv/).
   `setup.py` and `requirements*.txt` are removed.
 * Requires Python 3.10+. Tested on Python 3.10 - 3.14.
-* Optional `matplotlib` extra: `pip install "SecretColors[matplotlib]"`.
+* Optional extras: `pip install "SecretColors[matplotlib]"` (colormap
+  objects), `"SecretColors[image]"` (palettes from images) or
+  `"SecretColors[all]"` (everything). The core library has no dependencies.
 * `SecretColors.__version__` is available.
 # v1.2.6
 Removed dependency on `numpy` (Thanks to [ri0t](https://github.com/ri0t))

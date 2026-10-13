@@ -50,7 +50,12 @@ Optional extras
 ```bash
 uv add "SecretColors[matplotlib]"   # matplotlib colormap objects
 uv add "SecretColors[image]"        # palettes from images (Pillow)
+uv add "SecretColors[all]"          # everything
 ```
+
+The core library has no dependencies. Palettes, shades, `ColorWheel`,
+conversions and `cmaps.colors()` work with a plain install. Features which
+need an extra raise a clear `ImportError` telling you what to install.
 
 ## Quick start
 

@@ -19,6 +19,8 @@ Few sample plots and inspiration behind this library can be found in [WeirdData 
 ```
 uv add SecretColors        # or: pip install SecretColors
 uv add "SecretColors[matplotlib]"   # with matplotlib for ColorMap classes
+uv add "SecretColors[image]"        # with Pillow for palettes from images
+uv add "SecretColors[all]"          # everything
 ```
 
 ### Documentation

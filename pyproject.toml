@@ -31,6 +31,7 @@ classifiers = [
 [project.optional-dependencies]
 matplotlib = ["matplotlib>=3.10"]
 image = ["pillow>=11.0"]
+all = ["matplotlib>=3.10", "pillow>=11.0"]
 
 [project.urls]
 Homepage = "https://github.com/secretBiology/SecretColors"

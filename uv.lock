@@ -1791,6 +1791,11 @@ version = "2.0.0"
 source = { editable = "." }
 
 [package.optional-dependencies]
+all = [
+    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pillow" },
+]
 image = [
     { name = "pillow" },
 ]
@@ -1827,10 +1832,12 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "matplotlib", marker = "extra == 'all'", specifier = ">=3.10" },
     { name = "matplotlib", marker = "extra == 'matplotlib'", specifier = ">=3.10" },
+    { name = "pillow", marker = "extra == 'all'", specifier = ">=11.0" },
     { name = "pillow", marker = "extra == 'image'", specifier = ">=11.0" },
 ]
-provides-extras = ["matplotlib", "image"]
+provides-extras = ["matplotlib", "image", "all"]
 
 [package.metadata.requires-dev]
 dev = [

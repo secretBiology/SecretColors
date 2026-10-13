@@ -1,206 +1,330 @@
-## SecretColors
+<div align="center">
 
-[![PyPI version](https://badge.fury.io/py/SecretColors.svg)](https://badge.fury.io/py/SecretColors) [![Documentation Status](https://readthedocs.org/projects/secretcolors/badge/?version=latest)](https://secretcolors.readthedocs.io/en/latest/?badge=latest) 
+<img src="docs/images/banner.png" alt="SecretColors" width="100%">
 
+# SecretColors
 
+**Beautiful, ready-to-use color palettes and colormaps for Python.**<br>
+IBM, Material, ColorBrewer, Tableau, Clarity and colorblind-safe schemes - one simple API.
 
-Library generated for making plots with better color palette. It uses  famous color palettes and adds few helpful functions.   
+[![PyPI](https://img.shields.io/pypi/v/SecretColors?color=0f62fe&label=PyPI)](https://pypi.org/project/SecretColors/)
+[![Python](https://img.shields.io/pypi/pyversions/SecretColors?color=24a148)](https://pypi.org/project/SecretColors/)
+[![Tests](https://img.shields.io/github/actions/workflow/status/secretBiology/SecretColors/tests.yml?branch=master&label=tests)](https://github.com/secretBiology/SecretColors/actions/workflows/tests.yml)
+[![Docs](https://img.shields.io/readthedocs/secretcolors?label=docs&color=8a3ffc)](https://secretcolors.readthedocs.io)
+[![Downloads](https://static.pepy.tech/badge/secretcolors/month)](https://pepy.tech/project/secretcolors)
+[![License](https://img.shields.io/pypi/l/SecretColors?color=fa4d56)](LICENSE)
 
-Currently it supports following Color Palettes
+[Documentation](https://secretcolors.readthedocs.io) ·
+[Changelog](CHANGELOG.md) ·
+[PyPI](https://pypi.org/project/SecretColors/) ·
+[Report a bug](https://github.com/secretBiology/SecretColors/issues)
 
-- IBM Color Palette (`ibm`)
-- Google Material Design Color Palette (`material`)
-- Google Material Design Accent Color Palette (`material-accent`)
-- ColorBrewer2 Color Palette (`brewer`)
-- VMWare Clarity Color Palette  (`clarity`)
-- Tableau Color Palette (`tableau`)
+</div>
 
-You can get output of colors in variety of color formats including `hex` , `rgb`, `rgba` etc. 
+---
 
-See [changelog](/CHANGELOG.md) to know what's new!
+## Why SecretColors?
 
-Few sample plots and inspiration behind this library can be found in [WeirdData blog](https://weirddata.github.io/2019/06/11/secret-colors-2.html). 
+- **Curated colors, not random hex codes** - palettes from well known design
+  systems, each with a full range of shades.
+- **Any shade you want** - `p.blue(shade=37.5)` works. Every color is a smooth
+  gradient from white to its darkest tone.
+- **Colormaps by name** - register once and write `cmap="sc.greens"` in
+  matplotlib, pandas or seaborn.
+- **Works everywhere** - plain hex output for plotly, bokeh, altair or CSS.
+- **Colorblind friendly** - Okabe-Ito and Paul Tol schemes built in, plus
+  simulation helpers.
+- **Zero dependencies** - matplotlib is optional.
 
+## Installation
 
+```bash
+uv add SecretColors          # or: pip install SecretColors
+```
 
-|<img src="https://user-images.githubusercontent.com/8757115/69130240-72840d00-0ab0-11ea-8ce5-8b715ebef4f6.png" width="60%">|
-|:--:|
-| Default base colors in matplotlib and SecretColors palettes. |
+With matplotlib colormap support
 
+```bash
+uv add "SecretColors[matplotlib]"
+```
 
-|<img src="https://user-images.githubusercontent.com/8757115/69130544-fa6a1700-0ab0-11ea-80f4-aaff9e58f804.png" width="60%">|
-|:--:|
-| Simple bar plot with default colors. |
+## Quick start
 
+```python
+from SecretColors import Palette
 
-|<img src="https://user-images.githubusercontent.com/8757115/69130672-31402d00-0ab1-11ea-835d-b161caf4c24a.png" width="60%">|
-|:--:|
-| Histogram comparison with Magenta and Cyan. You can dramatically change colors by just passing single parameter. |
+p = Palette()                   # IBM palette (default)
+p.red()                         # '#fa4d56'
+p.red(shade=20)                 # '#ffd7d9'  lighter
+p.red(shade=80)                 # '#750e13'  darker
+p.blue(no_of_colors=5)          # ['#edf5ff', '#9bc0ff', '#2a75fe', '#0032a9', '#001141']
 
-### Installation 
+Palette("material").red()       # '#f44336'
+```
 
-With [uv](https://docs.astral.sh/uv/)
+Every color is a plain `str` (or `tuple`), so you can pass it straight to any
+plotting library.
 
-    uv add SecretColors
+## Palettes
 
-or with pip
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/palettes-dark.png">
+  <img alt="Available palettes" src="docs/images/palettes-light.png">
+</picture>
 
-    pip install SecretColors
+| Name | Palette | Name | Palette |
+|---|---|---|---|
+| `ibm` | [IBM Design Language](https://www.ibm.com/design/language/color/) *(default)* | `clarity` | [VMware Clarity](https://clarity.design/) |
+| `material` | [Google Material Design](https://m2.material.io/design/color/the-color-system.html) | `brewer` | [ColorBrewer](https://colorbrewer2.org/) |
+| `material-accent` | Material Design accent colors | `tableau` | [Tableau](https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm) |
 
-Matplotlib colormap objects need [matplotlib](https://matplotlib.org). You can install it along with SecretColors
+Need a color that is not in your palette? SecretColors looks for it in other
+palettes, then in the standard [CSS / X11 color names](https://www.w3.org/TR/css-color-3/#svg-color).
 
-    uv add "SecretColors[matplotlib]"
+```python
+p = Palette()                   # IBM has no 'amber'
+p.get("amber")                  # '#ffc107'  borrowed from Material
+p.get("aquamarine")             # '#7fffd4'  CSS color name
+p.get("grey"), p.get("k")       # ('#8d8d8d', '#000000')  synonyms work too
+```
 
-### Development
+## Shades and gradients
 
-    git clone https://github.com/secretBiology/SecretColors.git
-    cd SecretColors
-    uv sync               # creates .venv with test dependencies
-    uv run pytest         # runs test suite
-    uv run tox            # runs tests on all supported Python versions
-    uv build              # builds sdist and wheel
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/shades-dark.png">
+  <img alt="Shades of IBM colors" src="docs/images/shades-light.png">
+</picture>
 
+```python
+p.blue(shade=37.5)                                          # any value from 0 to 100
+p.blue(no_of_colors=3, starting_shade=20, ending_shade=60)  # ['#d0e2ff', '#78a9ff', '#0f62fe']
+p.blue(no_of_colors=4, gradient=False)                      # random shades
+```
 
-### Documentation
+## Use it in your plots
 
-Full documentation and API reference can be accessed via [ReadTheDocs](https://secretcolors.readthedocs.io) 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/examples-dark.png">
+  <img alt="Example plots" src="docs/images/examples-light.png">
+</picture>
 
-**SecretColors** is a very flexible library. You can easily select different color palettes.
+Make SecretColors the default color cycle of matplotlib. This order of IBM
+colors stays distinguishable for colorblind readers.
 
-    from SecretColors import Palette
-    
-    p = Palette()  # Generates Default color palette i.e. IBM Color Palette
-    ibm = Palette("ibm")  # Generates IBM Palette
-    ibm.red()  # Returns '#fb4b53'
-    material = Palette("material")  # Generates Material Palette
-    material.red()  # Returns '#f44336'
+```python
+import matplotlib.pyplot as plt
+from cycler import cycler
+from SecretColors import Palette
 
+p = Palette()
+plt.rcParams["axes.prop_cycle"] = cycler(color=[
+    p.blue(shade=60), p.red(), p.teal(), p.purple(shade=60), p.orange()])
 
-Select different types of color modes
+plt.hist(a, color=p.magenta(), alpha=0.75)
+plt.hist(b, color=p.cyan(), alpha=0.75)
+```
 
+## Colormaps
 
-    p1 = Palette() # Default Color mode (hex)
-    p1.green() # '#24a148'
-    p2 = Palette(color_mode="hexa")
-    p2.green() # '#24a148ff'
-    p3 = Palette(color_mode="ahex")
-    p3.green() # '#ff24a148'
-    p4 = Palette(color_mode="rgb")
-    p4.green() # (0.141, 0.631, 0.282)
-    p5 = Palette(color_mode="rgba")
-    p5.green() # '(0.141, 0.282, 0.631, 1)'
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/colormaps-dark.png">
+  <img alt="Colormaps" src="docs/images/colormaps-light.png">
+</picture>
 
+Register once and use any of the 83 colormaps by name - exactly like
+matplotlib's own. Each one also has a reversed `_r` version.
 
-Note: `matplotlib` can accepts *hex*, *rgb* or *hexa* 
+```python
+from SecretColors import cmaps
 
-Get random colors
+cmaps.register()
 
-    p = Palette()
-    p.random() # '#90dbe9'
-    p.random(no_of_colors=3) # ['#8fca39', '#64a0fe', '#7430b6']
-    p.random(no_of_colors=2, shade=20) # ['#b3e6ff', '#c2dbf4']
+plt.imshow(data, cmap="sc.greens")
+plt.imshow(data, cmap="sc.Spectral_r")
+df.plot.scatter(x="x", y="y", c="z", cmap="sc.tol_sunset")   # pandas
+sns.heatmap(data, cmap="sc.RdBu")                           # seaborn
+```
 
+Fine tune a colormap, or pick another palette for the standard ones
 
-Unlimited color manipulations
+```python
+plt.imshow(data, cmap=cmaps.cmap("blues", start=20, end=80))
+plt.imshow(data, cmap=cmaps.cmap("Spectral", n=9, reverse=True))
+plt.scatter(x, y, c=labels, cmap=cmaps.cmap("Set2", n=4))     # discrete
 
+cmaps.register(palette="material")      # sc.greens, sc.blues ... from Material
+cmaps.available("brewer")               # list names by source
+```
 
-    p = Palette()
-    p.blue()  # normal blue [#408bfc]
-    p.blue(shade=20)  # lighter shade of blue [#c9deff]
-    p.blue(shade=70)  # darker shade of blue [#054ada]
-    p.blue(shade=16.10)  # arbitrary shade of blue (between 0 to 100) [#dbe9ff]
-    p.blue(no_of_colors=3)  # Three blue shades ['#b8d4ff', '#408bfc', '#0546d4']
-    p.blue(no_of_colors=3, starting_shade=30)  # Three blue shades with lightest one is 30 ['#64a0fe', '#005ef9', '#052ea8']
-    p.blue(no_of_colors=3, ending_shade=40)  # Three blue shades with darkest one is 40 ['#edf4ff', '#c9deff', '#97c1ff']
-    p.blue(no_of_colors=3, starting_shade=30, ending_shade=40) # Three blue shades with lightest 30 and darkest 60 ['#8cbaff', '#8cbaff', '#8cbaff']
-    p.blue(no_of_colors=3, gradient=False) # Three blue shades in random order ['#8cbaff', '#b8d4ff', '#64a0fe']
-    p.color_mode = "rgba"
-    p.blue(alpha=0.3) # Blue with alpha (0.251, 0.988, 0.545, 0.3) Only works in color mode which outputs alpha values
+### Not using matplotlib?
 
+`cmaps.colors()` returns plain hex colors and needs no extra dependency.
 
+```python
+cmaps.colors("Spectral", n=5)   # ['#d7191c', '#fdae61', '#ffffbf', '#abdda4', '#2b83ba']
+```
 
-Flexible functions
+| Library | Example |
+|---|---|
+| plotly | `px.imshow(data, color_continuous_scale=cmaps.colors("RdBu"))` |
+| seaborn | `sns.color_palette(cmaps.colors("tol_bright"))` |
+| bokeh | `figure.scatter(x, y, color=cmaps.colors("Tableau", n=3)[0])` |
+| altair | `alt.Scale(range=cmaps.colors("tol_sunset"))` |
 
+## Colorblind friendly
 
-    get_complementary("#24a148") # Get complementary color [#a0237c]
-    hex_to_rgb("#a0237c") # (0.627, 0.137, 0.486)
-    hex_to_hsl("#a0237c") # (0.881, 0.641, 0.382)
-    hex_to_hex_a("#a0237c", alpha=0.7) # Get hex with transparency at end [#a0237cb2]
-    hex_to_ahex("#a0237c", alpha=0.7) # Get hex with transparency at start [#b2a0237c]
-    color_in_between("#24a148","#a0237c") # Color between two ['#616161']
-    color_in_between("#24a148","#a0237c", steps=4) # 3 colors between two ['#428154', '#616161', '#80426e'] such that color space is divided into 4 parts
-    rgb_to_hex(0.181, 0.241, 0.382) # '#2e3d61'
-    rgb_to_hsl(0.181, 0.241, 0.382) # (0.617, 0.357, 0.281)
-    hsl_to_hex(0.181, 0.241, 0.382) # '#747849'
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/colorblind-dark.png">
+  <img alt="Colorblind simulation" src="docs/images/colorblind-light.png">
+</picture>
 
+Red and green collapse into the same muddy tones for about 1 in 12 men.
+Use the built in colorblind-safe schemes instead, and check your own colors
+with the simulation helpers.
 
+```python
+cmaps.colors("cud")                     # Okabe-Ito (Color Universal Design)
+cmaps.colors("tol_bright")              # Paul Tol's bright scheme
+cmaps.available("colorblind")           # all 12 colorblind-safe schemes
 
-### Colormaps
+from SecretColors.utils import simulate_green_blindness, hex_to_rgb
+simulate_green_blindness(*hex_to_rgb("#fa4d56"))
+```
 
-Register once and use SecretColors colormaps by name, just like matplotlib's own colormaps.
-It works everywhere matplotlib colormap names are accepted (matplotlib, pandas, seaborn, etc.)
+## Color harmonies
 
-    import matplotlib.pyplot as plt
-    from SecretColors import cmaps
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/harmonies-dark.png">
+  <img alt="Color harmonies" src="docs/images/harmonies-light.png">
+</picture>
 
-    cmaps.register()                          # adds all maps with 'sc.' prefix
-    plt.imshow(data, cmap="sc.greens")
-    plt.imshow(data, cmap="sc.Spectral_r")    # every map has a reversed '_r' version
-    sns.heatmap(data, cmap="sc.tol_sunset")   # colorblind safe map in seaborn
+`ColorWheel` finds colors that go well together.
 
-Or create a customised colormap object directly
+```python
+from SecretColors import ColorWheel
 
-    plt.imshow(data, cmap=cmaps.cmap("greens", start=20, end=80))
-    plt.imshow(data, cmap=cmaps.cmap("blues", palette="material", reverse=True))
-    plt.scatter(x, y, c=labels, cmap=cmaps.cmap("Set2", n=4))   # qualitative maps are discrete
+cw = ColorWheel("#3f51b5")
+cw.complementary()          # ['#3f51b5', '#b5a33f']
+cw.triadic()                # ['#3f51b5', '#b53f51', '#51b53f']
+cw.analogous()              # ['#3f51b5', '#683fb5', '#a33fb5']
+cw.make_darker(30)
+cw.color                    # '#2c397f'
+cw.text_color()             # '#ffffff'  readable text on this background
+```
 
-Plain colors (no matplotlib needed) for any other library
+## More
 
-    cmaps.colors("Spectral", n=5)   # ['#d7191c', '#fdae61', '#ffffbf', '#abdda4', '#2b83ba']
-    px.imshow(data, color_continuous_scale=cmaps.colors("RdBu"))   # plotly
-    alt.Scale(range=cmaps.colors("tol_bright"))                    # altair
-    cmaps.available()               # names of all colormaps
+<details>
+<summary><b>Color modes and transparency</b></summary>
 
-Older `ColorMap`, `BrewerMap` and `TableauMap` classes still work (passing `matplotlib` is now optional)
+```python
+Palette(color_mode="hex").green()               # '#24a148'
+Palette(color_mode="hexa").green(alpha=0.5)     # '#24a14880'
+Palette(color_mode="ahex").green(alpha=0.5)     # '#8024a148'
+Palette(color_mode="rgb").green()               # (0.141, 0.631, 0.282)
+Palette(color_mode="rgba").green(alpha=0.5)     # (0.141, 0.631, 0.282, 0.5)
+```
 
-    from SecretColors.cmaps import ColorMap
-    plt.pcolor(data, cmap=ColorMap().greens(is_reversed=True))
+Every returned color also knows its other forms
 
+```python
+c = Palette().red()
+c.rgb                       # (0.980, 0.302, 0.337)
+c.rgb255                    # (250, 77, 86)
+c.hsl                       # (0.991, 0.945, 0.641)
+c.blend("#ffffff")          # '#fca6ab'
+```
 
-### TODO
- - [ ] CIE XYZ to CIE Lab conversions
- - [ ] Color Palettes - Latitude, Polaris, Adobe Spectrum
- - [ ] Direct support for more RGB to XYZ conversions
- - [ ] Generate Color Palette from image
- - [x] Color blind safe palette
- - [x] Out of the box colormaps usable by name in matplotlib
+</details>
 
+<details>
+<summary><b>Random colors and infinite color cycle</b></summary>
 
-Note: All CIE-XYZ conversion and colorblind simulation functions are still in
- beta-testing. Do not use them in your production code
+```python
+p = Palette(seed=42)                    # reproducible, never touches global random state
+p.random()                              # one random color
+p.random(no_of_colors=3, shade=30)      # ['#a6c8ff', '#ffb3b8', '#c6c6c6']
+p.random(no_of_colors=5, avoid=["gray"])
+p.random_gradient(no_of_colors=5)       # gradient between two complementary colors
 
-### Contribution and Feedback
+from itertools import islice
+list(islice(p.cycle(), 5))              # ['#fa4d56', '#4589ff', '#e3bc13', '#24a148', '#08bdba']
 
-Feel free to provide feedback and criticism through GitHub or you can email me [rohitsuratekar@gmail.com ](mailto:rohitsuratekar@gmail.com). If you want to contribute, please send pull request to this repository. 
+for color in Palette("material"):       # iterate over all palette colors
+    ...
+```
 
-### Acknowledgments
+</details>
 
-Colors used in this library are partly taken from [IBM Design Language](https://www.ibm.com/design/language/resources/color-library/) , [Google 
-Material Design](https://material.io/design/color/the-color-system.html
-) , [ColorBrewer](http://colorbrewer2.org/), [VMWare Clarity ](https://vmware.github.io/clarity/documentation/v0.13/color) and 
-[Tableau](https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm#Version_9.x_(legacy)_color_palette_hex_values) .
+<details>
+<summary><b>Conversions and utilities</b></summary>
 
-Color name data is taken from [X11](https://gitlab.freedesktop.org/xorg/app/rgb/raw/master/rgb.txt) 
-and [W3]( https://www.w3.org/TR/css-color-3/#svg-color). 
+```python
+from SecretColors.utils import *
 
-RGB colorspace matrices were taken from [Here](http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html) .
+hex_to_rgb("#3f51b5")                       # (0.247, 0.318, 0.710)
+rgb_to_hex(0.25, 0.32, 0.71)                # '#4052b5'
+hex_to_hsl("#3f51b5")                       # (0.641, 0.484, 0.478)
+color_in_between("#fa4d56", "#4589ff", 3)   # ['#cd5c80', '#a06baa', '#727ad5']
+get_complementary("#fa4d56")                # '#4dfaf1'
+text_color("#ffeb3b")                       # '#000000'
+relative_luminance("#3f51b5")               # 0.1028 (WCAG 2.0)
+```
 
-Any other specific code or resource used in this library is attributed in
- respective function or method where it is used. It can be accessible
-  from our online documentation as well.
+Also available: `rgb_to_hsv`, `rgb_to_cmy`, `cmy_to_cmyk`, `rgb_to_xyz`,
+`adobe_rgb_to_xyz`, `srgb_to_linear` and more. See the
+[full API](https://secretcolors.readthedocs.io).
 
+</details>
 
-### License 
+<details>
+<summary><b>Upgrading from 1.x</b></summary>
 
-This library and its code is released under MIT License . Read full statement [here](https://github.com/secretBiology/SecretColors/blob/master/LICENSE). 
+Version 2.0 fixes many bugs and makes a few behaviour changes. The most
+noticeable are
 
+- Unknown palette names raise `ValueError` (earlier, IBM was used silently).
+- `ColorString + "text"` is normal string concatenation. Use `.blend()` to mix colors.
+- `hexa` / `ahex` alpha uses the 0-255 scale (opaque is now `ff`).
+- `get_color_list` / `get_color_dict` are now `color_list` / `color_dict`.
+
+Read the [changelog](CHANGELOG.md) for the full list.
+
+</details>
+
+## Development
+
+```bash
+git clone https://github.com/secretBiology/SecretColors.git
+cd SecretColors
+uv sync                                 # create .venv with test dependencies
+uv run pytest                           # run tests
+uv run tox                              # test on Python 3.10 - 3.14
+uv run python scripts/readme_images.py  # regenerate README images
+uv build                                # build sdist and wheel
+```
+
+Feedback and pull requests are very welcome. Open an
+[issue](https://github.com/secretBiology/SecretColors/issues) or email
+[rohitsuratekar@gmail.com](mailto:rohitsuratekar@gmail.com).
+The story and inspiration behind this library is on the WeirdData blog[^blog].
+
+## Acknowledgments
+
+Colors are taken from [IBM Design Language](https://www.ibm.com/design/language/color/),
+[Google Material Design](https://m2.material.io/design/color/the-color-system.html),
+[ColorBrewer](https://colorbrewer2.org/), [VMware Clarity](https://clarity.design/)
+and [Tableau](https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm).
+Colorblind-safe schemes are from Okabe & Ito[^okabe] and Paul Tol[^tol].
+Color names are from [W3C CSS](https://www.w3.org/TR/css-color-3/#svg-color) and
+[X11](https://gitlab.freedesktop.org/xorg/app/rgb/raw/master/rgb.txt).
+RGB-XYZ matrices are from [Bruce Lindbloom](http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html).
+Any other resource is credited in the function where it is used.
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+[^blog]: Rohit Suratekar, [*Secret Colors*](https://weirddata.github.io/2019/06/11/secret-colors-2.html), WeirdData blog (2019).
+[^okabe]: Okabe M. and Ito K., [Color Universal Design](https://jfly.uni-koeln.de/color/).
+[^tol]: Paul Tol, [Colour Schemes](https://personal.sron.nl/~pault/).

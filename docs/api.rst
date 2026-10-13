@@ -49,6 +49,11 @@ Utils
 .. automodule:: SecretColors.utils
         :members:
 
+Palette from image
+===================
+.. automodule:: SecretColors.image
+        :members: extract_palette
+
 Indices and tables
 ==================
 

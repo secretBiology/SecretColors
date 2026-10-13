@@ -30,6 +30,7 @@ classifiers = [
 
 [project.optional-dependencies]
 matplotlib = ["matplotlib>=3.10"]
+image = ["pillow>=11.0"]
 
 [project.urls]
 Homepage = "https://github.com/secretBiology/SecretColors"
@@ -38,7 +39,7 @@ Changelog = "https://github.com/secretBiology/SecretColors/blob/master/CHANGELOG
 Issues = "https://github.com/secretBiology/SecretColors/issues"
 
 [dependency-groups]
-test = ["pytest>=9.0", "pytest-cov>=7.0", "matplotlib>=3.10"]
+test = ["pytest>=9.0", "pytest-cov>=7.0", "matplotlib>=3.10", "pillow>=11.0"]
 docs = ["sphinx>=8.1", "sphinx-rtd-theme>=3.1"]
 dev = [{ include-group = "test" }, "tox>=4.65", "tox-uv>=1.36"]
 

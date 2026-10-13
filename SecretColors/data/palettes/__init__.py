@@ -14,3 +14,5 @@ from SecretColors.data.palettes.material import MaterialPalette, MaterialAccentP
 from SecretColors.data.palettes.clarity import ClarityPalette
 from SecretColors.data.palettes.brewer import ColorBrewer
 from SecretColors.data.palettes.tableau import TableauPalette
+from SecretColors.data.palettes.spectrum import SpectrumPalette
+from SecretColors.data.palettes.latitude import LatitudePalette

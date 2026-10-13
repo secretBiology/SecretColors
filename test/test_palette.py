@@ -21,7 +21,7 @@ def test_basics():
 
 
 ALL_NAMES = ["ibm", "material", "material-accent", "brewer", "clarity",
-             "tableau"]
+             "tableau", "spectrum", "latitude"]
 
 
 def test_unknown_palette():
@@ -174,3 +174,15 @@ def test_color_collections():
 def test_removed_methods():
     assert not hasattr(Palette, "color_between")
     assert not hasattr(Palette, "cmap_from")
+
+
+@pytest.mark.parametrize("name, red, blue", [
+    ("spectrum", "#d73220", "#3b63fb"),
+    ("latitude", "#d92736", "#6294be"),
+])
+def test_new_palettes(name, red, blue):
+    p = Palette(name)
+    assert p.red() == red
+    assert p.blue() == blue
+    assert p.red(shade=0) == "#ffffff"
+    assert len(p.blue(no_of_colors=5)) == 5

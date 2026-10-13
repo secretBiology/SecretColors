@@ -14,7 +14,8 @@ from SecretColors.data.names.w3 import W3_DATA
 from SecretColors.data.names.x11 import X11_DATA
 from SecretColors.data.palettes import (IBMPalette, MaterialPalette, MaterialAccentPalette,
                                         ClarityPalette, ColorBrewer,
-                                        ParentPalette, TableauPalette)
+                                        ParentPalette, TableauPalette,
+                                        SpectrumPalette, LatitudePalette)
 from SecretColors.helpers.decorators import deprecated, color_docs
 from SecretColors.helpers.logging import Log
 from SecretColors.models.base import Color
@@ -36,6 +37,10 @@ def _get_palette(name: str) -> ParentPalette:
         return ColorBrewer()
     elif name == PALETTE_TABLEAU:
         return TableauPalette()
+    elif name == PALETTE_SPECTRUM:
+        return SpectrumPalette()
+    elif name == PALETTE_LATITUDE:
+        return LatitudePalette()
     raise ValueError(f"Unknown palette '{name}'. Currently available "
                      f"palettes: {ALL_PALETTES}")
 
@@ -83,6 +88,8 @@ class Palette:
     * **brewer** - ColorBrewer Color Palette
     * **clarity** - VMWare Clarity Palette
     * **tableau** - Tableau Color Palette
+    * **spectrum** - Adobe Spectrum Color Palette
+    * **latitude** - Flexport Latitude Color Palette
 
     .. code-block:: python
         :emphasize-lines: 2, 5

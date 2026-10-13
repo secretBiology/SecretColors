@@ -8,8 +8,10 @@ from SecretColors.cmaps.maps import _SPECIAL, _QUALITATIVE
 from SecretColors.data.names.w3 import W3_DATA
 from SecretColors.data.names.x11 import X11_DATA
 from SecretColors.data.palettes import (ClarityPalette, ColorBrewer,
-                                        IBMPalette, MaterialAccentPalette,
-                                        MaterialPalette, TableauPalette)
+                                        IBMPalette, LatitudePalette,
+                                        MaterialAccentPalette,
+                                        MaterialPalette, SpectrumPalette,
+                                        TableauPalette)
 
 HEX = re.compile(r"^#[0-9a-f]{6}$")
 
@@ -22,7 +24,8 @@ def test_all_data_is_valid():
             assert len(values) == int(key), name
             assert all(HEX.match(c.lower()) for c in values), name
     for palette in (IBMPalette, MaterialPalette, MaterialAccentPalette,
-                    ClarityPalette, ColorBrewer, TableauPalette):
+                    ClarityPalette, ColorBrewer, TableauPalette,
+                    SpectrumPalette, LatitudePalette):
         p = palette()
         for name, values in p.get_all_colors().items():
             assert len(values) == len(p.get_shades()), name

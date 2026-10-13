@@ -1,5 +1,17 @@
 # Changelog
 # v2.0.0
+### New palettes and features
+* New palettes: Adobe Spectrum (`Palette("spectrum")`) and Flexport Latitude
+  (`Palette("latitude")`).
+* `SecretColors.image.extract_palette()` generates a color palette from an
+  image (needs `pip install "SecretColors[image]"`).
+* CIE-L\*a\*b\* support: `xyz_to_lab`, `lab_to_xyz`, `rgb_to_lab`,
+  `lab_to_rgb`, `hex_to_lab`, `lab_to_hex`, `lab_to_lch`, `lch_to_lab`.
+* `delta_e()` measures perceptual color difference (CIEDE2000 or CIE76).
+* `rgb_to_xyz` / `xyz_to_rgb` accept `space=` for all 16 supported RGB
+  colorspaces (e.g. `pro_photo`, `wide_gamut`, `apple`). `rgb_spaces()`
+  lists them. Unknown colorspace or white reference raises `ValueError`
+  (earlier `AttributeError`).
 ### New colormap API
 * `SecretColors.cmaps.register()` registers every colormap (and its
   reversed `_r` version) in matplotlib with `sc.` prefix. Use them by name

@@ -1791,6 +1791,9 @@ version = "2.0.0"
 source = { editable = "." }
 
 [package.optional-dependencies]
+image = [
+    { name = "pillow" },
+]
 matplotlib = [
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -1800,6 +1803,7 @@ matplotlib = [
 dev = [
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pillow" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "tox", version = "4.65.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -1816,17 +1820,22 @@ docs = [
 test = [
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pillow" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "matplotlib", marker = "extra == 'matplotlib'", specifier = ">=3.10" }]
-provides-extras = ["matplotlib"]
+requires-dist = [
+    { name = "matplotlib", marker = "extra == 'matplotlib'", specifier = ">=3.10" },
+    { name = "pillow", marker = "extra == 'image'", specifier = ">=11.0" },
+]
+provides-extras = ["matplotlib", "image"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "matplotlib", specifier = ">=3.10" },
+    { name = "pillow", specifier = ">=11.0" },
     { name = "pytest", specifier = ">=9.0" },
     { name = "pytest-cov", specifier = ">=7.0" },
     { name = "tox", specifier = ">=4.65" },
@@ -1838,6 +1847,7 @@ docs = [
 ]
 test = [
     { name = "matplotlib", specifier = ">=3.10" },
+    { name = "pillow", specifier = ">=11.0" },
     { name = "pytest", specifier = ">=9.0" },
     { name = "pytest-cov", specifier = ">=7.0" },
 ]

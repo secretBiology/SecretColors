@@ -5,7 +5,7 @@
 # SecretColors
 
 **Beautiful, ready-to-use color palettes and colormaps for Python.**<br>
-IBM, Material, ColorBrewer, Tableau, Clarity and colorblind-safe schemes - one simple API.
+IBM, Material, Adobe Spectrum, ColorBrewer, Tableau and colorblind-safe schemes - one simple API.
 
 [![PyPI](https://img.shields.io/pypi/v/SecretColors?color=0f62fe&label=PyPI)](https://pypi.org/project/SecretColors/)
 [![Python](https://img.shields.io/pypi/pyversions/SecretColors?color=24a148)](https://pypi.org/project/SecretColors/)
@@ -34,6 +34,9 @@ IBM, Material, ColorBrewer, Tableau, Clarity and colorblind-safe schemes - one s
 - **Works everywhere** - plain hex output for plotly, bokeh, altair or CSS.
 - **Colorblind friendly** - Okabe-Ito and Paul Tol schemes built in, plus
   simulation helpers.
+- **Palettes from images** - pull the dominant colors out of any photo.
+- **Color science included** - CIE L\*a\*b\*, LCh, Delta E (CIEDE2000) and 16
+  RGB colorspaces.
 - **Zero dependencies** - matplotlib is optional.
 
 ## Installation
@@ -42,10 +45,11 @@ IBM, Material, ColorBrewer, Tableau, Clarity and colorblind-safe schemes - one s
 uv add SecretColors          # or: pip install SecretColors
 ```
 
-With matplotlib colormap support
+Optional extras
 
 ```bash
-uv add "SecretColors[matplotlib]"
+uv add "SecretColors[matplotlib]"   # matplotlib colormap objects
+uv add "SecretColors[image]"        # palettes from images (Pillow)
 ```
 
 ## Quick start
@@ -75,8 +79,9 @@ plotting library.
 | Name | Palette | Name | Palette |
 |---|---|---|---|
 | `ibm` | [IBM Design Language](https://www.ibm.com/design/language/color/) *(default)* | `clarity` | [VMware Clarity](https://clarity.design/) |
-| `material` | [Google Material Design](https://m2.material.io/design/color/the-color-system.html) | `brewer` | [ColorBrewer](https://colorbrewer2.org/) |
-| `material-accent` | Material Design accent colors | `tableau` | [Tableau](https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm) |
+| `material` | [Google Material Design](https://m2.material.io/design/color/the-color-system.html) | `latitude` | [Flexport Latitude](https://github.com/auxdesigner/latitude) |
+| `material-accent` | Material Design accent colors | `brewer` | [ColorBrewer](https://colorbrewer2.org/) |
+| `spectrum` | [Adobe Spectrum](https://spectrum.adobe.com/page/color-palette/) | `tableau` | [Tableau](https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm) |
 
 Need a color that is not in your palette? SecretColors looks for it in other
 palettes, then in the standard [CSS / X11 color names](https://www.w3.org/TR/css-color-3/#svg-color).
@@ -191,6 +196,24 @@ from SecretColors.utils import simulate_green_blindness, hex_to_rgb
 simulate_green_blindness(*hex_to_rgb("#fa4d56"))
 ```
 
+## Palette from an image
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/image-palette-dark.png">
+  <img alt="Palette extracted from an image" src="docs/images/image-palette-light.png">
+</picture>
+
+Colors are clustered in the perceptual CIE L\*a\*b\* space, so the palette
+matches what you see. Needs the `image` extra.
+
+```python
+from SecretColors.image import extract_palette
+
+extract_palette("sunset.jpg")                       # 5 dominant colors, most common first
+extract_palette("sunset.jpg", n=6, sort="lightness")
+ColorMap().from_list(extract_palette("sunset.jpg")) # turn it into a colormap
+```
+
 ## Color harmonies
 
 <picture>
@@ -257,6 +280,26 @@ for color in Palette("material"):       # iterate over all palette colors
 </details>
 
 <details>
+<summary><b>Color science - Lab, Delta E and RGB colorspaces</b></summary>
+
+```python
+from SecretColors.utils import *
+
+hex_to_lab("#ff0000")                       # (53.24, 80.09, 67.20)
+lab_to_hex(53.24, 80.09, 67.20)             # '#ff0000'
+lab_to_lch(*hex_to_lab("#ff0000"))          # (53.24, 104.55, 40.0)
+
+delta_e("#fa4d56", "#fa4d57")               # 0.27  -> looks identical
+delta_e("#fa4d56", "#4589ff")               # 44.47 -> clearly different
+
+rgb_spaces()                                # 16 RGB colorspaces: srgb, adobe, pro_photo ...
+rgb_to_xyz(0.2, 0.5, 0.1, space="pro_photo")
+xyz_to_lab(0.5, 0.4, 0.3, reference="D50")
+```
+
+</details>
+
+<details>
 <summary><b>Conversions and utilities</b></summary>
 
 ```python
@@ -271,8 +314,8 @@ text_color("#ffeb3b")                       # '#000000'
 relative_luminance("#3f51b5")               # 0.1028 (WCAG 2.0)
 ```
 
-Also available: `rgb_to_hsv`, `rgb_to_cmy`, `cmy_to_cmyk`, `rgb_to_xyz`,
-`adobe_rgb_to_xyz`, `srgb_to_linear` and more. See the
+Also available: `rgb_to_hsv`, `rgb_to_cmy`, `cmy_to_cmyk`, `srgb_to_linear`,
+`simulate_red_blindness` and more. See the
 [full API](https://secretcolors.readthedocs.io).
 
 </details>
@@ -314,11 +357,14 @@ The story and inspiration behind this library is on the WeirdData blog[^blog].
 Colors are taken from [IBM Design Language](https://www.ibm.com/design/language/color/),
 [Google Material Design](https://m2.material.io/design/color/the-color-system.html),
 [ColorBrewer](https://colorbrewer2.org/), [VMware Clarity](https://clarity.design/)
-and [Tableau](https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm).
+[Tableau](https://help.tableau.com/current/pro/desktop/en-us/formatting_create_custom_colors.htm),
+[Adobe Spectrum](https://github.com/adobe/spectrum-design-data) (Apache-2.0) and
+[Flexport Latitude](https://github.com/auxdesigner/latitude) (MIT).
 Colorblind-safe schemes are from Okabe & Ito[^okabe] and Paul Tol[^tol].
 Color names are from [W3C CSS](https://www.w3.org/TR/css-color-3/#svg-color) and
 [X11](https://gitlab.freedesktop.org/xorg/app/rgb/raw/master/rgb.txt).
-RGB-XYZ matrices are from [Bruce Lindbloom](http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html).
+RGB-XYZ matrices, white points and L\*a\*b\* formulas are from
+[Bruce Lindbloom](http://www.brucelindbloom.com/). CIEDE2000 follows Sharma et al.[^sharma]
 Any other resource is credited in the function where it is used.
 
 ## License
@@ -328,3 +374,4 @@ Released under the [MIT License](LICENSE).
 [^blog]: Rohit Suratekar, [*Secret Colors*](https://weirddata.github.io/2019/06/11/secret-colors-2.html), WeirdData blog (2019).
 [^okabe]: Okabe M. and Ito K., [Color Universal Design](https://jfly.uni-koeln.de/color/).
 [^tol]: Paul Tol, [Colour Schemes](https://personal.sron.nl/~pault/).
+[^sharma]: Sharma G., Wu W. and Dalal E. N., [The CIEDE2000 color-difference formula](https://hajim.rochester.edu/ece/sites/gsharma/ciede2000/), Color Research & Application, 2005.

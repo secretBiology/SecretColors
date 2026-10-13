@@ -13,7 +13,10 @@
 #
 # TODO: HSI conversions
 
-from typing import Tuple
+import math
+from typing import Sequence, Tuple, Union
+
+from SecretColors.data.rgb_xyz import RX_DATA, WHITE_POINTS
 from SecretColors.helpers.decorators import deprecated
 from SecretColors.helpers.rxutils import convert_rgb_to_xyz, convert_xyz_to_rgb
 
@@ -485,39 +488,53 @@ def srgb_to_rgb(sr, sg, sb):
     return linear_to_srgb(sr, sg, sb)
 
 
-def rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
+def rgb_spaces() -> dict:
     """
-    Converts Linear-RGB (0-1) to CIE-XYZ
+    RGB colorspaces available for CIE-XYZ conversions and their white
+    references
 
-    Note: This function is still in beta-testing. Do not use in your
-    production code.
+    >>> rgb_spaces()["pro_photo"] # ['D50']
+
+    :return: Dictionary of colorspace name and list of white references
+    """
+    return {name: list(refs) for name, refs in RX_DATA.items()}
+
+
+def rgb_to_xyz(r, g, b, *, space="srgb", reference=None, clip=True):
+    """
+    Converts linear RGB (0-1) of given RGB colorspace to CIE-XYZ
+
+    >>> rgb_to_xyz(*srgb_to_linear(1, 0, 0))   # sRGB red
+    >>> rgb_to_xyz(0.2, 0.5, 0.1, space="pro_photo")
 
     :param r: Red
     :param g: Green
     :param b: Blue
-    :param reference: White reference (default: D65)
+    :param space: RGB colorspace (see :func:`rgb_spaces`). (default: srgb)
+    :param reference: White reference. Default is D65 if available for the
+        colorspace, otherwise its native reference.
     :param clip: If True, negative values will be clipped to 0
     :return: CIE-X, CIE-Y, CIE-Z
     """
-    return convert_rgb_to_xyz(r, g, b, space="srgb",
+    return convert_rgb_to_xyz(r, g, b, space=space,
                               reference=reference, clip=clip)
 
 
-def xyz_to_rgb(x, y, z, *, reference="D65", clip=True):
-    """
-    Converts CIE-XYZ to Linear-RGB (0-1)
 
-    Note: This function is still in beta-testing. Do not use in your
-    production code.
+def xyz_to_rgb(x, y, z, *, space="srgb", reference=None, clip=True):
+    """
+    Converts CIE-XYZ to linear RGB (0-1) of given RGB colorspace
 
     :param x: CIE-X
     :param y: CIE-Y
     :param z: CIE-Z
-    :param reference: White reference (default: D65)
+    :param space: RGB colorspace (see :func:`rgb_spaces`). (default: srgb)
+    :param reference: White reference. Default is D65 if available for the
+        colorspace, otherwise its native reference.
     :param clip: If True, values below 0 and above 1 will be clipped
     :return: Red, Green Blue
     """
-    return convert_xyz_to_rgb(x, y, z, space="srgb",
+    return convert_xyz_to_rgb(x, y, z, space=space,
                               reference=reference, clip=clip)
 
 
@@ -556,6 +573,233 @@ def xyz_to_adobe_rgb(x, y, z, *, reference="D65", clip=True):
     """
     return convert_xyz_to_rgb(x, y, z, space="adobe",
                               reference=reference, clip=clip)
+
+
+_LAB_EPSILON = 216 / 24389
+_LAB_KAPPA = 24389 / 27
+
+
+def _white_point(reference: str) -> tuple:
+    key = reference.strip().upper()
+    if key not in WHITE_POINTS:
+        raise ValueError(f"Unknown white reference '{reference}'. Available "
+                         f"references: {list(WHITE_POINTS)}")
+    return WHITE_POINTS[key]
+
+
+def xyz_to_lab(x, y, z, *, reference="D65") -> tuple:
+    """
+    Converts CIE-XYZ to CIE-L*a*b*
+
+    Conversion formula taken from
+    http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_Lab.html
+
+    :param x: CIE-X
+    :param y: CIE-Y
+    :param z: CIE-Z
+    :param reference: White reference (default: D65)
+    :return: L* (0-100), a*, b*
+    """
+
+    def f(t):
+        if t > _LAB_EPSILON:
+            return t ** (1 / 3)
+        return (_LAB_KAPPA * t + 16) / 116
+
+    xw, yw, zw = _white_point(reference)
+    fx, fy, fz = f(x / xw), f(y / yw), f(z / zw)
+    return 116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)
+
+
+def lab_to_xyz(l, a, b, *, reference="D65") -> tuple:
+    """
+    Converts CIE-L*a*b* to CIE-XYZ
+
+    Conversion formula taken from
+    http://www.brucelindbloom.com/index.html?Eqn_Lab_to_XYZ.html
+
+    :param l: L* (0-100)
+    :param a: a*
+    :param b: b*
+    :param reference: White reference (default: D65)
+    :return: CIE-X, CIE-Y, CIE-Z
+    """
+    xw, yw, zw = _white_point(reference)
+    fy = (l + 16) / 116
+    fx = fy + a / 500
+    fz = fy - b / 200
+    xr = fx ** 3 if fx ** 3 > _LAB_EPSILON else (116 * fx - 16) / _LAB_KAPPA
+    yr = fy ** 3 if l > _LAB_KAPPA * _LAB_EPSILON else l / _LAB_KAPPA
+    zr = fz ** 3 if fz ** 3 > _LAB_EPSILON else (116 * fz - 16) / _LAB_KAPPA
+    return xr * xw, yr * yw, zr * zw
+
+
+def rgb_to_lab(r, g, b) -> tuple:
+    """
+    Converts sRGB (0-1) to CIE-L*a*b* (D65)
+
+    >>> rgb_to_lab(1, 0, 0) # (53.24, 80.09, 67.20)
+
+    :param r: Red (between 0-1)
+    :param g: Green (between 0-1)
+    :param b: Blue (between 0-1)
+    :return: L* (0-100), a*, b*
+    """
+    return xyz_to_lab(*rgb_to_xyz(*srgb_to_linear(r, g, b), clip=False))
+
+
+def lab_to_rgb(l, a, b, *, clip=True) -> tuple:
+    """
+    Converts CIE-L*a*b* (D65) to sRGB (0-1)
+
+    :param l: L* (0-100)
+    :param a: a*
+    :param b: b*
+    :param clip: If True, colors outside sRGB gamut are clipped. Otherwise
+        ValueError is raised for such colors.
+    :return: Red, Green, Blue (between 0-1)
+    """
+    x, y, z = lab_to_xyz(l, a, b)
+    if clip:
+        x, y, z = max(0.0, x), max(0.0, y), max(0.0, z)
+    elif min(x, y, z) < 0:
+        raise ValueError(f"L*a*b* ({l}, {a}, {b}) is outside sRGB gamut")
+    linear = xyz_to_rgb(x, y, z, clip=False)
+    if clip:
+        linear = tuple(min(1.0, max(0.0, v)) for v in linear)
+    elif any(v < -1e-9 or v > 1 + 1e-9 for v in linear):
+        raise ValueError(f"L*a*b* ({l}, {a}, {b}) is outside sRGB gamut")
+    else:
+        linear = tuple(min(1.0, max(0.0, v)) for v in linear)
+    return linear_to_srgb(*linear)
+
+
+def hex_to_lab(hex_color: str) -> tuple:
+    """
+    Converts Hex to CIE-L*a*b* (D65)
+
+    :param hex_color: Hex color
+    :return: L* (0-100), a*, b*
+    """
+    return rgb_to_lab(*hex_to_rgb(hex_color)[:3])
+
+
+def lab_to_hex(l, a, b) -> str:
+    """
+    Converts CIE-L*a*b* (D65) to Hex. Colors outside sRGB gamut are clipped.
+
+    :param l: L* (0-100)
+    :param a: a*
+    :param b: b*
+    :return: Hex color
+    """
+    return rgb_to_hex(*lab_to_rgb(l, a, b))
+
+
+def lab_to_lch(l, a, b) -> tuple:
+    """
+    Converts CIE-L*a*b* to CIE-LCh(ab)
+
+    :param l: L*
+    :param a: a*
+    :param b: b*
+    :return: Lightness, Chroma, Hue (in degrees, 0-360)
+    """
+    return l, math.hypot(a, b), math.degrees(math.atan2(b, a)) % 360
+
+
+def lch_to_lab(l, c, h) -> tuple:
+    """
+    Converts CIE-LCh(ab) to CIE-L*a*b*
+
+    :param l: Lightness
+    :param c: Chroma
+    :param h: Hue (in degrees)
+    :return: L*, a*, b*
+    """
+    h = math.radians(h)
+    return l, c * math.cos(h), c * math.sin(h)
+
+
+def _as_lab(color) -> tuple:
+    if isinstance(color, str):
+        return hex_to_lab(color)
+    if len(color) != 3:
+        raise ValueError(f"Expected hex color or L*a*b* tuple, got {color}")
+    return tuple(color)
+
+
+def _ciede2000(lab1, lab2) -> float:
+    l1, a1, b1 = lab1
+    l2, a2, b2 = lab2
+    c_bar = (math.hypot(a1, b1) + math.hypot(a2, b2)) / 2
+    g = 0.5 * (1 - math.sqrt(c_bar ** 7 / (c_bar ** 7 + 25 ** 7)))
+    a1p, a2p = a1 * (1 + g), a2 * (1 + g)
+    c1p, c2p = math.hypot(a1p, b1), math.hypot(a2p, b2)
+    h1p = math.degrees(math.atan2(b1, a1p)) % 360 if c1p else 0.0
+    h2p = math.degrees(math.atan2(b2, a2p)) % 360 if c2p else 0.0
+
+    dl = l2 - l1
+    dc = c2p - c1p
+    if c1p * c2p == 0:
+        dh = 0.0
+    elif abs(h2p - h1p) <= 180:
+        dh = h2p - h1p
+    elif h2p - h1p > 180:
+        dh = h2p - h1p - 360
+    else:
+        dh = h2p - h1p + 360
+    dh_big = 2 * math.sqrt(c1p * c2p) * math.sin(math.radians(dh / 2))
+
+    l_bar = (l1 + l2) / 2
+    cp_bar = (c1p + c2p) / 2
+    if c1p * c2p == 0:
+        hp_bar = h1p + h2p
+    elif abs(h1p - h2p) <= 180:
+        hp_bar = (h1p + h2p) / 2
+    elif h1p + h2p < 360:
+        hp_bar = (h1p + h2p + 360) / 2
+    else:
+        hp_bar = (h1p + h2p - 360) / 2
+
+    t = (1 - 0.17 * math.cos(math.radians(hp_bar - 30))
+         + 0.24 * math.cos(math.radians(2 * hp_bar))
+         + 0.32 * math.cos(math.radians(3 * hp_bar + 6))
+         - 0.20 * math.cos(math.radians(4 * hp_bar - 63)))
+    d_theta = 30 * math.exp(-(((hp_bar - 275) / 25) ** 2))
+    rc = 2 * math.sqrt(cp_bar ** 7 / (cp_bar ** 7 + 25 ** 7))
+    sl = 1 + 0.015 * (l_bar - 50) ** 2 / math.sqrt(20 + (l_bar - 50) ** 2)
+    sc = 1 + 0.045 * cp_bar
+    sh = 1 + 0.015 * cp_bar * t
+    rt = -math.sin(math.radians(2 * d_theta)) * rc
+    return math.sqrt((dl / sl) ** 2 + (dc / sc) ** 2 + (dh_big / sh) ** 2
+                     + rt * (dc / sc) * (dh_big / sh))
+
+
+def delta_e(color1: Union[str, Sequence[float]],
+            color2: Union[str, Sequence[float]], *,
+            method: str = "ciede2000") -> float:
+    """
+    Perceptual difference between two colors. Values below ~2.3 are barely
+    noticeable to the human eye.
+
+    >>> delta_e("#fa4d56", "#fa4d57")             # ~0.3
+    >>> delta_e("#fa4d56", "#4589ff")             # ~44.5
+    >>> delta_e((50, 2.5, 0), (73, 25, -18))      # L*a*b* tuples work too
+
+    :param color1: Hex color or L*a*b* tuple
+    :param color2: Hex color or L*a*b* tuple
+    :param method: 'ciede2000' (default) or 'cie76'
+    :return: Color difference (Delta E)
+    """
+    lab1, lab2 = _as_lab(color1), _as_lab(color2)
+    method = method.strip().lower()
+    if method == "cie76":
+        return math.dist(lab1, lab2)
+    if method == "ciede2000":
+        return _ciede2000(lab1, lab2)
+    raise ValueError(f"Unknown method '{method}'. Use 'ciede2000' or "
+                     f"'cie76'")
 
 
 def relative_luminance(hex_color: str):

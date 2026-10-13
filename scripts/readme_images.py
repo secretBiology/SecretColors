@@ -100,14 +100,14 @@ def banner():
 
 def palettes(theme):
     t = THEMES[theme]
-    names = ["ibm", "material", "material-accent", "clarity", "brewer",
-             "tableau"]
+    names = ["ibm", "material", "material-accent", "spectrum", "clarity",
+             "latitude", "brewer", "tableau"]
     rows = []
     for name in names:
         p = Palette(name)
         rows.append((name, [p.get(c) for c in _hue_order(p.colors, p)]))
     width = max(len(c) for _, c in rows)
-    fig, ax = _canvas(10, 0.62 * len(rows), theme)
+    fig, ax = _canvas(10, 0.5 * len(rows), theme)
     for r, (name, colors) in enumerate(rows):
         y = len(rows) - r - 1
         ax.text(-0.4, y + 0.42, f'Palette("{name}")', ha="right",
@@ -285,6 +285,61 @@ def harmonies(theme):
     _save(fig, "harmonies", theme)
 
 
+def _scene():
+    from PIL import Image, ImageDraw, ImageFilter
+
+    width, height = 900, 560
+    sky = [Palette("material").get(c, shade=s) for c, s in
+           (("deep-purple", 70), ("pink", 40), ("deep-orange", 30),
+            ("amber", 20))]
+    img = Image.new("RGB", (width, height))
+    draw = ImageDraw.Draw(img)
+    stops = [hex_to_rgb(c)[:3] for c in sky]
+    for y in range(height):
+        t = y / (height * 0.62) * (len(stops) - 1)
+        i = min(int(t), len(stops) - 2)
+        f = min(1.0, t - i)
+        rgb = [a + (b - a) * f for a, b in zip(stops[i], stops[i + 1])]
+        draw.line([(0, y), (width, y)],
+                  fill=tuple(int(v * 255) for v in rgb))
+    draw.ellipse((560, 230, 720, 390), fill=Palette("material").get(
+        "amber", shade=10))
+    hills = [("deep-purple", 80, 0.62, 0.0), ("indigo", 90, 0.72, 1.7),
+             ("blue-gray", 90, 0.84, 3.1)]
+    for name, shade, base, phase in hills:
+        color = Palette("material").get(name, shade=shade)
+        pts = [(x, height * base + 28 * np.sin(x / 95 + phase)
+                + 14 * np.sin(x / 37 + phase * 2)) for x in range(0, width + 1,
+                                                                 6)]
+        draw.polygon(pts + [(width, height), (0, height)], fill=color)
+    return img.filter(ImageFilter.GaussianBlur(1.2))
+
+
+def image_palette(theme):
+    from SecretColors.image import extract_palette
+
+    t = THEMES[theme]
+    scene = _scene()
+    colors = extract_palette(scene, n=6, sort="lightness")
+    fig = plt.figure(figsize=(10, 3.3))
+    fig.patch.set_facecolor(t["bg"])
+    ax = fig.add_axes([0.0, 0.0, 0.5, 1.0])
+    ax.imshow(np.asarray(scene))
+    ax.set_axis_off()
+    ax = fig.add_axes([0.53, 0.0, 0.47, 1.0])
+    ax.set_axis_off()
+    ax.text(0, 5.6, "extract_palette(image, n=6)", color=t["ink"],
+            fontsize=9.5, family=MONO, va="center")
+    for i, c in enumerate(colors):
+        y = 4.55 - i * 0.92
+        _chip(ax, 0, y, 0.55, 0.72, c, radius=0.08)
+        ax.text(0.64, y + 0.36, c, color=t["muted"], fontsize=8.5,
+                family=MONO, va="center")
+    ax.set_xlim(0, 1.6)
+    ax.set_ylim(-0.1, 6.1)
+    _save(fig, "image-palette", theme)
+
+
 def colorblind(theme):
     t = THEMES[theme]
     palettes_ = [
@@ -329,3 +384,4 @@ if __name__ == "__main__":
         examples(mode)
         harmonies(mode)
         colorblind(mode)
+        image_palette(mode)

@@ -26,7 +26,7 @@ import random
 from collections import Counter
 from typing import List, Union
 
-from SecretColors.models.objects import ColorString
+from SecretColors.models.objects import ColorList, ColorString
 from SecretColors.utils import lab_to_hex, lab_to_lch, rgb_to_lab
 
 __all__ = ["extract_palette"]
@@ -168,7 +168,7 @@ def extract_palette(image, n: int = 5, *, sort: str = "frequency",
         clusters.sort(key=lambda c: (lab_to_lch(*c[0])[1] < 5,
                                      lab_to_lch(*c[0])[2]))
 
-    result, seen = [], set()
+    result, seen = ColorList(), set()
     for center, _ in clusters:
         color = lab_to_hex(*center)
         if color not in seen:

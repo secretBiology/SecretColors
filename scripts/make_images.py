@@ -15,9 +15,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import FancyBboxPatch
 
-from SecretColors import ColorWheel, Palette, cmaps
-from SecretColors.utils import (hex_to_hsl, hex_to_rgb, rgb_to_hex,
-                                simulate_green_blindness,
+from SecretColors import (ColorWheel, Palette, check_colors, cmaps,
+                          distinct_colors)
+from SecretColors.utils import (color_in_between, hex_to_hsl, hex_to_rgb,
+                                rgb_to_hex, simulate_green_blindness,
                                 simulate_red_blindness)
 
 matplotlib.use("Agg")
@@ -34,13 +35,8 @@ THEMES = {
 }
 
 P = Palette()
-# Series orders below pass colorblind, lightness and contrast checks on
-# their respective surfaces
-SERIES = {
-    "light": [P.blue(shade=60), P.red(), P.teal(), P.purple(shade=60),
-              P.orange()],
-    "dark": [P.blue(), P.red(), P.teal(), P.purple(), P.orange(shade=60)],
-}
+SERIES = {theme: distinct_colors(5, background=t["bg"])
+          for theme, t in THEMES.items()}
 
 plt.rcParams.update({
     "font.family": ["Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"],
@@ -319,6 +315,68 @@ def harmonies(theme):
     _save(fig, "harmonies", theme)
 
 
+def gradients(theme):
+    t = THEMES[theme]
+    pairs = [("#fa4d56", "#4589ff"), ("#f1c21b", "#0f62fe"),
+             ("#ffffff", "#24a148")]
+    spaces = ["rgb", "lab", "lch"]
+    fig, axes = plt.subplots(1, len(pairs), figsize=(12, 2.3))
+    fig.patch.set_facecolor(t["bg"])
+    fig.subplots_adjust(left=0.06, right=0.99, wspace=0.08, top=0.8,
+                        bottom=0.03)
+    for k, (ax, (c1, c2)) in enumerate(zip(axes, pairs)):
+        ax.set_axis_off()
+        ax.set_title(f"{c1} \u2192 {c2}", loc="left", color=t["ink"],
+                     fontsize=9, family=MONO, pad=6)
+        for r, space in enumerate(spaces):
+            y = len(spaces) - r - 1
+            colors = [c1, *color_in_between(c1, c2, 62, space=space), c2]
+            strip = np.array([[hex_to_rgb(c)[:3] for c in colors]])
+            ax.imshow(strip, extent=(0, 1, y + 0.1, y + 0.82),
+                      aspect="auto", interpolation="bicubic")
+            if k == 0:
+                ax.text(-0.03, y + 0.46, f'"{space}"', ha="right",
+                        va="center", color=t["muted"], fontsize=8.5,
+                        family=MONO)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, len(spaces))
+    _save(fig, "gradients", theme)
+
+
+def distinct(theme):
+    t = THEMES[theme]
+    sets = [("distinct_colors(7)", distinct_colors(7, background=t["bg"])),
+            ("Palette().color_list[:7]", Palette().color_list[:7])]
+    views = [("Normal vision", lambda c: c),
+             ("Protanopia", lambda c: rgb_to_hex(
+                 *simulate_red_blindness(*hex_to_rgb(c)[:3]))),
+             ("Deuteranopia", lambda c: rgb_to_hex(
+                 *simulate_green_blindness(*hex_to_rgb(c)[:3])))]
+    fig, axes = plt.subplots(1, 2, figsize=(11, 2.1))
+    fig.patch.set_facecolor(t["bg"])
+    fig.subplots_adjust(left=0.115, right=0.99, wspace=0.06, top=0.72,
+                        bottom=0.02)
+    for k, (ax, (title, colors)) in enumerate(zip(axes, sets)):
+        ax.set_axis_off()
+        report = check_colors(colors, background=t["bg"])
+        worst = min(report.min_delta_e, report.min_delta_e_protanopia,
+                    report.min_delta_e_deuteranopia)
+        verdict = "OK" if report.ok else "needs attention"
+        ax.set_title(f"{title}\nworst \u0394E {worst:.1f} - {verdict}",
+                     loc="left", color=t["ink"], fontsize=8.5, family=MONO,
+                     pad=6, linespacing=1.5)
+        for r, (label, view) in enumerate(views):
+            y = len(views) - r - 1
+            if k == 0:
+                ax.text(-0.15, y + 0.4, label, ha="right", va="center",
+                        color=t["muted"], fontsize=8)
+            for i, c in enumerate(colors):
+                _chip(ax, i, y + 0.06, 0.9, 0.7, view(c), radius=0.1)
+        ax.set_xlim(-0.05, len(colors))
+        ax.set_ylim(0, len(views))
+    _save(fig, "distinct", theme)
+
+
 def _scene():
     from PIL import Image, ImageDraw, ImageFilter
 
@@ -420,3 +478,5 @@ if __name__ == "__main__":
         harmonies(mode)
         colorblind(mode)
         image_palette(mode)
+        gradients(mode)
+        distinct(mode)

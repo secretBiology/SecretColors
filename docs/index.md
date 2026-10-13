@@ -96,6 +96,22 @@ Register once and use `cmap="sc.greens"` in matplotlib, pandas or seaborn.
 Make SecretColors the default look of your plots, in one line.
 :::
 
+:::{grid-item-card} Colors for everyone
+:link: guide/distinct-colors
+:link-type: doc
+
+Pick colors that stay distinct for colorblind readers and pass WCAG
+contrast checks.
+:::
+
+:::{grid-item-card} Smooth gradients
+:link: guide/gradients
+:link-type: doc
+
+Mix colors in perceptual L\*a\*b\* or LCh space for vivid, even
+gradients.
+:::
+
 :::{grid-item-card} Colorblind friendly
 :link: guide/colorblind
 :link-type: doc
@@ -133,7 +149,9 @@ upgrading
 guide/palettes
 guide/plotting
 guide/colormaps
+guide/distinct-colors
 guide/colorblind
+guide/gradients
 guide/image-palettes
 guide/harmonies
 guide/color-science
@@ -152,6 +170,7 @@ gallery/colormaps
 :caption: API reference
 
 api/palette
+api/selection
 api/colormaps
 api/colorwheel
 api/utils

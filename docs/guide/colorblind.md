@@ -1,5 +1,9 @@
 # Colorblind friendly
 
+:::{seealso}
+{doc}`distinct-colors` picks and checks colorblind-safe colors for you.
+:::
+
 ```{image} ../images/colorblind-light.png
 :class: only-light
 :alt: Colorblind simulation

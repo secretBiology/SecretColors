@@ -67,6 +67,16 @@ c.rgb255                        # (250, 77, 86)
 c.blend("#ffffff")              # '#fca6ab'
 ```
 
+## In Jupyter
+
+Colors, lists of colors and palettes show up as color swatches in Jupyter
+notebooks. Lists are still regular Python lists.
+
+```python
+Palette("spectrum")                 # all colors of the palette
+Palette().blue(no_of_colors=6)
+```
+
 ## Colormaps in one line
 
 ```python

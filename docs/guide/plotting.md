@@ -15,19 +15,16 @@ Set the matplotlib color cycle once, and every plot uses SecretColors.
 
 ```python
 import matplotlib.pyplot as plt
-from cycler import cycler
-from SecretColors import Palette
+from SecretColors import distinct_colors
 
-p = Palette()
-plt.rcParams["axes.prop_cycle"] = cycler(color=[
-    p.blue(shade=60), p.red(), p.teal(), p.purple(shade=60), p.orange()])
+plt.rcParams["axes.prop_cycle"] = plt.cycler(color=distinct_colors(5))
 ```
 
 :::{tip}
-This order of IBM colors keeps adjacent series distinguishable for
-colorblind readers and has enough contrast on a white background. For dark
-backgrounds use `p.blue()`, `p.red()`, `p.teal()`, `p.purple()`,
-`p.orange(shade=60)`.
+{func}`~SecretColors.distinct_colors` picks colors which stay distinct for
+colorblind readers and have enough contrast with the background. For dark
+themes use `distinct_colors(5, background="#161616")`. See
+{doc}`distinct-colors`.
 :::
 
 ## Single plots

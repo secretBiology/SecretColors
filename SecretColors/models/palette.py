@@ -19,7 +19,8 @@ from SecretColors.data.palettes import (IBMPalette, MaterialPalette, MaterialAcc
 from SecretColors.helpers.decorators import deprecated, color_docs
 from SecretColors.helpers.logging import Log
 from SecretColors.models.base import Color
-from SecretColors.models.objects import ColorString, ColorTuple
+from SecretColors.models.objects import (ColorList, ColorString,
+                                         ColorTuple, _swatch_html)
 from SecretColors.utils import get_complementary, color_in_between
 
 
@@ -181,6 +182,12 @@ class Palette:
     def __str__(self):
         return f"Palette({self.name})"
 
+    def _repr_html_(self) -> str:
+        colors = {name: color.get() for name, color in self.colors.items()}
+        return (f"<b>{self}</b>" +
+                _swatch_html(list(colors.values()),
+                             [f"{n} {c}" for n, c in colors.items()]))
+
     @property
     def _value(self) -> ParentPalette:
         if self._palette is None:
@@ -222,7 +229,7 @@ class Palette:
     def color_list(self) -> list:
         """Returns list of all colors with their default shade
         """
-        return [self._send(x.get()) for x in self.colors.values()]
+        return ColorList(self._send(x.get()) for x in self.colors.values())
 
     @property
     @deprecated("Use 'color_dict' instead.")
@@ -390,7 +397,7 @@ class Palette:
                 print(c1)
             return c1
         else:
-            c2 = [self._convert(x, alpha=alpha) for x in colors]
+            c2 = ColorList(self._convert(x, alpha=alpha) for x in colors)
             if pc:
                 print(c2)
             return c2

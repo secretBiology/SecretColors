@@ -17,3 +17,5 @@ Every color returned by SecretColors is a :class:`ColorString` (or
    :inherited-members:
 
 .. autoclass:: SecretColors.models.objects.ColorTuple
+
+.. autoclass:: SecretColors.models.objects.ColorList

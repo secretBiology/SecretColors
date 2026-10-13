@@ -6,10 +6,10 @@
 #
 # All objects related this project
 
+import html
 from typing import Union
 
-from SecretColors.utils import (hex_to_rgb, rgb_to_hex,
-                                color_in_between, text_color,
+from SecretColors.utils import (hex_to_rgb, rgb_to_hex, mix, text_color,
                                 hsl_to_hex, hex_to_hsl, rgb_to_rgb255,
                                 rgb_to_hsl)
 
@@ -91,28 +91,29 @@ class ColorOutput:
             else:
                 return self._base[:6]
 
-    @staticmethod
-    def _new_hex(c1: str, other) -> str:
-        if isinstance(other, ColorOutput):
-            return color_in_between(c1, other.hex)[0]
-        elif isinstance(other, str):
-            return color_in_between(c1, other)[0]
-        elif isinstance(other, tuple):
-            return color_in_between(c1, rgb_to_hex(*other))[0]
-        else:
-            raise TypeError(f"Expected ColorObject, str or tuple but got "
-                            f"{type(other)}")
-
-    def blend(self, other) -> "ColorString":
+    def blend(self, other, ratio: float = 0.5, *,
+              space: str = "rgb") -> "ColorString":
         """
-        Mixes this color with another color in RGB space
+        Mixes this color with another color
 
         >>> ColorString("#ff0000").blend("#0000ff") # '#800080'
+        >>> ColorString("#ff0000").blend("#0000ff", space="lab")
 
         :param other: Hex string, RGB/RGBA tuple or color object
-        :return: Color halfway between both colors
+        :param ratio: Amount of `other` color (0-1). Default: 0.5
+        :param space: 'rgb' (default), 'lab' or 'lch'. See
+            :func:`~SecretColors.utils.mix`
+        :return: Mixed color
         """
-        return ColorString(self._new_hex(self.hex, other))
+        if isinstance(other, ColorOutput):
+            other = other.hex
+        elif not isinstance(other, (str, tuple)):
+            raise TypeError(f"Expected ColorObject, str or tuple but got "
+                            f"{type(other)}")
+        return ColorString(mix(self.hex, other, ratio, space=space))
+
+    def _repr_html_(self) -> str:
+        return _swatch_html([self.hex], [repr(self)])
 
 
 class ColorString(ColorOutput, str):
@@ -123,6 +124,38 @@ class ColorString(ColorOutput, str):
 class ColorTuple(ColorOutput, tuple):
     def __init__(self, base: Union[str, tuple]):
         super().__init__(base)
+
+
+def _swatch_html(hex_colors: list, labels: list) -> str:
+    chips = []
+    for color, label in zip(hex_colors, labels):
+        chips.append(
+            f'<div style="display:inline-block;margin:0 6px 6px 0;'
+            f'text-align:center;font:11px monospace">'
+            f'<div title="{html.escape(label)}" style="width:56px;'
+            f'height:36px;border-radius:6px;background:{color};'
+            f'box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></div>'
+            f'{html.escape(color)}</div>')
+    return f'<div>{"".join(chips)}</div>'
+
+
+class ColorList(list):
+    """
+    Regular ``list`` of colors which shows color swatches in Jupyter
+    notebooks
+    """
+
+    def _repr_html_(self) -> str:
+        hexes, labels = [], []
+        for c in self:
+            if isinstance(c, ColorOutput):
+                hexes.append(c.hex)
+            elif isinstance(c, str):
+                hexes.append(c)
+            else:
+                hexes.append(rgb_to_hex(*c[:3]))
+            labels.append(repr(c))
+        return _swatch_html(hexes, labels)
 
 
 class ColorWheel:
@@ -197,11 +230,15 @@ class ColorWheel:
     def color(self) -> str:
         """Returns current color (which has all the manipulations)
         """
-        return hsl_to_hex(self.hue, self.saturation, self.lightness)
+        return ColorString(hsl_to_hex(self.hue, self.saturation,
+                                      self.lightness))
 
     def __repr__(self):
         return (f"ColorWheel( _original_hex : {self._original_hex}, "
                 f"color : {self.color} )")
+
+    def _repr_html_(self) -> str:
+        return _swatch_html([self.color], [repr(self)])
 
     def __iter__(self):
         yield self.color
@@ -262,14 +299,14 @@ class ColorWheel:
         self.lightness += av
 
     def _make_color_list(self, *args, is_revered: bool) -> list:
-        color_list = [self.color]
+        color_list = ColorList([self.color])
         for angle in args:
             hue = self._rotate(self.hue, angle)
-            color_list.append(hsl_to_hex(hue, self.saturation, self.lightness))
+            color_list.append(ColorString(hsl_to_hex(hue, self.saturation,
+                                                     self.lightness)))
         if is_revered:
-            return list(reversed(color_list))
-        else:
-            return color_list
+            color_list.reverse()
+        return color_list
 
     def complementary(self, is_reversed: bool = False) -> list:
         """
@@ -336,10 +373,10 @@ class ColorWheel:
                 hsl_to_hex(a2, self.saturation, self.lightness)
             ]
 
+        colors = ColorList(ColorString(c) for c in colors)
         if is_reversed:
-            return list(reversed(colors))
-        else:
-            return colors
+            colors.reverse()
+        return colors
 
     def text_color(self) -> str:
         """Simply returns black or white color based on the color contrast

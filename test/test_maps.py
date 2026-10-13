@@ -221,3 +221,22 @@ def test_name_resolution_order():
     assert cmaps.colors("orange", n=3) == cmaps.colors("oranges", n=3)
     assert cmaps.colors("aquared") == cmaps.colors("AquaRed")
     assert cmaps.colors("TOL_SUNSET") == cmaps.colors("tol_sunset")
+
+
+def test_interpolation_space():
+    assert cmaps.colors("Spectral", n=5, space="lab") == \
+        cmaps.colors("Spectral", n=5)
+    assert cmaps.colors("Spectral", n=20, space="lab") != \
+        cmaps.colors("Spectral", n=20)
+    assert len(cmaps.colors("RdBu", n=7, space="lch")) == 7
+    with pytest.raises(ValueError):
+        cmaps.colors("RdBu", space="hsv")
+
+
+def test_cmap_space():
+    matplotlib = pytest.importorskip("matplotlib")
+    to_hex = matplotlib.colors.to_hex
+    m = cmaps.cmap("RdBu", space="lab")
+    assert m.N == 256
+    assert to_hex(m(0.0)) == cmaps.colors("RdBu")[0]
+    assert to_hex(m(1.0)) == cmaps.colors("RdBu")[-1]

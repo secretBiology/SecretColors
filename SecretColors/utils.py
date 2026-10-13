@@ -802,56 +802,172 @@ def delta_e(color1: Union[str, Sequence[float]],
                      f"'cie76'")
 
 
-def relative_luminance(hex_color: str):
+def _as_rgb(color) -> tuple:
+    if isinstance(color, str):
+        return hex_to_rgb(color)[:3]
+    if isinstance(color, (tuple, list)) and len(color) in (3, 4):
+        _validate(*color[:3])
+        return tuple(color[:3])
+    raise ValueError(f"Expected hex string or RGB/RGBA tuple (0-1), got "
+                     f"{color!r}")
+
+
+def relative_luminance(color) -> float:
     """
     Relative luminance according to WCAG 2.0 standard
     https://www.w3.org/WAI/GL/wiki/Relative_luminance
-    :param hex_color: Hex color (alpha channel, if present, is ignored)
+
+    :param color: Hex color or RGB/RGBA tuple (0-1). Alpha is ignored.
     :return: Relative luminance (between 0-1)
     """
-    r, g, b = srgb_to_linear(*hex_to_rgb(hex_color)[:3])
+    r, g, b = srgb_to_linear(*_as_rgb(color))
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast_ratio(color1, color2) -> float:
+    """
+    WCAG 2.x contrast ratio between two colors. Order of colors does not
+    matter.
+
+    https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio
+
+    >>> contrast_ratio("#000000", "#ffffff")   # 21.0 (maximum)
+    >>> contrast_ratio("#0f62fe", "#ffffff")   # 5.0
+
+    :param color1: Hex color or RGB/RGBA tuple (0-1)
+    :param color2: Hex color or RGB/RGBA tuple (0-1)
+    :return: Contrast ratio between 1 and 21
+    """
+    l1, l2 = sorted((relative_luminance(color1),
+                     relative_luminance(color2)), reverse=True)
+    return (l1 + 0.05) / (l2 + 0.05)
+
+
+_WCAG_MINIMUM = {("AA", False): 4.5, ("AA", True): 3.0,
+                 ("AAA", False): 7.0, ("AAA", True): 4.5}
+
+
+def is_readable(foreground, background, *, level: str = "AA",
+                large_text: bool = False) -> bool:
+    """
+    Checks if text in `foreground` color is readable on `background`
+    according to WCAG 2.x
+
+    ====== =========== ==========
+    Level  Normal text Large text
+    ====== =========== ==========
+    AA     4.5         3.0
+    AAA    7.0         4.5
+    ====== =========== ==========
+
+    Large text is at least 18pt (24px) or 14pt (~18.7px) bold. A ratio of
+    3.0 is also the WCAG minimum for graphics such as plot lines and markers.
+
+    >>> is_readable("#6f6f6f", "#ffffff")              # True
+    >>> is_readable("#6f6f6f", "#ffffff", level="AAA") # False
+
+    :param foreground: Text color (hex or RGB tuple)
+    :param background: Background color (hex or RGB tuple)
+    :param level: 'AA' (default) or 'AAA'
+    :param large_text: If True, thresholds for large text are used
+    :return: True if contrast is sufficient
+    """
+    key = (level.strip().upper(), bool(large_text))
+    if key not in _WCAG_MINIMUM:
+        raise ValueError("'level' should be 'AA' or 'AAA'")
+    return contrast_ratio(foreground, background) >= _WCAG_MINIMUM[key]
 
 
 def text_color(hex_color: str):
     """
-    Provides black or white color which can be used for text on given hex
-    color background
-
-    According to WCA 2.0 standards
-    https://www.w3.org/WAI/GL/wiki/Relative_luminance
-    and
-    https://medium.muz.li/the-science-of-color-contrast-an-expert-designers-guide-33e84c41d156
+    Provides black or white color which can be used for text on given
+    background color (whichever has higher WCAG contrast ratio)
 
     >>> text_color("#ffffff") # '#000000'
 
     :param hex_color: background color
     :return: proper text color
     """
-    rw = relative_luminance("#ffffff")
-    rl = relative_luminance(hex_color)
-    rb = relative_luminance("#000000")
-    white_ratio = (rw + 0.05) / (rl + 0.05)
-    black_ratio = (rl + 0.05) / (rb + 0.05)
-    if white_ratio > black_ratio:
+    if contrast_ratio("#ffffff", hex_color) > contrast_ratio("#000000",
+                                                             hex_color):
         return "#ffffff"
-    else:
-        return "#000000"
+    return "#000000"
 
 
-def color_in_between(c1, c2, no_of_colors=1) -> list:
+_SPACES = ("rgb", "lab", "lch")
+
+
+def _mix(rgb1, rgb2, t: float, space: str) -> tuple:
+    if space == "rgb":
+        return tuple(a + (b - a) * t for a, b in zip(rgb1, rgb2))
+    lab1, lab2 = rgb_to_lab(*rgb1), rgb_to_lab(*rgb2)
+    if space == "lab":
+        return lab_to_rgb(*(a + (b - a) * t for a, b in zip(lab1, lab2)))
+    l1, c1, h1 = lab_to_lch(*lab1)
+    l2, c2, h2 = lab_to_lch(*lab2)
+    if c1 < 1e-4:
+        h1 = h2
+    if c2 < 1e-4:
+        h2 = h1
+    dh = (h2 - h1 + 180) % 360 - 180
+    return lab_to_rgb(*lch_to_lab(l1 + (l2 - l1) * t, c1 + (c2 - c1) * t,
+                                  h1 + dh * t))
+
+
+def mix(color1, color2, ratio: float = 0.5, *, space: str = "rgb") -> str:
     """
-    Creates color between two colors in RGB ColorSpace
+    Mixes two colors
 
-    >>> color_in_between("#fb4b53", "#408bfc") # ['#9d6aa7']
-    >>> color_in_between("#fb4b53", "#408bfc", 3) # ['#cc5a7d', '#9d6aa7', '#6e7ad1']
+    >>> mix("#fa4d56", "#4589ff")                  # '#a06bab'
+    >>> mix("#fa4d56", "#4589ff", space="lab")     # '#c670a9'
+    >>> mix("#fa4d56", "#4589ff", ratio=0.25)      # closer to first color
+
+    :param color1: Hex color or RGB/RGBA tuple (0-1)
+    :param color2: Hex color or RGB/RGBA tuple (0-1)
+    :param ratio: Amount of `color2` (0 gives `color1`, 1 gives `color2`)
+    :param space: Color space used for mixing - 'rgb' (default), 'lab'
+        (perceptually uniform) or 'lch' (keeps colors vivid)
+    :return: Hex color
+    """
+    space = _check_space(space)
+    if not 0 <= ratio <= 1:
+        raise ValueError("'ratio' should be between 0 and 1")
+    rgb = _mix(_as_rgb(color1), _as_rgb(color2), ratio, space)
+    return rgb_to_hex(*(min(1.0, max(0.0, v)) for v in rgb))
+
+
+def _check_space(space: str) -> str:
+    space = space.strip().lower()
+    if space not in _SPACES:
+        raise ValueError(f"'space' should be one of {_SPACES}")
+    return space
+
+
+def color_in_between(c1, c2, no_of_colors=1, *, space: str = "rgb") -> list:
+    """
+    Creates evenly spaced colors between two colors
+
+    >>> color_in_between("#fb4b53", "#408bfc") # ['#9e6ba8']
+    >>> color_in_between("#fb4b53", "#408bfc", 3) # ['#cc5b7d', '#9d6ba8', '#6f7bd2']
+    >>> color_in_between("#fb4b53", "#408bfc", 3, space="lab") # ['#e4607c', '#c670a6', '#9a7ed0']
+
+    RGB mixing is simple but its middle colors often look dull and grayish.
+    'lab' gives perceptually even steps and 'lch' keeps colors vivid by
+    going around the color wheel.
 
     :param c1: Hex of first color
     :param c2: Hex of second color
     :param no_of_colors: How many colors in between? [Default :1]
-    :return: List of Colors between provided colors in RGB space
+    :param space: Color space for interpolation - 'rgb' (default), 'lab' or
+        'lch'
+    :return: List of Colors between provided colors
     """
+    space = _check_space(space)
     steps = no_of_colors + 1
+    if space != "rgb":
+        rgb1, rgb2 = _as_rgb(c1), _as_rgb(c2)
+        return [rgb_to_hex(*_mix(rgb1, rgb2, i / steps, space))
+                for i in range(1, steps)]
     all_colors = []
     r1, g1, b1 = hex_to_rgb(c1)
     r2, g2, b2 = hex_to_rgb(c2)

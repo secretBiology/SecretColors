@@ -130,3 +130,29 @@ def test_color_wheel():
     gray.rotate_saturation(-90)
     assert gray.color == "#808080"
     assert len(ColorWheel("#fa4d56").tetradic()) == 4
+
+
+def test_blend_options():
+    c = ColorString("#000000")
+    assert c.blend("#ffffff", 0) == "#000000"
+    assert c.blend("#ffffff", 1) == "#ffffff"
+    assert c.blend("#ffffff", space="lab") == "#777777"
+
+
+def test_notebook_html():
+    from SecretColors import Palette, cmaps
+    from SecretColors.models.objects import ColorList
+    assert "#fa4d56" in Palette().red()._repr_html_()
+    blues = Palette().blue(no_of_colors=3)
+    assert isinstance(blues, ColorList) and isinstance(blues, list)
+    assert all(c in blues._repr_html_() for c in blues)
+    rgb = Palette(color_mode="rgb").blue(no_of_colors=2)
+    assert "#" in rgb._repr_html_()
+    assert isinstance(cmaps.colors("Set1"), ColorList)
+    assert isinstance(Palette().color_list, ColorList)
+    assert "Palette(ibm)" in Palette()._repr_html_()
+    cw = ColorWheel("#3f51b5")
+    assert isinstance(cw.triadic(), ColorList)
+    assert isinstance(cw.color, ColorString)
+    assert "#3f51b5" in cw._repr_html_()
+    assert ColorList(["#ffffff"]) == ["#ffffff"]

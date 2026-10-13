@@ -32,11 +32,14 @@ IBM, Material, Adobe Spectrum, ColorBrewer, Tableau and colorblind-safe schemes 
 - **Colormaps by name** - register once and write `cmap="sc.greens"` in
   matplotlib, pandas or seaborn.
 - **Works everywhere** - plain hex output for plotly, bokeh, altair or CSS.
-- **Colorblind friendly** - Okabe-Ito and Paul Tol schemes built in, plus
-  simulation helpers.
+- **Colorblind friendly** - pick colors that stay distinct for everyone,
+  check your own, and use Okabe-Ito and Paul Tol schemes.
+- **Accessible** - WCAG contrast ratio and readability checks.
+- **Smoother gradients** - mix colors in perceptual L\*a\*b\* or LCh space.
 - **Palettes from images** - pull the dominant colors out of any photo.
 - **Color science included** - CIE L\*a\*b\*, LCh, Delta E (CIEDE2000) and 16
   RGB colorspaces.
+- **Notebook friendly** - colors show up as swatches in Jupyter.
 - **Zero dependencies** - matplotlib is optional.
 
 ## Installation
@@ -118,18 +121,16 @@ p.blue(no_of_colors=4, gradient=False)                      # random shades
   <img alt="Example plots" src="docs/images/examples-light.png">
 </picture>
 
-Make SecretColors the default color cycle of matplotlib. This order of IBM
-colors stays distinguishable for colorblind readers.
+Make SecretColors the default color cycle of matplotlib, using colors which
+stay distinct for colorblind readers too.
 
 ```python
 import matplotlib.pyplot as plt
-from cycler import cycler
-from SecretColors import Palette
+from SecretColors import Palette, distinct_colors
+
+plt.rcParams["axes.prop_cycle"] = plt.cycler(color=distinct_colors(5))
 
 p = Palette()
-plt.rcParams["axes.prop_cycle"] = cycler(color=[
-    p.blue(shade=60), p.red(), p.teal(), p.purple(shade=60), p.orange()])
-
 plt.hist(a, color=p.magenta(), alpha=0.75)
 plt.hist(b, color=p.cyan(), alpha=0.75)
 ```
@@ -181,16 +182,54 @@ cmaps.colors("Spectral", n=5)   # ['#d7191c', '#fdae61', '#ffffbf', '#abdda4', '
 | bokeh | `figure.scatter(x, y, color=cmaps.colors("Tableau", n=3)[0])` |
 | altair | `alt.Scale(range=cmaps.colors("tol_sunset"))` |
 
-## Colorblind friendly
+## Colors for everyone
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/distinct-dark.png">
+  <img alt="Distinct colors under colorblindness" src="docs/images/distinct-light.png">
+</picture>
+
+Red and green collapse into the same muddy tones for about 1 in 12 men.
+`distinct_colors()` picks colors from a palette which stay apart for normal
+vision, protanopia and deuteranopia, and have enough contrast with the
+background.
+
+```python
+from SecretColors import distinct_colors, check_colors
+
+distinct_colors(5)                          # ['#8a3ffc', '#b3901f', '#9f1853', '#009d9a', '#993a1d']
+distinct_colors(5, background="#161616")   # for dark themes
+distinct_colors(8, palette="material")
+distinct_colors(3, palette=my_brand_colors) # pick from your own colors
+```
+
+The first `k` colors are always the same, so adding a category never
+repaints the others. Check any set of colors with `check_colors()`.
+
+```python
+print(check_colors(["#fa4d56", "#24a148", "#0f62fe"]))
+# ColorReport (3 colors): needs attention
+#   [ok ] normal vision  min Delta E   44.4  #fa4d56 vs #0f62fe
+#   [ok ] protanopia     min Delta E   17.9  #fa4d56 vs #24a148
+#   [LOW] deuteranopia   min Delta E    5.5  #fa4d56 vs #24a148
+```
+
+Text and background colors can be checked against the WCAG guidelines.
+
+```python
+from SecretColors.utils import contrast_ratio, is_readable
+
+contrast_ratio("#0f62fe", "#ffffff")                # 5.0
+is_readable("#8d8d8d", "#ffffff")                   # False (needs 4.5)
+is_readable("#8d8d8d", "#ffffff", large_text=True)  # True  (needs 3.0)
+```
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/colorblind-dark.png">
   <img alt="Colorblind simulation" src="docs/images/colorblind-light.png">
 </picture>
 
-Red and green collapse into the same muddy tones for about 1 in 12 men.
-Use the built in colorblind-safe schemes instead, and check your own colors
-with the simulation helpers.
+Ready made colorblind-safe schemes and simulation helpers are included too.
 
 ```python
 cmaps.colors("cud")                     # Okabe-Ito (Color Universal Design)
@@ -199,6 +238,27 @@ cmaps.available("colorblind")           # all 12 colorblind-safe schemes
 
 from SecretColors.utils import simulate_green_blindness, hex_to_rgb
 simulate_green_blindness(*hex_to_rgb("#fa4d56"))
+```
+
+## Smoother gradients
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/gradients-dark.png">
+  <img alt="Gradients in RGB, Lab and LCh" src="docs/images/gradients-light.png">
+</picture>
+
+Mixing colors in RGB makes the middle of a gradient dull and grayish. Mix in
+`"lab"` for perceptually even steps, or `"lch"` to keep colors vivid.
+
+```python
+from SecretColors.utils import mix, color_in_between
+
+mix("#fa4d56", "#4589ff")                           # '#a06bab'  rgb
+mix("#fa4d56", "#4589ff", space="lab")              # '#c670a9'
+mix("#fa4d56", "#4589ff", space="lch")              # '#df57c0'
+color_in_between("#f1c21b", "#0f62fe", 3, space="lab")
+p.red().blend("#4589ff", ratio=0.3, space="lch")
+cmaps.cmap("RdBu", space="lab")                     # smooth colormaps
 ```
 
 ## Palette from an image
@@ -261,6 +321,20 @@ c.rgb                       # (0.980, 0.302, 0.337)
 c.rgb255                    # (250, 77, 86)
 c.hsl                       # (0.991, 0.945, 0.641)
 c.blend("#ffffff")          # '#fca6ab'
+```
+
+</details>
+
+<details>
+<summary><b>Jupyter notebooks</b></summary>
+
+Colors, lists of colors, palettes and `ColorWheel` show up as color swatches
+in Jupyter. Lists are still regular Python lists.
+
+```python
+Palette("spectrum")                 # all colors of the palette
+Palette().blue(no_of_colors=6)      # six swatches
+distinct_colors(8)
 ```
 
 </details>
@@ -335,6 +409,8 @@ noticeable are
 - `ColorString + "text"` is normal string concatenation. Use `.blend()` to mix colors.
 - `hexa` / `ahex` alpha uses the 0-255 scale (opaque is now `ff`).
 - `get_color_list` / `get_color_dict` are now `color_list` / `color_dict`.
+- Functions returning several colors return `ColorList`, a regular `list`
+  which shows swatches in Jupyter.
 
 Read the [changelog](CHANGELOG.md) for the full list.
 

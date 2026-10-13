@@ -43,9 +43,9 @@ from SecretColors.data.cmaps.brewer import BREWER_DATA
 from SecretColors.data.cmaps.colorblind import CB_DATA
 from SecretColors.data.cmaps.tableau import TABLEAU_DATA
 from SecretColors.data.constants import PALETTE_IBM
-from SecretColors.models.objects import ColorString
+from SecretColors.models.objects import ColorList, ColorString
 from SecretColors.models.palette import Palette, _linspace
-from SecretColors.utils import hex_to_rgb, rgb_to_hex
+from SecretColors.utils import _check_space, _mix, hex_to_rgb, rgb_to_hex
 
 __all__ = ["available", "colors", "cmap", "register", "DEFAULT_PREFIX"]
 
@@ -147,7 +147,8 @@ def _validate(n, start, end):
             raise ValueError(f"'{label}' should be between 0 and 100")
 
 
-def _sample(hex_colors: List[str], n: int, start: float, end: float):
+def _sample(hex_colors: List[str], n: int, start: float, end: float,
+            space: str = "rgb"):
     rgb = [hex_to_rgb(c)[:3] for c in hex_colors]
     if len(rgb) == 1:
         return [hex_colors[0]] * n
@@ -157,13 +158,12 @@ def _sample(hex_colors: List[str], n: int, start: float, end: float):
     for t in positions:
         x = t * segments
         i = min(int(x), segments - 1)
-        f = x - i
-        mixed = (a + (b - a) * f for a, b in zip(rgb[i], rgb[i + 1]))
+        mixed = _mix(rgb[i], rgb[i + 1], x - i, space)
         result.append(rgb_to_hex(*(min(1.0, max(0.0, v)) for v in mixed)))
     return result
 
 
-def _special_colors(name, data, n, start, end) -> List[str]:
+def _special_colors(name, data, n, start, end, space) -> List[str]:
     sizes = sorted(int(k) for k in data if k != "type")
     largest = data[str(sizes[-1])]
     if data.get("type") in _QUALITATIVE:
@@ -186,15 +186,17 @@ def _special_colors(name, data, n, start, end) -> List[str]:
             return list(data[str(n)])
     start = 0 if start is None else start
     end = 100 if end is None else end
-    return _sample(largest, n or len(largest), start / 100, end / 100)
+    return _sample(largest, n or len(largest), start / 100, end / 100,
+                   space)
 
 
 def _is_qualitative(kind: str, name: str) -> bool:
     return kind == "special" and _SPECIAL[name][1].get("type") in _QUALITATIVE
 
 
-def _colors(name, palette, n, start, end):
+def _colors(name, palette, n, start, end, space="rgb"):
     _validate(n, start, end)
+    space = _check_space(space)
     kind, key = _resolve(name)
     pal = None if kind == "special" else _get_palette(palette)
     color = None
@@ -206,7 +208,8 @@ def _colors(name, palette, n, start, end):
             raise _unknown(name, pal)
         kind, key = "special", matches[0]
     if kind == "special":
-        result = _special_colors(key, _SPECIAL[key][1], n, start, end)
+        result = _special_colors(key, _SPECIAL[key][1], n, start, end,
+                                 space)
         return kind, key, result
 
     shades = color.get_all_shades()
@@ -218,7 +221,7 @@ def _colors(name, palette, n, start, end):
 
 def colors(name: str, *, palette: Union[str, Palette] = PALETTE_IBM,
            n: int = None, start: float = None, end: float = None,
-           reverse: bool = False) -> List[ColorString]:
+           reverse: bool = False, space: str = "rgb") -> List[ColorString]:
     """
     Colors of a colormap as hex strings. It does not need matplotlib and
     output can be used with any library.
@@ -250,11 +253,15 @@ def colors(name: str, *, palette: Union[str, Palette] = PALETTE_IBM,
     :param end: End of colormap (0-100). For standard colormaps this is the
         ending shade.
     :param reverse: If True, order of colors will be reversed
+    :param space: Color space used when colors are interpolated - 'rgb'
+        (default), 'lab' or 'lch'. See :func:`~SecretColors.utils.mix`
     :return: List of hex colors
     """
-    _, _, result = _colors(name, palette, n, start, end)
-    result = [ColorString(str(c)) for c in result]
-    return list(reversed(result)) if reverse else result
+    _, _, result = _colors(name, palette, n, start, end, space)
+    result = ColorList(ColorString(str(c)) for c in result)
+    if reverse:
+        result.reverse()
+    return result
 
 
 def _matplotlib_colors():
@@ -279,7 +286,8 @@ def _build(color_list, name: str, discrete: bool, mpl_colors=None):
 
 def cmap(name: str, *, palette: Union[str, Palette] = PALETTE_IBM,
          n: int = None, start: float = None, end: float = None,
-         discrete: Optional[bool] = None, reverse: bool = False):
+         discrete: Optional[bool] = None, reverse: bool = False,
+         space: str = "rgb"):
     """
     Matplotlib colormap which can be directly passed to ``cmap`` argument
 
@@ -299,14 +307,19 @@ def cmap(name: str, *, palette: Union[str, Palette] = PALETTE_IBM,
         returned, else :class:`matplotlib.colors.LinearSegmentedColormap`.
         Default: True for qualitative colormaps, False otherwise.
     :param reverse: If True, colormap will be reversed
+    :param space: Color space used for interpolation - 'rgb' (default),
+        'lab' or 'lch'. Continuous colormaps are smoothly resampled in this
+        space, which avoids dull middle colors.
     :return: Matplotlib colormap
     """
-    kind, key, result = _colors(name, palette, n, start, end)
+    kind, key, result = _colors(name, palette, n, start, end, space)
     if discrete is None:
         discrete = _is_qualitative(kind, key)
     if reverse:
         result = list(reversed(result))
     full_name = f"{DEFAULT_PREFIX}.{key}" + ("_r" if reverse else "")
+    if not discrete and space != "rgb" and len(result) > 1:
+        result = _sample(result, 256, 0, 1, space)
     return _build(result, full_name, discrete)
 
 

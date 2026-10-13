@@ -12,6 +12,17 @@
   colorspaces (e.g. `pro_photo`, `wide_gamut`, `apple`). `rgb_spaces()`
   lists them. Unknown colorspace or white reference raises `ValueError`
   (earlier `AttributeError`).
+* `distinct_colors(n)` picks colors which stay distinct for normal vision,
+  protanopia and deuteranopia and have enough contrast with the background.
+  `check_colors()` reports how distinct any set of colors is.
+* WCAG accessibility: `contrast_ratio()` and `is_readable()`.
+  `relative_luminance()` accepts RGB tuples as well.
+* Perceptual mixing: `mix()`, and `space="lab"` / `"lch"` option in
+  `color_in_between()`, `ColorString.blend()`, `cmaps.colors()` and
+  `cmaps.cmap()` for smoother gradients. `blend()` accepts `ratio`.
+* Colors, lists of colors, palettes and `ColorWheel` show swatches in Jupyter
+  notebooks. Functions returning several colors return `ColorList`, a
+  regular `list` subclass. `ColorWheel.color` returns `ColorString`.
 ### New colormap API
 * `SecretColors.cmaps.register()` registers every colormap (and its
   reversed `_r` version) in matplotlib with `sc.` prefix. Use them by name

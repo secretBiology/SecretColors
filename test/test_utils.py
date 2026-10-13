@@ -211,3 +211,79 @@ def test_delta_e():
         delta_e("#000000", "#ffffff", method="cie94")
     with pytest.raises(ValueError):
         delta_e((1, 2), "#ffffff")
+
+
+@pytest.mark.parametrize("c1, c2, expected", [
+    ("#000000", "#ffffff", 21.0),
+    ("#ffffff", "#ffffff", 1.0),
+    ("#0f62fe", "#ffffff", 5.0),
+])
+def test_contrast_ratio(c1, c2, expected):
+    assert contrast_ratio(c1, c2) == pytest.approx(expected, abs=0.01)
+    assert contrast_ratio(c2, c1) == contrast_ratio(c1, c2)
+
+
+def test_contrast_inputs():
+    assert contrast_ratio((0, 0, 0), "#ffffff") == pytest.approx(21)
+    assert contrast_ratio((0, 0, 0, 0.5), "#ffffffff") == pytest.approx(21)
+    with pytest.raises(ValueError):
+        contrast_ratio((2, 0, 0), "#ffffff")
+    with pytest.raises(ValueError):
+        contrast_ratio(5, "#ffffff")
+
+
+@pytest.mark.parametrize("fg, level, large, expected", [
+    ("#6f6f6f", "AA", False, True),
+    ("#6f6f6f", "AAA", False, False),
+    ("#8d8d8d", "AA", False, False),
+    ("#8d8d8d", "AA", True, True),
+    ("#525252", "AAA", False, True),
+    ("#6f6f6f", "aaa", True, True),
+])
+def test_is_readable(fg, level, large, expected):
+    assert is_readable(fg, "#ffffff", level=level,
+                       large_text=large) is expected
+
+
+def test_is_readable_invalid():
+    with pytest.raises(ValueError):
+        is_readable("#000000", "#ffffff", level="A")
+
+
+@pytest.mark.parametrize("space", ["rgb", "lab", "lch"])
+def test_mix(space):
+    assert mix("#fa4d56", "#4589ff", 0, space=space) == "#fa4d56"
+    assert mix("#fa4d56", "#4589ff", 1, space=space) == "#4589ff"
+    assert mix("#808080", "#808080", 0.3, space=space) == "#808080"
+    assert len(color_in_between("#fa4d56", "#4589ff", 4, space=space)) == 4
+
+
+def test_mix_values():
+    assert mix("#000000", "#ffffff") == "#808080"
+    assert mix("#000000", "#ffffff", space="lab") == "#777777"
+    assert hex_to_lab(mix("#000000", "#ffffff", space="lab"))[0] == \
+        pytest.approx(50, abs=0.5)
+    with pytest.raises(ValueError):
+        mix("#000000", "#ffffff", 1.5)
+    with pytest.raises(ValueError):
+        mix("#000000", "#ffffff", space="hsv")
+
+
+def test_lab_gradients_are_even():
+    def spread(space):
+        colors = ["#000000",
+                  *color_in_between("#000000", "#ffffff", 9, space=space),
+                  "#ffffff"]
+        steps = [hex_to_lab(c)[0] for c in colors]
+        gaps = [b - a for a, b in zip(steps, steps[1:])]
+        return max(gaps) - min(gaps)
+
+    assert spread("lab") < 1
+    assert spread("rgb") > 2
+
+
+def test_lch_keeps_chroma():
+    rgb_mid = mix("#fa4d56", "#4589ff")
+    lch_mid = mix("#fa4d56", "#4589ff", space="lch")
+    assert lab_to_lch(*hex_to_lab(lch_mid))[1] > \
+        lab_to_lch(*hex_to_lab(rgb_mid))[1]

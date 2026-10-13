@@ -40,6 +40,7 @@ plt.rcParams["axes.prop_cycle"] = plt.cycler(color=distinct_colors(6))
 :::{tip}
 The first `k` colors of `distinct_colors(n)` are always the same as
 `distinct_colors(k)`. Adding a new category never repaints the existing ones.
+`Palette().cycle()` gives the same colors one by one, without a limit.
 :::
 
 | Argument | Default | Meaning |

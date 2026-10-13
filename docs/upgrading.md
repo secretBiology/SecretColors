@@ -20,6 +20,7 @@ code keeps working. This page lists everything that may need a change.
 | `seed=` changed global `random` state | Uses a private generator | Seed `random` yourself if you relied on it |
 | `ColorWheel.rotate_lightness()` wrapped around | Clamps between 0-100% | Nothing |
 | Unknown RGB colorspace raised `AttributeError` | Raises `ValueError` | Catch `ValueError` |
+| `Palette.cycle()` started with red, blue, yellow, green ... (red/green clash for colorblind readers) | Yields colorblind-safe distinct colors, same order as `distinct_colors()` | Nothing, or pass `background=` for dark themes |
 | Several colors were returned as `list` | Returned as `ColorList`, a `list` subclass which shows swatches in Jupyter | Nothing |
 
 ## Renamed and removed

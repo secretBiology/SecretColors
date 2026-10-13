@@ -243,80 +243,49 @@ class Palette:
         """Deprecated alias of :attr:`color_list`"""
         return self.color_list
 
-    def cycle(self, version: int = 1, skip_first: int = 0):
+    def cycle(self, version: int = 1, skip_first: int = 0, *,
+              background: str = "#ffffff", colorblind_safe: bool = True):
         """
-        Creates infinite color cycle
-
-        Inspiration is taken from : https://tsitsul.in/blog/coloropt/
+        Creates an infinite cycle of distinct colors from the current
+        palette. Use it when you do not know in advance how many colors you
+        need.
 
         >>> color_cycle = Palette().cycle()
-        >>> next(color_cycle) # First Color
-        >>> next(color_cycle) # Next Color
+        >>> next(color_cycle)       # '#8a3ffc'
+        >>> next(color_cycle)       # '#b3901f'
 
-        This will go infinitely. After few colors it will start repeating.
-        You can get qualitative colors like following
+        >>> for color, data in zip(Palette().cycle(), datasets):
+        ...     plt.plot(data, color=color)
 
-        >>> my_colors = [next(color_cycle) for x in range(10)] # Ten colors
-
-        You may use in the for loop. However, be careful. It is infinite
-        cycle. You need to break the loop by yourself.
+        Colors come in the same order as
+        :func:`~SecretColors.distinct_colors`: each next color is the one
+        most distinct from the colors before it, also for colorblind readers,
+        and has enough contrast with the background. When all colors of the
+        palette are used, the cycle starts again from the first color.
 
         ..  danger::
-            This method creates inifinite number of colors. Be careful while using it in the loop
+            The cycle never ends. Use it with ``zip``, ``islice`` or break
+            the loop yourself.
 
-        :param skip_first: number of colors to be skipped from start. Only
-            works for first 18 colors.
-        :param version: color sequence version
+        :param version: Kept for backward compatibility. It has no effect.
+        :param skip_first: Number of colors to skip from the start
+        :param background: Background color of the plot (default: white).
+            Use e.g. '#161616' for dark themes.
+        :param colorblind_safe: If True (default), colors are kept apart for
+            people with red or green colorblindness
         """
-        selected = [self.red(),
-                    self.blue(),
-                    self.yellow(shade=30),
-                    self.green(),
-                    self.teal(shade=40),
-                    self.magenta(),
-                    self.orange(shade=30),
-                    self.red(shade=30),
-                    self.indigo(),
-                    self.cyan(shade=30),
-                    self.brown(shade=30),
-                    self.green(shade=30),
-                    self.gray(shade=40),
-                    self.amber(shade=30),
-                    self.aqua(shade=40),
-                    self.red_orange(shade=40),
-                    self.cerulean(shade=40),
-                    self.green_light()
-                    ]
+        from SecretColors.selection import _distinct_order
 
-        if skip_first < len(selected):
-            for i in range(skip_first):
-                selected.pop(0)
-
-        # First default colors
-        for c in selected:
-            yield c
-
-        # Define colors
-        objs = [self.yellow, self.red, self.blue, self.green, self.teal,
-                self.magenta, self.orange, self.red, self.indigo, self.cyan,
-                self.brown, self.green, self.gray, self.amber, self.aqua,
-                self.red_orange, self.cerulean, self.green_light]
-        start_shade = 40
-
-        # Start infinite
-        initial_offset = 0
+        order = _distinct_order(self.name, bool(colorblind_safe), background,
+                                3.0, (40, 70), False)
+        if not order:
+            self.log.error(f"No colors of '{self.name}' palette have enough "
+                           f"contrast with background '{background}'",
+                           exception=ValueError)
+        index = max(0, int(skip_first))
         while True:
-            for c in objs:
-                if c(shade=start_shade) not in selected:
-                    yield c(shade=start_shade)
-                    selected.append(c(shade=start_shade))
-            start_shade += 5
-            if start_shade > 100:
-                start_shade = initial_offset + 10
-                initial_offset += 1
-                if initial_offset > 80:
-                    initial_offset = 0
-                    selected = []
+            yield self._send(ColorString(order[index % len(order)]))
+            index += 1
 
     def __iter__(self):
         return iter(self.color_list)

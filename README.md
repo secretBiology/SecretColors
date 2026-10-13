@@ -135,6 +135,16 @@ plt.hist(a, color=p.magenta(), alpha=0.75)
 plt.hist(b, color=p.cyan(), alpha=0.75)
 ```
 
+Don't know how many series you will plot? `cycle()` gives the same distinct
+colors one by one, without a limit.
+
+```python
+for color, (name, data) in zip(Palette().cycle(), groups.items()):
+    plt.plot(data, color=color, label=name)
+
+Palette("material").cycle(background="#161616")    # other palettes, dark themes
+```
+
 ## Colormaps
 
 <picture>
@@ -350,7 +360,7 @@ p.random(no_of_colors=5, avoid=["gray"])
 p.random_gradient(no_of_colors=5)       # gradient between two complementary colors
 
 from itertools import islice
-list(islice(p.cycle(), 5))              # ['#fa4d56', '#4589ff', '#e3bc13', '#24a148', '#08bdba']
+list(islice(Palette().cycle(), 5))      # ['#8a3ffc', '#b3901f', '#9f1853', '#009d9a', '#993a1d']
 
 for color in Palette("material"):       # iterate over all palette colors
     ...

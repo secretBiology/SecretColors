@@ -15,6 +15,10 @@
 * `distinct_colors(n)` picks colors which stay distinct for normal vision,
   protanopia and deuteranopia and have enough contrast with the background.
   `check_colors()` reports how distinct any set of colors is.
+* `Palette.cycle()` yields colorblind-safe distinct colors in the same order
+  as `distinct_colors()`, so it can be used directly in loops. Earlier
+  sequence had red next to green and low contrast yellow. New `background`
+  and `colorblind_safe` arguments.
 * WCAG accessibility: `contrast_ratio()` and `is_readable()`.
   `relative_luminance()` accepts RGB tuples as well.
 * Perceptual mixing: `mix()`, and `space="lab"` / `"lch"` option in

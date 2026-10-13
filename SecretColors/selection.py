@@ -18,6 +18,7 @@ Pick colors which are easy to tell apart, and check your own colors.
 """
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 from itertools import combinations
 from typing import List, Optional, Sequence, Tuple, Union
 
@@ -67,6 +68,54 @@ def _candidates(palette, shade_range, include_grays) -> List[tuple]:
     return list(found.items())
 
 
+def _palette_key(palette):
+    if isinstance(palette, Palette):
+        return palette.name
+    if isinstance(palette, str):
+        return palette.strip().lower()
+    if isinstance(palette, (list, tuple)):
+        return tuple(c if isinstance(c, str) else tuple(c) for c in palette)
+    raise TypeError(f"'palette' should be a palette name, Palette or a "
+                    f"list of colors, not {type(palette)}")
+
+
+@lru_cache(maxsize=64)
+def _distinct_order(palette, colorblind_safe: bool,
+                    background: Optional[str], min_contrast: float,
+                    shade_range: Tuple[float, float],
+                    include_grays: bool) -> Tuple[str, ...]:
+    if isinstance(palette, tuple):
+        palette = list(palette)
+    pool = _candidates(palette, shade_range, include_grays)
+    if background is not None:
+        pool = [(c, f) for c, f in pool if contrast_ratio(c, background) >=
+                min_contrast]
+    if not pool:
+        return ()
+
+    families = [f for _, f in pool]
+    pool = [c for c, _ in pool]
+    labs = [_labs(c) for c in pool]
+    views = range(3) if colorblind_safe else range(1)
+
+    def distance(i, j):
+        return min(_ciede2000(labs[i][v], labs[j][v]) for v in views)
+
+    chroma = [lab_to_lch(*lab[0])[1] for lab in labs]
+    chosen = [max(range(len(pool)), key=lambda i: chroma[i])]
+    nearest = [distance(i, chosen[0]) for i in range(len(pool))]
+    remaining = set(range(len(pool))) - set(chosen)
+    while remaining:
+        used = {families[i] for i in chosen}
+        best = max(sorted(remaining),
+                   key=lambda i: nearest[i] + (_NEW_HUE_BONUS if families[i]
+                                               not in used else 0))
+        chosen.append(best)
+        remaining.discard(best)
+        nearest = [min(d, distance(i, best)) for i, d in enumerate(nearest)]
+    return tuple(pool[i] for i in chosen)
+
+
 def distinct_colors(n: int, *, palette: Union[str, Palette, Sequence] = "ibm",
                     colorblind_safe: bool = True,
                     background: Optional[str] = "#ffffff",
@@ -85,6 +134,8 @@ def distinct_colors(n: int, *, palette: Union[str, Palette, Sequence] = "ibm",
 
     The first `k` colors of ``distinct_colors(n)`` are the same as
     ``distinct_colors(k)``, so adding a category never repaints the others.
+    :meth:`Palette.cycle() <SecretColors.Palette.cycle>` yields the same
+    colors one by one, without a limit.
 
     >>> distinct_colors(5)                          # from IBM palette
     >>> distinct_colors(8, palette="material")
@@ -110,34 +161,15 @@ def distinct_colors(n: int, *, palette: Union[str, Palette, Sequence] = "ibm",
     if n < 1:
         raise ValueError("'n' should be at least 1")
 
-    pool = _candidates(palette, shade_range, include_grays)
-    if background is not None:
-        pool = [(c, f) for c, f in pool if contrast_ratio(c, background) >=
-                min_contrast]
-    if len(pool) < n:
-        raise ValueError(f"Only {len(pool)} colors are available with these "
-                         f"settings. Try lowering 'min_contrast', widening "
-                         f"'shade_range' or setting include_grays=True.")
-
-    families = [f for _, f in pool]
-    pool = [c for c, _ in pool]
-    labs = [_labs(c) for c in pool]
-    views = range(3) if colorblind_safe else range(1)
-
-    def distance(i, j):
-        return min(_ciede2000(labs[i][v], labs[j][v]) for v in views)
-
-    chroma = [lab_to_lch(*lab[0])[1] for lab in labs]
-    chosen = [max(range(len(pool)), key=lambda i: chroma[i])]
-    nearest = [distance(i, chosen[0]) for i in range(len(pool))]
-    while len(chosen) < n:
-        used = {families[i] for i in chosen}
-        best = max((i for i in range(len(pool)) if i not in chosen),
-                   key=lambda i: nearest[i] + (_NEW_HUE_BONUS if families[i]
-                                               not in used else 0))
-        chosen.append(best)
-        nearest = [min(d, distance(i, best)) for i, d in enumerate(nearest)]
-    return ColorList(ColorString(pool[i]) for i in chosen)
+    order = _distinct_order(_palette_key(palette), bool(colorblind_safe),
+                            background, float(min_contrast),
+                            tuple(shade_range), bool(include_grays))
+    if len(order) < n:
+        raise ValueError(f"Only {len(order)} colors are available with "
+                         f"these settings. Try lowering 'min_contrast', "
+                         f"widening 'shade_range' or setting "
+                         f"include_grays=True.")
+    return ColorList(ColorString(c) for c in order[:n])
 
 
 @dataclass

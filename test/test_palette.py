@@ -8,6 +8,7 @@
 import random
 
 import pytest
+from SecretColors import check_colors, distinct_colors
 from SecretColors.models.palette import Palette
 
 
@@ -159,6 +160,29 @@ def test_cycle():
     cycle = Palette().cycle()
     colors = [next(cycle) for _ in range(60)]
     assert len(set(colors[:18])) == 18
+    assert colors[:8] == distinct_colors(8)
+
+
+@pytest.mark.parametrize("name", ["ibm", "material", "spectrum"])
+def test_cycle_is_distinct(name):
+    from itertools import islice
+    colors = list(islice(Palette(name).cycle(), 8))
+    assert check_colors(colors).ok
+    dark = list(islice(Palette(name).cycle(background="#161616"), 6))
+    assert check_colors(dark, background="#161616").ok
+
+
+def test_cycle_options():
+    from itertools import islice
+    assert list(islice(Palette().cycle(skip_first=2), 3)) == \
+        distinct_colors(5)[2:5]
+    rgb = next(Palette(color_mode="rgb").cycle())
+    assert isinstance(rgb, tuple) and len(rgb) == 3
+    small = list(islice(Palette("tableau").cycle(), 20))
+    assert small[:8] == small[8:16]
+    assert next(Palette().cycle(colorblind_safe=False)).startswith("#")
+    with pytest.raises(ValueError):
+        next(Palette().cycle(background="#808080"))
 
 
 def test_color_collections():

@@ -133,8 +133,28 @@ touched.
 handy when you do not know in advance how many series you will plot.
 
 ```python
-from itertools import islice
+for color, (name, data) in zip(Palette().cycle(), groups.items()):
+    plt.plot(data, color=color, label=name)
 
+from itertools import islice
 list(islice(Palette().cycle(), 5))
-# ['#fa4d56', '#4589ff', '#e3bc13', '#24a148', '#08bdba']
+# ['#8a3ffc', '#b3901f', '#9f1853', '#009d9a', '#993a1d']
 ```
+
+Colors come in the same order as {func}`~SecretColors.distinct_colors`: every
+next color is the most distinct one from the colors before it, also for
+colorblind readers, with enough contrast against the background. When all
+colors of the palette are used, the cycle starts again.
+
+```python
+Palette().cycle(background="#161616")   # for dark themes
+Palette("material").cycle()             # any palette
+Palette().cycle(skip_first=2)           # start from the third color
+```
+
+:::{tip}
+Readers can reliably tell apart about 8 categorical colors. With more
+categories, consider grouping the smallest ones into "Other" or using small
+multiples. Small palettes such as `tableau` and `clarity` have fewer distinct
+colors to offer.
+:::

@@ -161,7 +161,7 @@ class ColorWheel:
         cw = ColorWheel("#fa4d56")  # Initialize your 'base color'
         cw.make_darker(30)  # Make current color darker by 30%
         print(cw.color)  # Prints #df0612, darker shade of #fa4d56
-        cw.make_lighter(10)  # Make current color lighter by 30%
+        cw.make_lighter(10)  # Make current color lighter by 10%
         print(cw.color)  # Prints #f80915, lighter shade of #df0612
 
     You can perform infinite amount of manipulations. Only thing you should

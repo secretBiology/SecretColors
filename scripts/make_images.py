@@ -4,9 +4,9 @@
 #  Author: Rohit Suratekar
 #  Website: https://github.com/secretBiology/SecretColors
 #
-#  Generates images used in README.md
+#  Generates images used in README.md and documentation
 #
-#  uv run python scripts/readme_images.py
+#  uv run python scripts/make_images.py
 
 from pathlib import Path
 
@@ -22,7 +22,9 @@ from SecretColors.utils import (hex_to_hsl, hex_to_rgb, rgb_to_hex,
 
 matplotlib.use("Agg")
 
-OUT = Path(__file__).resolve().parent.parent / "docs" / "images"
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "docs" / "images"
+STATIC = ROOT / "docs" / "_static"
 
 THEMES = {
     "light": dict(bg="#ffffff", ink="#161616", muted="#6f6f6f",
@@ -96,6 +98,38 @@ def banner():
     ax.set_xlim(-0.05, len(hues) - 0.1)
     ax.set_ylim(-0.05, len(shades) - 0.1)
     _save(fig, "banner", transparent=True)
+
+
+def _mosaic(ax, size, gap):
+    p = Palette()
+    grid = [["red", "magenta", "purple"], ["orange", "cyan", "blue"],
+            ["yellow", "green", "teal"]][:size]
+    for r, row in enumerate(grid):
+        for c, name in enumerate(row[:size]):
+            _chip(ax, c, size - r - 1, 1 - gap, 1 - gap, p.get(name),
+                  radius=0.22)
+
+
+def logo():
+    for theme, t in THEMES.items():
+        fig, ax = _canvas(3.4, 0.62)
+        fig.patch.set_alpha(0)
+        _mosaic(ax, 3, 0.16)
+        ax.text(3.35, 1.42, "SecretColors", color=t["ink"], fontsize=21,
+                fontweight="bold", va="center")
+        ax.set_xlim(0, 15.5)
+        ax.set_ylim(-0.05, 2.95)
+        STATIC.mkdir(parents=True, exist_ok=True)
+        fig.savefig(STATIC / f"logo-{theme}.png", dpi=200, transparent=True)
+        plt.close(fig)
+    fig, ax = _canvas(0.64, 0.64)
+    fig.patch.set_alpha(0)
+    _mosaic(ax, 3, 0.14)
+    ax.set_xlim(0, 2.9)
+    ax.set_ylim(0, 2.9)
+    fig.savefig(STATIC / "favicon.png", dpi=100, transparent=True)
+    plt.close(fig)
+    print("saved docs/_static/logo-*.png, favicon.png")
 
 
 def palettes(theme):
@@ -377,6 +411,7 @@ def colorblind(theme):
 
 if __name__ == "__main__":
     banner()
+    logo()
     for mode in THEMES:
         palettes(mode)
         shades(mode)

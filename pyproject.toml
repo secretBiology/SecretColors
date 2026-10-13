@@ -41,7 +41,7 @@ Issues = "https://github.com/secretBiology/SecretColors/issues"
 
 [dependency-groups]
 test = ["pytest>=9.0", "pytest-cov>=7.0", "matplotlib>=3.10", "pillow>=11.0"]
-docs = ["sphinx>=8.1", "sphinx-rtd-theme>=3.1"]
+docs = ["sphinx>=8.1", "furo>=2025.0", "myst-parser>=4.0", "sphinx-copybutton>=0.5.2", "sphinx-design>=0.6"]
 dev = [{ include-group = "test" }, "tox>=4.65", "tox-uv>=1.36"]
 
 [tool.hatch.build.targets.wheel]

@@ -1,0 +1,149 @@
+/* Landing page */
+img.sc-banner {
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 0.5rem;
+}
+section#secretcolors > h1 {
+  text-align: center;
+  font-size: 2.7rem;
+  letter-spacing: -0.02em;
+  margin: 1.4rem 0 0.4rem;
+}
+.sc-tagline {
+  text-align: center;
+  font-size: 1.12rem;
+  color: var(--color-foreground-secondary);
+  max-width: 38rem;
+  margin: 0 auto 1.2rem;
+}
+.sc-buttons {
+  text-align: center;
+  margin-bottom: 2.2rem;
+}
+.sc-buttons p {
+  display: inline-block;
+  margin: 0.25rem;
+}
+.sd-card {
+  border-radius: 10px !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sd-card:hover {
+  transform: translateY(-2px);
+}
+.sd-card .sd-card-title {
+  font-weight: 650;
+}
+.sc-dot {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  margin-right: 0.45em;
+  vertical-align: 0.02em;
+}
+
+/* Palette swatches */
+.sc-swatches {
+  margin: 1rem 0 2rem;
+  font-size: 0.72rem;
+}
+.sc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 3px 0;
+}
+.sc-name {
+  flex: 0 0 7.5rem;
+  text-align: right;
+  font-size: 0.78rem;
+  color: var(--color-foreground-secondary);
+  background: none !important;
+  border: none !important;
+}
+.sc-chips {
+  flex: 1;
+  display: flex;
+  gap: 3px;
+}
+.sc-chip {
+  flex: 1;
+  height: 2.2rem;
+  border-radius: 5px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.sc-chip span {
+  opacity: 0;
+  font-family: var(--font-stack--monospace);
+  font-size: 0.6rem;
+  transition: opacity 0.12s ease;
+}
+.sc-chip:hover span {
+  opacity: 1;
+}
+.sc-chip.sc-core {
+  box-shadow: inset 0 0 0 2px var(--color-background-primary),
+    0 0 0 2px var(--color-foreground-primary);
+}
+.sc-header .sc-chips span {
+  flex: 1;
+  text-align: center;
+  color: var(--color-foreground-muted);
+  font-family: var(--font-stack--monospace);
+}
+
+/* Colormap swatches */
+.sc-cmaps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem 1.4rem;
+  margin: 1rem 0 2rem;
+}
+.sc-cmap-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.3rem;
+}
+.sc-cmap-head code {
+  font-size: 0.78rem;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+.sc-badge {
+  font-size: 0.66rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 1rem;
+  color: var(--color-foreground-secondary);
+  border: 1px solid var(--color-background-border);
+}
+.sc-strip {
+  height: 1.8rem;
+  border-radius: 6px;
+}
+.sc-discrete {
+  display: flex;
+  gap: 2px;
+}
+.sc-discrete span {
+  flex: 1;
+}
+.sc-discrete span:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.sc-discrete span:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+/* Figures */
+img.only-light,
+img.only-dark {
+  border-radius: 8px;
+}

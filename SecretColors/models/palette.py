@@ -97,7 +97,7 @@ class Palette:
         from SecretColors import Palette
         p = Palette() # Generates Default color palette i.e. IBM Color Palette
         ibm = Palette("ibm") # Generates IBM Palette
-        ibm.red() # Returns '#fb4b53'
+        ibm.red() # Returns '#fa4d56'
         material = Palette("material") # Generates Material Palette
         material.red() # Returns '#f44336'
 
@@ -121,7 +121,7 @@ class Palette:
         p4 = Palette(color_mode="rgb")
         p4.green() # (0.141, 0.631, 0.282)
         p5 = Palette(color_mode="rgba")
-        p5.green() # '(0.141, 0.282, 0.631, 1)'
+        p5.green() # (0.141, 0.631, 0.282, 1)
 
     Note: *matplotlib* can accepts "hex", "rgb" or "hexa"
 

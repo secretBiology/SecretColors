@@ -22,18 +22,11 @@ def deprecated(message: str = None):
     def decorator(function):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
-            warnings.simplefilter('always',
-                                  DeprecationWarning)  # turn off filter
-
             m = "'{}' is deprecated. ".format(function.__name__)
             if message is not None:
                 m += str(message)
 
             warnings.warn(m, category=DeprecationWarning, stacklevel=2)
-
-            warnings.simplefilter('default',
-                                  DeprecationWarning)  # reset filter
-
             return function(*args, **kwargs)
 
         return wrapper

@@ -8,7 +8,8 @@
 
 import pytest
 
-from SecretColors.models.objects import ColorOutput, ColorString, ColorTuple
+from SecretColors.models.objects import (ColorOutput, ColorString,
+                                         ColorTuple, ColorWheel)
 
 test_data = [
     ("#ffffff", False, (1, 1, 1, 1), "#ffffff"),
@@ -88,3 +89,44 @@ def test_color_objects():
     assert len(col_tuple) == 3
 
 
+
+
+def test_string_and_tuple_semantics():
+    c = ColorString("#ff0000")
+    assert c + "80" == "#ff000080"
+    assert "color: " + c == "color: #ff0000"
+    t = ColorTuple((1, 0, 0))
+    assert t + (1,) == (1, 0, 0, 1)
+
+
+def test_blend():
+    c = ColorString("#ff0000")
+    assert c.blend("#0000ff") == "#800080"
+    assert c.blend((0, 0, 1)) == "#800080"
+    assert c.blend(ColorString("#0000ff")) == "#800080"
+    assert isinstance(c.blend("#0000ff"), ColorString)
+    with pytest.raises(TypeError):
+        c.blend(5)
+
+
+def test_color_wheel():
+    cw = ColorWheel("#fa4d56")
+    cw.rotate_hue(180)
+    assert cw.color == "#4dfaf1"
+    cw.rotate_hue(-180)
+    assert cw.color == "#fa4d56"
+    cw.rotate_hue(360 * 3)
+    assert cw.color == "#fa4d56"
+
+    white = ColorWheel("#ffffff")
+    white.rotate_lightness(0)
+    assert white.color == "#ffffff"
+    white.rotate_lightness(90)
+    assert white.color == "#ffffff"
+    white.rotate_lightness(-720)
+    assert white.color == "#000000"
+
+    gray = ColorWheel("#808080")
+    gray.rotate_saturation(-90)
+    assert gray.color == "#808080"
+    assert len(ColorWheel("#fa4d56").tetradic()) == 4

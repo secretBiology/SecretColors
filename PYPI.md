@@ -17,7 +17,8 @@ Few sample plots and inspiration behind this library can be found in [WeirdData 
 ### Installation 
 
 ```
-pip install SecretColors
+uv add SecretColors        # or: pip install SecretColors
+uv add "SecretColors[matplotlib]"   # with matplotlib for ColorMap classes
 ```
 
 ### Documentation

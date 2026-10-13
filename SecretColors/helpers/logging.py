@@ -6,10 +6,12 @@
 #
 #  Logging util class
 
-import inspect
 import logging
 import os
+import sys
 from typing import Type
+
+LOGGER_NAME = "SecretColors"
 
 
 class LogFilter(object):
@@ -21,6 +23,12 @@ class LogFilter(object):
 
 
 class Log:
+    """
+    Thin wrapper around the 'SecretColors' logger. Handlers are attached
+    only once per process (and only when `show_log` is True), so creating
+    many Log objects does not duplicate the output.
+    """
+
     def __init__(self, show_log: bool = False,
                  options: dict = None,
                  add_to_console: bool = True,
@@ -34,42 +42,51 @@ class Log:
         self.add_to_console = add_to_console
         self.add_to_file = add_to_file
         self.filename = filename
-        self._log_object = None
         self.min_log_level = min_log_level
+        self._configured = False
 
     @property
-    def log_object(self):
-        if self._log_object is None:
-            self._log_object = logging.getLogger("log")
+    def log_object(self) -> logging.Logger:
+        logger = logging.getLogger(LOGGER_NAME)
+        if self.show_log and not self._configured:
+            self._configured = True
+            if logger.level == logging.NOTSET:
+                logger.setLevel(logging.DEBUG)
             if self.add_to_console:
-                console = logging.StreamHandler()
-                console.setFormatter(self.formatter)
-                console.addFilter(LogFilter(self.min_log_level))
-                self._log_object.addHandler(console)
-
+                self._attach(logger, "console", logging.StreamHandler)
             if self.add_to_file:
-                log_file = logging.FileHandler(self.filename)
-                log_file.setFormatter(self.formatter)
-                log_file.addFilter(LogFilter(self.min_log_level))
-                self._log_object.addHandler(log_file)
-        return self._log_object
+                path = os.path.abspath(self.filename)
+                self._attach(logger, f"file:{path}",
+                             lambda: logging.FileHandler(path))
+        return logger
+
+    def _attach(self, logger: logging.Logger, key: str, factory):
+        if any(getattr(h, "_secret_colors_key", None) == key
+               for h in logger.handlers):
+            return
+        handler = factory()
+        handler._secret_colors_key = key
+        handler.setFormatter(self.formatter)
+        handler.addFilter(LogFilter(self.min_log_level))
+        logger.addHandler(handler)
+
+    @staticmethod
+    def _caller() -> str:
+        frame = sys._getframe(3)
+        return os.path.basename(frame.f_code.co_filename)
+
+    def _emit(self, level: int, message):
+        self.log_object.log(level, message, extra={"script": self._caller()},
+                            stacklevel=3)
 
     def info(self, message):
         if self.show_log:
-            self.log_object.setLevel(logging.INFO)
-            frame = inspect.stack()[1]
-            module = inspect.getmodule(frame[0])
-            filename = os.path.basename(module.__file__)
-            self.log_object.info(message, extra={"script": filename})
+            self._emit(logging.INFO, message)
 
     def error(self, message, raise_exception=True,
               exception: Type[Exception] = None):
         if self.show_log:
-            self.log_object.setLevel(logging.ERROR)
-            frame = inspect.stack()[1]
-            module = inspect.getmodule(frame[0])
-            filename = os.path.basename(module.__file__)
-            self.log_object.error(message, extra={"script": filename})
+            self._emit(logging.ERROR, message)
 
         if raise_exception:
             if exception is None:
@@ -79,23 +96,11 @@ class Log:
 
     def warn(self, message):
         if self.show_log:
-            self.log_object.setLevel(logging.WARN)
-            frame = inspect.stack()[1]
-            module = inspect.getmodule(frame[0])
-            filename = os.path.basename(module.__file__)
-            self.log_object.warning(message, extra={"script": filename})
+            self._emit(logging.WARNING, message)
 
     def debug(self, message):
         if self.show_log:
-            self.log_object.setLevel(logging.DEBUG)
-            frame = inspect.stack()[1]
-            module = inspect.getmodule(frame[0])
-            filename = os.path.basename(module.__file__)
-            self.log_object.debug(message, extra={"script": filename})
+            self._emit(logging.DEBUG, message)
 
     def deprecated(self, message):
-        self.log_object.setLevel(logging.WARN)
-        frame = inspect.stack()[1]
-        module = inspect.getmodule(frame[0])
-        filename = os.path.basename(module.__file__)
-        self.log_object.warning(message, extra={"script": filename})
+        self._emit(logging.WARNING, message)

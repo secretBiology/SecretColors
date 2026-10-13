@@ -1,4 +1,53 @@
 # Changelog
+# v2.0.0
+### Bug fixes
+* `hexa` / `ahex` color modes now encode alpha on the 0-255 scale. Earlier,
+  fully opaque colors were written as `64` (~39% opacity) instead of `ff`.
+* `Palette.random()` no longer crashes when more colors are requested than
+  the number of standard shades available.
+* Iterating over a `Palette` (`for c in Palette()`) works.
+* `Palette.random_gradient()` no longer randomly raises `IndexError`.
+* `shade=0` is respected instead of being treated as "not provided".
+* Fixed sRGB gamma transform (`apply_gamma_transform`).
+* `hsv_to_rgb` accepts hue value of 1.
+* `cmy_to_cmyk(1, 1, 1)` returns pure black instead of raising
+  `ZeroDivisionError`.
+* `relative_luminance` / `text_color` accept 8-character hex codes.
+* `xyz_to_rgb` / `xyz_to_adobe_rgb` accept XYZ values greater than 1, and
+  `rgb_to_xyz` / `adobe_rgb_to_xyz` no longer clip XYZ values at 1.
+* `simulate_red_blindness` / `simulate_green_blindness` now follow the
+  published formula.
+* `ColorWheel.rotate_saturation` / `rotate_lightness` clamp between 0-100%
+  instead of wrapping (e.g. white no longer turns black).
+* `ColorMap.random_divergent()` respects `is_qualitative` and `is_reversed`.
+* `BrewerMap` and `TableauMap` accept `log` and `seed` arguments like
+  `ColorMap`.
+### Behaviour changes
+* Unknown palette names raise `ValueError` instead of silently falling back
+  to IBM palette.
+* `ColorString` / `ColorTuple` no longer override `+`. Normal string / tuple
+  concatenation works again. Use `ColorString.blend(other)` to mix colors.
+* Looking up colors from other palettes or named colors (e.g. `Palette.get
+  ("amber")`) no longer adds them to `Palette.colors`, `get_color_list` or
+  the pool used by `Palette.random()`.
+* `seed` in `Palette` and `ColorMap` uses a private random generator; global
+  `random` state is not modified anymore.
+* Logging uses the `SecretColors` logger, attaches handlers only once and no
+  longer changes global `warnings` filters.
+* ColorMap errors raise `ValueError` instead of bare `Exception`.
+* `rgb_to_srgb` / `srgb_to_rgb` are deprecated in favour of correctly named
+  `srgb_to_linear` / `linear_to_srgb`.
+* `Palette.get_color_dict` / `Palette.get_color_list` are deprecated in
+  favour of `Palette.color_dict` / `Palette.color_list`.
+* Removed `Palette.color_between` (deprecated since v1.2.0, use
+  `SecretColors.utils.color_in_between`) and `Palette.cmap_from` (deprecated
+  since v1.2.0, use `ColorMap.from_list`).
+### Packaging
+* Moved to `pyproject.toml` (hatchling) and [uv](https://docs.astral.sh/uv/).
+  `setup.py` and `requirements*.txt` are removed.
+* Requires Python 3.10+. Tested on Python 3.10 - 3.14.
+* Optional `matplotlib` extra: `pip install "SecretColors[matplotlib]"`.
+* `SecretColors.__version__` is available.
 # v1.2.6
 Removed dependency on `numpy` (Thanks to [ri0t](https://github.com/ri0t))
 # v1.2.5

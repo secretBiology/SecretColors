@@ -6,7 +6,7 @@
 #
 #  Main classes classes related to color and shades will go in this file
 
-import collections
+import collections.abc
 
 from SecretColors.helpers.logging import Log
 from SecretColors.models.objects import ColorString
@@ -68,6 +68,7 @@ class Color:
             log = Log()
         self.log = log
         self._values = None
+        self._segments = {}
         self.left = left  # Left hand end
         self.right = right  # Right hand end
         self.default = default  # Default shade
@@ -119,6 +120,13 @@ class Color:
     def get(self) -> ColorString:
         return self.shade(self.default)
 
+    def _segment(self, index: int) -> list:
+        if index not in self._segments:
+            left, right = self.values[index - 1], self.values[index]
+            colors = color_in_between(left.hex, right.hex, 99)
+            self._segments[index] = [left.hex, *colors, right.hex]
+        return self._segments[index]
+
     def shade(self, value: float) -> ColorString:
         self.log.debug(f"Extracting shade '{value}' from '{self.name}'")
 
@@ -131,13 +139,8 @@ class Color:
                 return ColorString(s.hex)
             if s.shade > value:
                 left = self.values[i - 1]
-                right = s
-                idx = (value - left.shade) * 100 / (right.shade - left.shade)
-                idx = round(idx)
-                colors = color_in_between(left.hex, right.hex, 99)
-                colors.insert(0, left.hex)
-                colors.append(right.hex)
-                return ColorString(colors[int(idx)])
+                idx = (value - left.shade) * 100 / (s.shade - left.shade)
+                return ColorString(self._segment(i)[int(round(idx))])
 
         self.log.error(f"Something went wrong with shade {value}. Please "
                        f"report it on GitHub", exception=ValueError)

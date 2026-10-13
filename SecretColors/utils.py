@@ -13,8 +13,8 @@
 #
 # TODO: HSI conversions
 
-import math
 from typing import Tuple
+from SecretColors.helpers.decorators import deprecated
 from SecretColors.helpers.rxutils import convert_rgb_to_xyz, convert_xyz_to_rgb
 
 
@@ -95,6 +95,8 @@ def cmy_to_cmyk(c, m, y) -> tuple:
     """
     _validate(c, m, y)
     b = min(c, m, y)
+    if b == 1:
+        return 0, 0, 0, 1
     c2 = (c - b) / (1 - b)
     m2 = (m - b) / (1 - b)
     y2 = (y - b) / (1 - b)
@@ -174,7 +176,7 @@ def hsv_to_rgb(h, s, v) -> tuple:
     :return: Red, Green, Blue
     """
     _validate(h, s, v)
-    h = h * 360  # Convert to angle
+    h = (h * 360) % 360
 
     c = v * s
     x = c * (1 - abs(((h / 60) % 2) - 1))
@@ -193,10 +195,8 @@ def hsv_to_rgb(h, s, v) -> tuple:
         return __adjust(0, x, c)
     elif 240 <= h < 300:
         return __adjust(x, 0, c)
-    elif 300 <= h < 360:
-        return __adjust(c, 0, x)
     else:
-        raise Exception("Something went wrong in converting HSV to RGB")
+        return __adjust(c, 0, x)
 
 
 def rgb_to_hsl(r, g, b) -> tuple:
@@ -418,7 +418,7 @@ def apply_gamma_transform(value):
     :return: Transformed values
     """
     if value > 0.0031308:
-        return (pow(1.055 * value, (1 / 2.4))) - 0.055
+        return 1.055 * pow(value, 1 / 2.4) - 0.055
     else:
         return 12.92 * value
 
@@ -437,17 +437,14 @@ def apply_linear_transform(value):
         return value / 12.92
 
 
-def rgb_to_srgb(r, g, b):
+def srgb_to_linear(r, g, b):
     """
-    Converts RGB to sRGB
-
-    Note: This function is still in beta-testing. Do not use in your
-    production code.
+    Converts gamma-encoded sRGB (0-1) to linear RGB (0-1)
 
     :param r: Red
     :param g: Green
     :param b: Blue
-    :return: sRed, sGreen, sBlue
+    :return: Linear Red, Linear Green, Linear Blue
     """
     _validate(r, g, b)
     return (apply_linear_transform(r),
@@ -455,21 +452,37 @@ def rgb_to_srgb(r, g, b):
             apply_linear_transform(b))
 
 
-def srgb_to_rgb(sr, sg, sb):
+def linear_to_srgb(r, g, b):
     """
-    Converts sRGB to RGB
+    Converts linear RGB (0-1) to gamma-encoded sRGB (0-1)
 
-    Note: This function is still in beta-testing. Do not use in your
-    production code.
-
-    :param sr: sRed
-    :param sg: sGreen
-    :param sb: sBlue
+    :param r: Linear Red
+    :param g: Linear Green
+    :param b: Linear Blue
     :return: Red, Green, Blue
     """
-    return (apply_gamma_transform(sr),
-            apply_gamma_transform(sg),
-            apply_gamma_transform(sb))
+    _validate(r, g, b)
+    return (apply_gamma_transform(r),
+            apply_gamma_transform(g),
+            apply_gamma_transform(b))
+
+
+@deprecated("Its name is misleading as it converts sRGB to linear RGB. "
+            "Use 'srgb_to_linear' instead.")
+def rgb_to_srgb(r, g, b):
+    """
+    Deprecated alias of :func:`srgb_to_linear`
+    """
+    return srgb_to_linear(r, g, b)
+
+
+@deprecated("Its name is misleading as it converts linear RGB to sRGB. "
+            "Use 'linear_to_srgb' instead.")
+def srgb_to_rgb(sr, sg, sb):
+    """
+    Deprecated alias of :func:`linear_to_srgb`
+    """
+    return linear_to_srgb(sr, sg, sb)
 
 
 def rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
@@ -483,7 +496,7 @@ def rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
     :param g: Green
     :param b: Blue
     :param reference: White reference (default: D65)
-    :param clip: If True, values below 0 and above 1 will be clipped
+    :param clip: If True, negative values will be clipped to 0
     :return: CIE-X, CIE-Y, CIE-Z
     """
     return convert_rgb_to_xyz(r, g, b, space="srgb",
@@ -520,7 +533,7 @@ def adobe_rgb_to_xyz(r, g, b, *, reference="D65", clip=True):
      :param g: adobe-Green
      :param b: adobe-Blue
      :param reference: White reference (default: D65)
-     :param clip: If True, values above 1 and below 0 will be clipped
+     :param clip: If True, negative values will be clipped to 0
      :return: CIE-X, CIE-Y, CIE-Z
      """
     return convert_rgb_to_xyz(r, g, b, space="adobe",
@@ -549,22 +562,10 @@ def relative_luminance(hex_color: str):
     """
     Relative luminance according to WCAG 2.0 standard
     https://www.w3.org/WAI/GL/wiki/Relative_luminance
-    :param hex_color:
-    :return:
+    :param hex_color: Hex color (alpha channel, if present, is ignored)
+    :return: Relative luminance (between 0-1)
     """
-
-    def _conv(v):
-        if v <= 0.03928:
-            return v / 12.92
-        else:
-            return pow((v + 0.055) / 1.055, 2.4)
-
-    r, g, b = hex_to_rgb(hex_color)
-
-    r = _conv(r)
-    g = _conv(g)
-    b = _conv(b)
-
+    r, g, b = srgb_to_linear(*hex_to_rgb(hex_color)[:3])
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
@@ -658,65 +659,46 @@ def get_complementary(hex_color: str):
     return rgb_to_hex(t[0], t[1], t[2])
 
 
+def _simulate_dichromacy(r, g, b, offset, red_weight, green_weight,
+                         blue_weights):
+    _validate(r, g, b)
+    r, g, b = (pow(v * 255, 2.2) for v in (r, g, b))
+    rg = pow(offset + red_weight * r + green_weight * g, 1 / 2.2)
+    bb = offset + blue_weights[0] * b + blue_weights[1] * g + \
+        blue_weights[2] * r
+    bb = pow(max(0.0, bb), 1 / 2.2)
+    rg = min(1.0, rg / 255)
+    return rg, rg, min(1.0, bb / 255)
+
+
 def simulate_green_blindness(r, g, b):
     """
     Adjust RGB values such that it can 'simulate' Green blindness
+    (deuteranopia)
 
     Conversion formula taken from
     https://personal.sron.nl/~pault/#sec:colour_blindness
 
-    Note: This function is still in beta-testing. Do not use in your
-    production code.
-
-    :param r: Red
-    :param g: Green
-    :param b: Blue
+    :param r: Red (between 0-1)
+    :param g: Green (between 0-1)
+    :param b: Blue (between 0-1)
     :return: Red, Green, Blue (seen by Green-Blind person)
     """
-    _validate(r, g, b)
-
-    r2, g2, b2 = rgb_to_rgb255(*rgb_to_srgb(r, g, b))
-
-    r = pow((4211 + pow(g2 * 0.677, 2.2) + pow(r2 * 0.2802, 2.2)), 1 / 2.2)
-    g = pow((4211 + pow(g2 * 0.677, 2.2) + pow(r2 * 0.2802, 2.2)), 1 / 2.2)
-    b = pow((4211 +
-             pow(b2 * 0.95724, 2.2) +
-             pow(g2 * 0.02138, 2.2) -
-             pow(r2 * 0.02138, 2.2)), 1 / 2.2)
-
-    r2, g2, b2 = rgb255_to_rgb(int(round(r)), int(round(g)), int(round(b)))
-    return srgb_to_rgb(r2, g2, b2)
+    return _simulate_dichromacy(r, g, b, 4211, 0.2802, 0.677,
+                                (0.95724, 0.02138, -0.02138))
 
 
 def simulate_red_blindness(r, g, b):
     """
-    Adjust RGB values such that it can 'simulate' Red blindness
+    Adjust RGB values such that it can 'simulate' Red blindness (protanopia)
 
     Conversion formula taken from
     https://personal.sron.nl/~pault/#sec:colour_blindness
 
-    Note: This function is still in beta-testing. Do not use in your
-    production code.
-
-    :param r: Red
-    :param g: Green
-    :param b: Blue
+    :param r: Red (between 0-1)
+    :param g: Green (between 0-1)
+    :param b: Blue (between 0-1)
     :return: Red, Green, Blue (seen by Red-Blind person)
     """
-    _validate(r, g, b)
-
-    r2, g2, b2 = rgb_to_rgb255(*rgb_to_srgb(r, g, b))
-    r = pow((782.7 + pow(g2 * 0.8806, 2.2) + pow(r2 * 0.1115, 2.2)), 1 / 2.2)
-    g = pow((782.7 + pow(g2 * 0.8806, 2.2) + pow(r2 * 0.1115, 2.2)), 1 / 2.2)
-    b = pow((782.7 +
-             pow(b2 * 0.992052, 2.2) -
-             pow(g2 * 0.003974, 2.2) +
-             pow(r2 * 0.003974, 2.2)), 1 / 2.2)
-    r2, g2, b2 = rgb255_to_rgb(int(round(r)), int(round(g)), int(round(b)))
-    return srgb_to_rgb(r2, g2, b2)
-
-
-def run():
-    r, g, b = 0.9339861535887517, 0.8860409576833747, 0.9749859185188849
-    xyz = rgb_to_xyz(r, g, b)
-    print(xyz_to_rgb(*xyz))
+    return _simulate_dichromacy(r, g, b, 782.7, 0.1115, 0.8806,
+                                (0.992052, -0.003974, 0.003974))

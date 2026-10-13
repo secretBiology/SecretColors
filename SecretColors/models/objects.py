@@ -19,9 +19,9 @@ def _validate(color: tuple, base):
         raise ValueError(f"{base} is not a valid Hex or RGB/RGBA tuple")
 
     if max(color) > 1 or min(color) < 0:
-        raise ValueError(f"RGB/RGBA tuple should have values between 0-1. If "
-                         f"you have 255 based color, please convert it to 0-1 "
-                         f"and then provide it as an input")
+        raise ValueError("RGB/RGBA tuple should have values between 0-1. If "
+                         "you have 255 based color, please convert it to 0-1 "
+                         "and then provide it as an input")
 
     if len(color) == 3:
         return color[0], color[1], color[2], 1
@@ -103,11 +103,16 @@ class ColorOutput:
             raise TypeError(f"Expected ColorObject, str or tuple but got "
                             f"{type(other)}")
 
-    def __add__(self, other):
-        return ColorString(self._new_hex(self.hex, other))
+    def blend(self, other) -> "ColorString":
+        """
+        Mixes this color with another color in RGB space
 
-    def __radd__(self, other):
-        return self.__add__(other)
+        >>> ColorString("#ff0000").blend("#0000ff") # '#800080'
+
+        :param other: Hex string, RGB/RGBA tuple or color object
+        :return: Color halfway between both colors
+        """
+        return ColorString(self._new_hex(self.hex, other))
 
 
 class ColorString(ColorOutput, str):
@@ -144,8 +149,8 @@ class ColorWheel:
     .. tip::
         When your provide negative rotation values, essentially you are
         rotating wheel anti-clockwise. Essentially, 0-360 degree represents
-        0-100% of value. When you go above 360 or below 0, it will
-        automatically wrap it around.
+        0-100% of value. Hue wraps around when you go above 360 or below 0,
+        whereas saturation and lightness are clamped between 0-100%.
 
     Sometimes, rotation might be little confusing while dealing with
     lightness. Hence we have special methods which are
@@ -203,10 +208,11 @@ class ColorWheel:
 
     @staticmethod
     def _rotate(value: float, angle: float) -> float:
-        value = value * 360
-        value += angle
-        value = abs(value % 360)
-        return value / 360
+        return ((value * 360 + angle) % 360) / 360
+
+    @staticmethod
+    def _shift(value: float, angle: float) -> float:
+        return min(1.0, max(0.0, value + angle / 360))
 
     def rotate_hue(self, angle: float):
         """
@@ -224,7 +230,7 @@ class ColorWheel:
         :param angle: Angle of rotation
         :type angle: float
         """
-        self.saturation = self._rotate(self.saturation, angle)
+        self.saturation = self._shift(self.saturation, angle)
 
     def rotate_lightness(self, angle: float):
         """
@@ -233,7 +239,7 @@ class ColorWheel:
         :param angle: Angle of ratation
         :type angle: float
         """
-        self.lightness = self._rotate(self.lightness, angle)
+        self.lightness = self._shift(self.lightness, angle)
 
     def make_darker(self, percentage: float):
         """

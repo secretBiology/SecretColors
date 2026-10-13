@@ -40,6 +40,12 @@ def _validate(*args):
             raise ValueError("Color values can not be negative")
 
 
+def _validate_xyz(*args):
+    for a in args:
+        if a < 0:
+            raise ValueError("CIE-XYZ values can not be negative")
+
+
 def _clip_values(value):
     if value < 0:
         return 0
@@ -49,28 +55,27 @@ def _clip_values(value):
         return value
 
 
-def _apply(matrix, values, clip):
-    v = 0
-    for m, val in zip(matrix, values):
-        v += m * val
-    if clip:
-        return _clip_values(v)
-    else:
+def _apply(matrix, values, clip, upper=True):
+    v = sum(m * val for m, val in zip(matrix, values))
+    if not clip:
         return v
+    if upper:
+        return _clip_values(v)
+    return max(0, v)
 
 
 def _convert_to_xyz(r, g, b, matrix: dict, clip: bool):
     _validate(r, g, b)
     matrix = matrix["xyz"]
     rgb = [r, g, b]
-    x = _apply(matrix["x"], rgb, clip)
-    y = _apply(matrix["y"], rgb, clip)
-    z = _apply(matrix["z"], rgb, clip)
+    x = _apply(matrix["x"], rgb, clip, upper=False)
+    y = _apply(matrix["y"], rgb, clip, upper=False)
+    z = _apply(matrix["z"], rgb, clip, upper=False)
     return x, y, z
 
 
 def _convert_to_rgb(x, y, z, matrix: dict, clip: bool):
-    _validate(x, y, z)
+    _validate_xyz(x, y, z)
     matrix = matrix["rgb"]
     xyz = [x, y, z]
     r = _apply(matrix["r"], xyz, clip)
@@ -81,7 +86,7 @@ def _convert_to_rgb(x, y, z, matrix: dict, clip: bool):
 
 def convert_rgb_to_xyz(r, g, b, *, space, reference, clip=True):
     """
-    Converts given RGB (between 0-1) to CIE-XYZ (between 0-1).
+    Converts given linear RGB (between 0-1) to CIE-XYZ.
     
     Note: For general purpose use, directly use conversion functions like 
     `srgb_to_xyz`, `adobe_rgb_to_xyz` etc. instead using this function.
@@ -91,8 +96,8 @@ def convert_rgb_to_xyz(r, g, b, *, space, reference, clip=True):
     :param b: Blue (between 0-1)
     :param space: Name of the specific RGB colorspace
     :param reference: White Illumination Reference (e.g. D65)
-    :param clip: If True, values falls outside 0-1 range will be clipped
-    :return: CIE-XYZ (0-1 if clip=True)
+    :param clip: If True, negative values will be clipped to 0
+    :return: CIE-X, CIE-Y, CIE-Z
     """
     return _convert_to_xyz(r, g, b,
                            matrix=_get_matrix(space, reference),

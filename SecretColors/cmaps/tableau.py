@@ -11,6 +11,7 @@ from SecretColors.cmaps.parent import ColorMapParent
 from SecretColors.data.cmaps.tableau import TABLEAU_DATA
 from SecretColors.data.constants import PALETTE_TABLEAU
 from SecretColors.helpers.decorators import cmap_docs
+from SecretColors.helpers.logging import Log
 from SecretColors.models.palette import Palette
 
 MP_NAME = "TableauMap"
@@ -100,9 +101,9 @@ class TableauMap(ColorMapParent):
 
     """
 
-    def __init__(self, matplotlib):
-        super().__init__(matplotlib)
-        self.palette = Palette(PALETTE_TABLEAU)
+    def __init__(self, matplotlib, log: Log = None, seed=None):
+        super().__init__(matplotlib, palette=Palette(PALETTE_TABLEAU),
+                         log=log, seed=seed)
 
     @property
     def data(self):
@@ -115,158 +116,241 @@ class TableauMap(ColorMapParent):
               no_of_colors: int = None,
               is_qualitative: bool = False,
               is_reversed=False):
-        return self._default("Gray", "gray", locals())
+        return self._default("Gray", "gray", starting_shade=starting_shade,
+                             ending_shade=ending_shade,
+                             no_of_colors=no_of_colors,
+                             is_qualitative=is_qualitative,
+                             is_reversed=is_reversed)
 
     def greens(self, *, starting_shade: float = None,
                ending_shade: float = None,
                no_of_colors: int = None,
                is_qualitative: bool = False,
                is_reversed=False):
-        return self._default("Green", "green", locals())
+        return self._default("Green", "green", starting_shade=starting_shade,
+                             ending_shade=ending_shade,
+                             no_of_colors=no_of_colors,
+                             is_qualitative=is_qualitative,
+                             is_reversed=is_reversed)
 
     def blues(self, *, starting_shade: float = None,
               ending_shade: float = None,
               no_of_colors: int = None,
               is_qualitative: bool = False,
               is_reversed=False):
-        return self._default("Blue", "blue", locals())
+        return self._default("Blue", "blue", starting_shade=starting_shade,
+                             ending_shade=ending_shade,
+                             no_of_colors=no_of_colors,
+                             is_qualitative=is_qualitative,
+                             is_reversed=is_reversed)
 
     def reds(self, *, starting_shade: float = None,
              ending_shade: float = None,
              no_of_colors: int = None,
              is_qualitative: bool = False,
              is_reversed=False):
-        return self._default("Red", "red", locals())
+        return self._default("Red", "red", starting_shade=starting_shade,
+                             ending_shade=ending_shade,
+                             no_of_colors=no_of_colors,
+                             is_qualitative=is_qualitative,
+                             is_reversed=is_reversed)
 
     def oranges(self, *, starting_shade: float = None,
                 ending_shade: float = None,
                 no_of_colors: int = None,
                 is_qualitative: bool = False,
                 is_reversed=False):
-        return self._default("Orange", "orange", locals())
+        return self._default("Orange", "orange", starting_shade=starting_shade,
+                             ending_shade=ending_shade,
+                             no_of_colors=no_of_colors,
+                             is_qualitative=is_qualitative,
+                             is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "Tableau")
     def tableau(self, *, no_of_colors: int = None,
                 is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Tableau", None, locals())
+        return self._special_maps("Tableau", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "Tableau_light")
     def tableau_light(self, *, no_of_colors: int = None,
                       is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Tableau_light", None, locals())
+        return self._special_maps("Tableau_light", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "Tableau_medium")
     def tableau_medium(self, *, no_of_colors: int = None,
                        is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Tableau_medium", None, locals())
+        return self._special_maps("Tableau_medium", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "ColorBlind")
     def colorblind(self, *, no_of_colors: int = None,
                    is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("ColorBlind", None, locals())
+        return self._special_maps("ColorBlind", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "TrafficLight")
     def traffic_light(self, *, no_of_colors: int = 9,
                       is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("TrafficLight", None, locals())
+        return self._special_maps("TrafficLight", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "PurpleGray")
     def purple_gray(self, *, no_of_colors: int = 12,
                     is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("PurpleGray", None, locals())
+        return self._special_maps("PurpleGray", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "GreenOrange")
     def green_orange(self, *, no_of_colors: int = 12,
                      is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("GreenOrange", None, locals())
+        return self._special_maps("GreenOrange", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "BlueRed")
     def blue_red(self, *, no_of_colors: int = 12,
                  is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("BlueRed", None, locals())
+        return self._special_maps("BlueRed", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "Cyclic")
     def cyclic(self, *, no_of_colors: int = 13,
                is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Cyclic", None, locals())
+        return self._special_maps("Cyclic", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "AquaRed")
     def aqua_red(self, *, no_of_colors: int = 11,
                  is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("AquaRed", None, locals())
+        return self._special_maps("AquaRed", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "AquaGreen")
     def aqua_green(self, *, no_of_colors: int = 11,
                    is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("AquaGreen", None, locals())
+        return self._special_maps("AquaGreen", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "AquaBrown")
     def aqua_brown(self, *, no_of_colors: int = 11,
                    is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("AquaBrown", None, locals())
+        return self._special_maps("AquaBrown", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "RedBlue")
     def red_blue(self, *, no_of_colors: int = 11,
                  is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RedBlue", None, locals())
+        return self._special_maps("RedBlue", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "RedBlack")
     def red_black(self, *, no_of_colors: int = 11,
                   is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RedBlack", None, locals())
+        return self._special_maps("RedBlack", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "AreaRedGreen")
     def area_red_green(self, *, no_of_colors: int = 21,
                        is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("AreaRedGreen", None, locals())
+        return self._special_maps("AreaRedGreen", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "OrangeBlue")
     def orange_blue(self, *, no_of_colors: int = 13,
                     is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("OrangeBlue", None, locals())
+        return self._special_maps("OrangeBlue", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "GreenBlue")
     def green_blue(self, *, no_of_colors: int = 11,
                    is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("GreenBlue", None, locals())
+        return self._special_maps("GreenBlue", None, no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "RedWhiteGreen")
     def red_white_green(self, *, no_of_colors: int = 11,
                         is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RedWhiteGreen", None, locals())
+        return self._special_maps("RedWhiteGreen", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "RedWhiteBlack")
     def red_white_black(self, *, no_of_colors: int = 11,
                         is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RedWhiteBlack", None, locals())
+        return self._special_maps("RedWhiteBlack", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "OrangeWhiteBlue")
     def orange_white_blue(self, *, no_of_colors: int = 11,
                           is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("OrangeWhiteBlue", None, locals())
+        return self._special_maps("OrangeWhiteBlue", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "RedWhiteBlack_light")
     def red_white_black_light(self, *, no_of_colors: int = 10,
                               is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RedWhiteBlack_light", None, locals())
+        return self._special_maps("RedWhiteBlack_light", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "OrangeWhiteBlue_light")
     def orange_white_blue_light(self, *, no_of_colors: int = 11,
                                 is_qualitative: bool = False,
                                 is_reversed=False):
-        return self._special_maps("OrangeWhiteBlue_light", None, locals())
+        return self._special_maps("OrangeWhiteBlue_light", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "RedWhiteGreen_light")
     def red_white_green_light(self, *, no_of_colors: int = 11,
                               is_qualitative: bool = False,
                               is_reversed=False):
-        return self._special_maps("RedWhiteGreen_light", None, locals())
+        return self._special_maps("RedWhiteGreen_light", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
     @cmap_docs(MP_NAME, "RedGreen_light")
     def red_green_light(self, *, no_of_colors: int = 11,
                         is_qualitative: bool = False,
                         is_reversed=False):
-        return self._special_maps("RedGreen_light", None, locals())
+        return self._special_maps("RedGreen_light", None,
+                                  no_of_colors=no_of_colors,
+                                  is_qualitative=is_qualitative,
+                                  is_reversed=is_reversed)
 
 
 def run():

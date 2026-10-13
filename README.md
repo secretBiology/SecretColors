@@ -39,8 +39,26 @@ Few sample plots and inspiration behind this library can be found in [WeirdData 
 
 ### Installation 
 
+With [uv](https://docs.astral.sh/uv/)
+
+    uv add SecretColors
+
+or with pip
 
     pip install SecretColors
+
+`ColorMap` classes need [matplotlib](https://matplotlib.org). You can install it along with SecretColors
+
+    uv add "SecretColors[matplotlib]"
+
+### Development
+
+    git clone https://github.com/secretBiology/SecretColors.git
+    cd SecretColors
+    uv sync               # creates .venv with test dependencies
+    uv run pytest         # runs test suite
+    uv run tox            # runs tests on all supported Python versions
+    uv build              # builds sdist and wheel
 
 
 ### Documentation

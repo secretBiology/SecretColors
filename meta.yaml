@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name|lower }}-{{ version }}.tar.gz
-  sha256: SHA256_PLACEHOLDER
+  sha256: ca6a1084a18a9d44bfcd6a3ba3e067a130c4355fa17a781dbe96f89fe4937e83
 
 build:
   noarch: python
@@ -38,8 +38,11 @@ about:
   license: MIT
   license_family: MIT
   license_file: LICENSE
-  summary: 'A small package for fantastic color palette'
-  description: Library generated for making plots with better color palette. It uses famous color palettes and adds few helpful functions.
+  summary: 'Color palettes, colormaps and accessible colors for Python'
+  description: |
+    Ready-to-use palettes (IBM, Material, Adobe Spectrum, ColorBrewer, Tableau ...),
+    83 matplotlib colormaps, colorblind-safe color selection, WCAG contrast checks
+    and color science utilities (CIE Lab, Delta E).
   doc_url: https://secretcolors.readthedocs.io/
   dev_url: https://github.com/secretBiology/SecretColors
 

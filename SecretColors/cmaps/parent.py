@@ -8,9 +8,18 @@
 
 import random
 
+from SecretColors.cmaps.maps import _build
 from SecretColors.data.constants import DIV_COLOR_PAIRS
 from SecretColors.helpers.logging import Log
 from SecretColors.models.palette import Palette
+
+
+def _colors_module(obj):
+    for candidate in (getattr(obj, "colors", None), obj):
+        if hasattr(candidate, "LinearSegmentedColormap") and hasattr(
+                candidate, "ListedColormap"):
+            return candidate
+    return None
 
 
 class ColorMapParent:
@@ -27,14 +36,16 @@ class ColorMapParent:
 
     """
 
-    def __init__(self, matplotlib,
+    def __init__(self, matplotlib=None,
                  palette: Palette = None,
                  log: Log = None,
                  seed=None):
         """
         Initializing of any ColorMap.
 
-        :param matplotlib: matplotlib object from matplotlib library
+        :param matplotlib: (Optional) matplotlib module. It is not needed
+            anymore as matplotlib is imported automatically when required.
+            Kept for backward compatibility.
 
         :param palette: Palette from which you want colors
         :type palette: Palette
@@ -44,6 +55,9 @@ class ColorMapParent:
 
         :param seed: Seed for random number generation
         """
+        if matplotlib is not None and _colors_module(matplotlib) is None:
+            raise TypeError(f"First argument should be the matplotlib module "
+                            f"(or omitted), not {type(matplotlib)}")
         self._mat = matplotlib
         if log is None:
             log = Log()
@@ -57,6 +71,12 @@ class ColorMapParent:
         if seed is not None:
             self.log.info(f"Random seed set for : {seed}")
         self.no_of_colors = 10
+
+    @property
+    def _mpl_colors(self):
+        if self._mat is None:
+            return None
+        return _colors_module(self._mat)
 
     @property
     def data(self) -> dict:
@@ -123,21 +143,14 @@ class ColorMapParent:
         :param color_list: List of colors
         :return: LinearSegmentedColormap
         """
-        try:
-            return self._mat.colors.LinearSegmentedColormap.from_list(
-                "secret_color", color_list)
-        except AttributeError:
-            raise Exception("Matplotlib is required to use this function")
+        return _build(color_list, "secret_color", False, self._mpl_colors)
 
     def _get_listed_segment(self, color_list: list):
         """
         :param color_list: List of colors
         :return: ListedColormap
         """
-        try:
-            return self._mat.colors.ListedColormap(color_list)
-        except AttributeError:
-            raise Exception("Matplotlib is required to use this function")
+        return _build(color_list, "secret_color", True, self._mpl_colors)
 
     def _derive_map(self, color_list: list,
                     is_qualitative=False,
@@ -202,7 +215,7 @@ class ColorMapParent:
 
         .. code-block:: python
 
-            cm = BrewerMap(matplotlib)
+            cm = BrewerMap()
             cm.get_colors('Spectral', 9) # Returns 9 'Spectral' colors from BrewerMap colormap
 
 
@@ -449,12 +462,11 @@ class ColorMap(ColorMapParent):
 
     .. code-block:: python
 
-        import matplotlib
         import matplotlib.pyplot as plt
         from SecretColors.cmaps import ColorMap
         import numpy as np
 
-        cm = ColorMap(matplotlib)
+        cm = ColorMap()
         data = np.random.rand(5, 5)
         plt.imshow(data, cmap=cm.greens())
         plt.colorbar()
@@ -498,7 +510,7 @@ class ColorMap(ColorMapParent):
 
     .. code-block:: python
 
-        cm = ColorMap(matplotlib)
+        cm = ColorMap()
         p = Palette()
         my_colors = [p.red(shade=30), p.white(), p.blue(shade=60)]
         my_cmap = cm.from_list(my_colors)
@@ -514,7 +526,7 @@ class ColorMap(ColorMapParent):
 
     .. code-block:: python
 
-        cm = ColorMap(matplotlib)
+        cm = ColorMap()
         cm.palette = Palette("material") # Material Palette colors will be used.
         cm.palette = Palette("brewer") # ColorBrewer colors will be used.
 

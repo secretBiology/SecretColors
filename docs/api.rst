@@ -18,6 +18,11 @@ ColorMaps
 
 .. include:: map_intro.rst
 
+Functional API
+----------------
+.. automodule:: SecretColors.cmaps.maps
+        :members: available, colors, cmap, register
+
 ColorMapParent
 ----------------
 .. autoclass:: SecretColors.cmaps.parent.ColorMapParent

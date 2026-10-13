@@ -47,7 +47,7 @@ or with pip
 
     pip install SecretColors
 
-`ColorMap` classes need [matplotlib](https://matplotlib.org). You can install it along with SecretColors
+Matplotlib colormap objects need [matplotlib](https://matplotlib.org). You can install it along with SecretColors
 
     uv add "SecretColors[matplotlib]"
 
@@ -135,33 +135,36 @@ Flexible functions
 
 
 
-Custom and flexible colormaps which can be directly used in `matplotlib` workflow 
+### Colormaps
 
+Register once and use SecretColors colormaps by name, just like matplotlib's own colormaps.
+It works everywhere matplotlib colormap names are accepted (matplotlib, pandas, seaborn, etc.)
 
-    import matplotlib
-    import matplotlib.pylab as plt
-    import numpy as np
+    import matplotlib.pyplot as plt
+    from SecretColors import cmaps
+
+    cmaps.register()                          # adds all maps with 'sc.' prefix
+    plt.imshow(data, cmap="sc.greens")
+    plt.imshow(data, cmap="sc.Spectral_r")    # every map has a reversed '_r' version
+    sns.heatmap(data, cmap="sc.tol_sunset")   # colorblind safe map in seaborn
+
+Or create a customised colormap object directly
+
+    plt.imshow(data, cmap=cmaps.cmap("greens", start=20, end=80))
+    plt.imshow(data, cmap=cmaps.cmap("blues", palette="material", reverse=True))
+    plt.scatter(x, y, c=labels, cmap=cmaps.cmap("Set2", n=4))   # qualitative maps are discrete
+
+Plain colors (no matplotlib needed) for any other library
+
+    cmaps.colors("Spectral", n=5)   # ['#d7191c', '#fdae61', '#ffffbf', '#abdda4', '#2b83ba']
+    px.imshow(data, color_continuous_scale=cmaps.colors("RdBu"))   # plotly
+    alt.Scale(range=cmaps.colors("tol_bright"))                    # altair
+    cmaps.available()               # names of all colormaps
+
+Older `ColorMap`, `BrewerMap` and `TableauMap` classes still work (passing `matplotlib` is now optional)
+
     from SecretColors.cmaps import ColorMap
-    from SecretColors import Palette
-    p = Palette()
-    c = ColorMap(matplotlib, p)
-    data = np.random.rand(100, 100)
-    plt.pcolor(data, cmap=c.greens())
-    plt.show()
-
-
-Create your own colormaps or make it *qualitative* colormap
-
-
-    color_list = [p.red(), p.blue()]
-    plt.pcolor(data, cmap=c.from_list(color_list, is_qualitative=True))
-    plt.show()
-
-
-Reverse the direction 
-
-
-    plt.pcolor(data, cmap=c.greens(is_reversed=True))
+    plt.pcolor(data, cmap=ColorMap().greens(is_reversed=True))
 
 
 ### TODO
@@ -170,11 +173,7 @@ Reverse the direction
  - [ ] Direct support for more RGB to XYZ conversions
  - [ ] Generate Color Palette from image
  - [x] Color blind safe palette
- - [ ] ~~Out of the box `LinearSegmentedColormap` object~~ 
- 
- We can not implement 'out of the box' colormaps for matplotlib because `matplotlib` checks its
-  `type` before its use. Hence we can not make new class which can be directly
-   act as a substitute.
+ - [x] Out of the box colormaps usable by name in matplotlib
 
 
 Note: All CIE-XYZ conversion and colorblind simulation functions are still in

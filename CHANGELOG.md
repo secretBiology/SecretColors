@@ -1,6 +1,24 @@
 # Changelog
 # v2.0.0
+### New colormap API
+* `SecretColors.cmaps.register()` registers every colormap (and its
+  reversed `_r` version) in matplotlib with `sc.` prefix. Use them by name
+  anywhere matplotlib colormap names are accepted, e.g.
+  `plt.imshow(data, cmap="sc.greens")`.
+* `SecretColors.cmaps.cmap(name, ...)` returns matplotlib colormap object
+  directly. matplotlib is imported automatically, no need to pass it.
+* `SecretColors.cmaps.colors(name, ...)` returns plain hex colors which can
+  be used with any library (plotly, bokeh, altair, seaborn, CSS). It does not
+  need matplotlib.
+* `SecretColors.cmaps.available()` lists all colormap names.
+* Colorblind safe colormaps (Okabe-Ito `cud` and Paul Tol's schemes) are
+  now accessible.
+* Diverging and sequential colormaps can be interpolated to any number of
+  colors and cropped with `start` / `end`.
+* `ColorMap`, `BrewerMap` and `TableauMap` work as before. Passing
+  `matplotlib` to them is optional now.
 ### Bug fixes
+* Fixed invalid color in Paul Tol's `tol_bu_rd` colormap.
 * `hexa` / `ahex` color modes now encode alpha on the 0-255 scale. Earlier,
   fully opaque colors were written as `64` (~39% opacity) instead of `ff`.
 * `Palette.random()` no longer crashes when more colors are requested than

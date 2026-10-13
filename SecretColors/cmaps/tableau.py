@@ -33,12 +33,11 @@ class TableauMap(ColorMapParent):
     Simplest way to use this class in your ``matplotlib`` workflow is following
 
     ..  code-block:: python
-        :emphasize-lines: 5
+        :emphasize-lines: 4
 
-        import matplotlib
         import matplotlib.pyplot as plt
         from SecretColors.cmaps import TableauMap
-        tm = TableauMap(matplotlib)
+        tm = TableauMap()
         plt.imshow(data, cmap=tm.tableau())
         plt.show()
 
@@ -101,7 +100,7 @@ class TableauMap(ColorMapParent):
 
     """
 
-    def __init__(self, matplotlib, log: Log = None, seed=None):
+    def __init__(self, matplotlib=None, log: Log = None, seed=None):
         super().__init__(matplotlib, palette=Palette(PALETTE_TABLEAU),
                          log=log, seed=seed)
 
@@ -352,9 +351,3 @@ class TableauMap(ColorMapParent):
                                   is_qualitative=is_qualitative,
                                   is_reversed=is_reversed)
 
-
-def run():
-    import matplotlib
-    b = TableauMap(matplotlib)
-    for t in b.get_all:
-        print(f"* {t}")

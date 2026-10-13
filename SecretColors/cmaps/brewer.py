@@ -27,12 +27,11 @@ class BrewerMap(ColorMapParent):
     Simplest way to use this class in your ``matplotlib`` workflow is following
 
     ..  code-block:: python
-        :emphasize-lines: 5
+        :emphasize-lines: 4
 
-        import matplotlib
         import matplotlib.pyplot as plt
         from SecretColors.cmaps import BrewerMap
-        bm = BrewerMap(matplotlib)
+        bm = BrewerMap()
         plt.imshow(data, cmap=bm.spectral())
         plt.show()
 
@@ -94,7 +93,7 @@ class BrewerMap(ColorMapParent):
 
     """
 
-    def __init__(self, matplotlib, log: Log = None, seed=None):
+    def __init__(self, matplotlib=None, log: Log = None, seed=None):
         super().__init__(matplotlib, palette=Palette(PALETTE_BREWER),
                          log=log, seed=seed)
         self.no_of_colors = 9

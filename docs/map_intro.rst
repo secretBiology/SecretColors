@@ -26,3 +26,24 @@ Hence we have made these ColorMaps which can be directly used in
 restricted to matplotlib. You can use these object to generate variety of
 colors based on value. Or you can just get colors from these ColorMaps and
 use them in regular workflow.
+
+**Quick start**
+
+Since v2.0, the simplest way is the functional API in
+:mod:`SecretColors.cmaps`. Register all colormaps once and use them by name
+anywhere matplotlib colormap names are accepted.
+
+.. code-block:: python
+
+    import matplotlib.pyplot as plt
+    from SecretColors import cmaps
+
+    cmaps.register()                         # all maps with 'sc.' prefix
+    plt.imshow(data, cmap="sc.greens")
+    plt.imshow(data, cmap="sc.Spectral_r")   # reversed version
+
+    plt.imshow(data, cmap=cmaps.cmap("blues", palette="material", start=20))
+    cmaps.colors("RdBu", n=7)                # plain hex colors, no matplotlib
+
+The classes described below are still available and work as before.
+Passing ``matplotlib`` to them is optional now.

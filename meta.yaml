@@ -1,6 +1,6 @@
 {% set name = "SecretColors" %}
-{% set version = "2.0.0" %}
-{% set python_min = python_min | default("3.10") %}
+{% set version = "2.1.0" %}
+{% set python_min = python_min | default("3.11") %}
 
 package:
   name: {{ name|lower }}
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name|lower }}-{{ version }}.tar.gz
-  sha256: ca6a1084a18a9d44bfcd6a3ba3e067a130c4355fa17a781dbe96f89fe4937e83
+  sha256: ad2297bb2fd5df43bd4bdcb8d7e535218931acf2ef26679fa5da4d6f7e05a6f5
 
 build:
   noarch: python
@@ -24,7 +24,7 @@ requirements:
     - python >={{ python_min }}
   run_constrained:
     - matplotlib-base >=3.10
-    - pillow >=11.0
+    - pillow >=13.0
 
 test:
   imports:

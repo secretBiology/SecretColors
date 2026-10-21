@@ -5,7 +5,7 @@ code keeps working. This page lists everything that may need a change.
 
 ## Requirements
 
-- Python **3.10** or newer.
+- Python **3.11** or newer.
 - matplotlib is optional. Install `SecretColors[matplotlib]` (or `[all]`)
   if you use colormaps.
 

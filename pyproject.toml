@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "SecretColors"
-version = "2.0.0"
+version = "2.1.0"
 description = "A small package for fantastic color palette"
 readme = "PYPI.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Rohit Suratekar", email = "rohitsuratekar@gmail.com" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = []
 keywords = ["color", "palette", "colormap", "matplotlib", "visualization"]
 classifiers = [
@@ -20,7 +20,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -30,8 +29,8 @@ classifiers = [
 
 [project.optional-dependencies]
 matplotlib = ["matplotlib>=3.10"]
-image = ["pillow>=11.0"]
-all = ["matplotlib>=3.10", "pillow>=11.0"]
+image = ["pillow>=13.0"]
+all = ["matplotlib>=3.10", "pillow>=13.0"]
 
 [project.urls]
 Homepage = "https://github.com/secretBiology/SecretColors"
@@ -40,7 +39,7 @@ Changelog = "https://github.com/secretBiology/SecretColors/blob/master/CHANGELOG
 Issues = "https://github.com/secretBiology/SecretColors/issues"
 
 [dependency-groups]
-test = ["pytest>=9.0", "pytest-cov>=7.0", "matplotlib>=3.10", "pillow>=11.0"]
+test = ["pytest>=9.0", "pytest-cov>=7.0", "matplotlib>=3.10", "pillow>=13.0"]
 docs = ["sphinx>=8.1", "furo>=2025.0", "myst-parser>=4.0", "sphinx-copybutton>=0.5.2", "sphinx-design>=0.6"]
 dev = [{ include-group = "test" }, "tox>=4.65", "tox-uv>=1.36"]
 

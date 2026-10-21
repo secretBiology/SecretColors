@@ -15,7 +15,7 @@ uv add SecretColors
 :::
 ::::
 
-SecretColors needs Python 3.10 or newer and has **no dependencies**.
+SecretColors needs Python 3.11 or newer and has **no dependencies**.
 Optional features are available through extras.
 
 | Extra | Installs | Enables |

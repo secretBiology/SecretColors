@@ -1,4 +1,12 @@
 # Changelog
+## v2.1.0
+* Requires Python 3.11+ (Python 3.10 support dropped). Python 3.10 users
+  will continue to get v2.0.x from pip.
+* Optional `image` extra now requires `pillow>=13.0` to pick up security
+  fixes (CVE-2026-112395, CVE-2026-112397, CVE-2026-112400, CVE-2026-112404,
+  CVE-2026-112895, CVE-2026-112896, CVE-2026-112897, CVE-2026-112899).
+* Development lockfile: `certifi` 2026.10.19 and `uv` 0.13.4 (security fixes).
+
 ## v2.0.0
 ### New palettes and features
 * New palettes: Adobe Spectrum (`Palette("spectrum")`) and Flexport Latitude

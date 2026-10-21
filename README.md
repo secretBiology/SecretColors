@@ -433,7 +433,7 @@ git clone https://github.com/secretBiology/SecretColors.git
 cd SecretColors
 uv sync                                 # create .venv with test dependencies
 uv run pytest                           # run tests
-uv run tox                              # test on Python 3.10 - 3.14
+uv run tox                              # test on Python 3.11 - 3.14
 uv run python scripts/make_images.py    # regenerate README and docs images
 uv build                                # build sdist and wheel
 ```

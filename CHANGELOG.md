@@ -1,4 +1,7 @@
 # Changelog
+## v2.1.1
+* Updated PyPI project description to match the current README.
+
 ## v2.1.0
 * Requires Python 3.11+ (Python 3.10 support dropped). Python 3.10 users
   will continue to get v2.0.x from pip.

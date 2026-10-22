@@ -1,6 +1,6 @@
 # Upgrading
 
-## Upcoming release: compatibility and correctness
+## Upgrading to 2.2: compatibility and correctness
 
 Default opaque palette colors, curated colormap samples, seeded random
 sequences and the existing distinct-color ordering are preserved. Corrections

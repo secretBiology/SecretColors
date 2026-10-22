@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.2.0
 * Correct alpha-first parsing, immutable color value representations, and transparent contrast checks.
 * Add `with_alpha()`, canonical hex serialization and alpha-aware, validated notebook swatches.
 * Fix RGB/RGBA colormap inputs and isolate shared source datasets from caller mutations.

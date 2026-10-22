@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "SecretColors"
-version = "2.1.1"
+version = "2.2.0"
 description = "A small package for fantastic color palette"
 readme = "PYPI.md"
 license = "MIT"

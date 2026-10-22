@@ -1,5 +1,5 @@
 {% set name = "SecretColors" %}
-{% set version = "2.1.1" %}
+{% set version = "2.2.0" %}
 {% set python_min = python_min | default("3.11") %}
 
 package:
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name|lower }}-{{ version }}.tar.gz
-  sha256: cbfa25939b5d0f726df29503935d1ed0541086a1f0c4192db79d158c5a99f5cb
+  sha256: de74bc212693e2a2203e091fec7d27255b26881ea94064e12bf2116dc2a96ea4
 
 build:
   noarch: python

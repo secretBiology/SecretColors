@@ -6,6 +6,7 @@
 #
 #  CMap implementation for Brewer
 
+from SecretColors.helpers.decorators import deprecated_aliases
 from SecretColors.data.cmaps.brewer import BREWER_DATA
 from SecretColors.data.constants import PALETTE_BREWER
 from SecretColors.cmaps.parent import ColorMapParent
@@ -96,281 +97,316 @@ class BrewerMap(ColorMapParent):
     def __init__(self, matplotlib=None, log: Log = None, seed=None):
         super().__init__(matplotlib, palette=Palette(PALETTE_BREWER),
                          log=log, seed=seed)
-        self.no_of_colors = 9
+        self.n = 9
 
     @property
     def data(self):
         return BREWER_DATA
 
-    def greens(self, *, starting_shade: float = None,
-               ending_shade: float = None,
-               no_of_colors: int = None,
-               is_qualitative: bool = False,
-               is_reversed=False):
-        return self._default("Greens", "green", starting_shade=starting_shade,
-                             ending_shade=ending_shade,
-                             no_of_colors=no_of_colors,
-                             is_qualitative=is_qualitative,
-                             is_reversed=is_reversed)
+    @deprecated_aliases(no_of_colors='n', starting_shade='start', ending_shade='end', is_qualitative='discrete', is_reversed='reverse')
+    def greens(self, *, start: float = None,
+               end: float = None,
+               n: int = None,
+               discrete: bool = False,
+               reverse=False):
+        return self._default("Greens", "green", start=start,
+                             end=end,
+                             n=n,
+                             discrete=discrete,
+                             reverse=reverse)
 
-    def oranges(self, *, starting_shade: float = None,
-                ending_shade: float = None,
-                no_of_colors: int = None,
-                is_qualitative: bool = False,
-                is_reversed=False):
+    @deprecated_aliases(no_of_colors='n', starting_shade='start', ending_shade='end', is_qualitative='discrete', is_reversed='reverse')
+    def oranges(self, *, start: float = None,
+                end: float = None,
+                n: int = None,
+                discrete: bool = False,
+                reverse=False):
         return self._default("Oranges", "orange",
-                             starting_shade=starting_shade,
-                             ending_shade=ending_shade,
-                             no_of_colors=no_of_colors,
-                             is_qualitative=is_qualitative,
-                             is_reversed=is_reversed)
+                             start=start,
+                             end=end,
+                             n=n,
+                             discrete=discrete,
+                             reverse=reverse)
 
-    def reds(self, *, starting_shade: float = None,
-             ending_shade: float = None,
-             no_of_colors: int = None,
-             is_qualitative: bool = False,
-             is_reversed=False):
-        return self._default("Reds", "red", starting_shade=starting_shade,
-                             ending_shade=ending_shade,
-                             no_of_colors=no_of_colors,
-                             is_qualitative=is_qualitative,
-                             is_reversed=is_reversed)
+    @deprecated_aliases(no_of_colors='n', starting_shade='start', ending_shade='end', is_qualitative='discrete', is_reversed='reverse')
+    def reds(self, *, start: float = None,
+             end: float = None,
+             n: int = None,
+             discrete: bool = False,
+             reverse=False):
+        return self._default("Reds", "red", start=start,
+                             end=end,
+                             n=n,
+                             discrete=discrete,
+                             reverse=reverse)
 
-    def purples(self, *, starting_shade: float = None,
-                ending_shade: float = None,
-                no_of_colors: int = None,
-                is_qualitative: bool = False,
-                is_reversed=False):
+    @deprecated_aliases(no_of_colors='n', starting_shade='start', ending_shade='end', is_qualitative='discrete', is_reversed='reverse')
+    def purples(self, *, start: float = None,
+                end: float = None,
+                n: int = None,
+                discrete: bool = False,
+                reverse=False):
         return self._default("Purples", "purple",
-                             starting_shade=starting_shade,
-                             ending_shade=ending_shade,
-                             no_of_colors=no_of_colors,
-                             is_qualitative=is_qualitative,
-                             is_reversed=is_reversed)
+                             start=start,
+                             end=end,
+                             n=n,
+                             discrete=discrete,
+                             reverse=reverse)
 
-    def grays(self, *, starting_shade: float = None,
-              ending_shade: float = None,
-              no_of_colors: int = None,
-              is_qualitative: bool = False,
-              is_reversed=False):
-        return self._default("Greys", "gray", starting_shade=starting_shade,
-                             ending_shade=ending_shade,
-                             no_of_colors=no_of_colors,
-                             is_qualitative=is_qualitative,
-                             is_reversed=is_reversed)
+    @deprecated_aliases(no_of_colors='n', starting_shade='start', ending_shade='end', is_qualitative='discrete', is_reversed='reverse')
+    def grays(self, *, start: float = None,
+              end: float = None,
+              n: int = None,
+              discrete: bool = False,
+              reverse=False):
+        return self._default("Greys", "gray", start=start,
+                             end=end,
+                             n=n,
+                             discrete=discrete,
+                             reverse=reverse)
 
-    def blues(self, *, starting_shade: float = None,
-              ending_shade: float = None,
-              no_of_colors: int = None,
-              is_qualitative: bool = False,
-              is_reversed=False):
-        return self._default("Blues", "blue", starting_shade=starting_shade,
-                             ending_shade=ending_shade,
-                             no_of_colors=no_of_colors,
-                             is_qualitative=is_qualitative,
-                             is_reversed=is_reversed)
+    @deprecated_aliases(no_of_colors='n', starting_shade='start', ending_shade='end', is_qualitative='discrete', is_reversed='reverse')
+    def blues(self, *, start: float = None,
+              end: float = None,
+              n: int = None,
+              discrete: bool = False,
+              reverse=False):
+        return self._default("Blues", "blue", start=start,
+                             end=end,
+                             n=n,
+                             discrete=discrete,
+                             reverse=reverse)
 
     # Other special maps
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Spectral")
-    def spectral(self, *, no_of_colors: int = None,
-                 is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Spectral", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def spectral(self, *, n: int = None,
+                 discrete: bool = False, reverse=False):
+        return self._special_maps("Spectral", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "RgYlGn")
-    def rd_yl_gn(self, *, no_of_colors: int = None,
-                 is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RdYlGn", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def rd_yl_gn(self, *, n: int = None,
+                 discrete: bool = False, reverse=False):
+        return self._special_maps("RdYlGn", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "RdBu")
-    def rd_bu(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RdBu", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def rd_bu(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("RdBu", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "PiYG")
-    def pi_yg(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("PiYG", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def pi_yg(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("PiYG", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "PRGn")
-    def pr_gn(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("PRGn", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def pr_gn(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("PRGn", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "RdYlBu")
-    def rd_yl_bu(self, *, no_of_colors: int = None,
-                 is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RdYlBu", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def rd_yl_bu(self, *, n: int = None,
+                 discrete: bool = False, reverse=False):
+        return self._special_maps("RdYlBu", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "BrBG")
-    def br_bg(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("BrBG", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def br_bg(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("BrBG", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "RdGy")
-    def rd_gy(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RdGy", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def rd_gy(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("RdGy", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "PuOr")
-    def pu_or(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("PuOr", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def pu_or(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("PuOr", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Set1")
-    def set1(self, *, no_of_colors: int = None,
-             is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Set1", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def set1(self, *, n: int = None,
+             discrete: bool = False, reverse=False):
+        return self._special_maps("Set1", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Set2")
-    def set2(self, *, no_of_colors: int = 8,
-             is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Set2", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def set2(self, *, n: int = 8,
+             discrete: bool = False, reverse=False):
+        return self._special_maps("Set2", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Accent")
-    def accent(self, *, no_of_colors: int = 8,
-               is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Accent", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def accent(self, *, n: int = 8,
+               discrete: bool = False, reverse=False):
+        return self._special_maps("Accent", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Set3")
-    def set3(self, *, no_of_colors: int = None,
-             is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Set3", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def set3(self, *, n: int = None,
+             discrete: bool = False, reverse=False):
+        return self._special_maps("Set3", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Dark2")
-    def dark2(self, *, no_of_colors: int = 8,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Dark2", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def dark2(self, *, n: int = 8,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("Dark2", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Paired")
-    def paired(self, *, no_of_colors: int = None,
-               is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Paired", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def paired(self, *, n: int = None,
+               discrete: bool = False, reverse=False):
+        return self._special_maps("Paired", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Pastel2")
-    def pastel2(self, *, no_of_colors: int = 8,
-                is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Pastel2", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def pastel2(self, *, n: int = 8,
+                discrete: bool = False, reverse=False):
+        return self._special_maps("Pastel2", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "Pastel1")
-    def pastel1(self, *, no_of_colors: int = None,
-                is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("Pastel1", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def pastel1(self, *, n: int = None,
+                discrete: bool = False, reverse=False):
+        return self._special_maps("Pastel1", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "OrRd")
-    def or_rd(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("OrRd", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def or_rd(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("OrRd", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "PuBU")
-    def pu_bu(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("PuBu", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def pu_bu(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("PuBu", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "BuPu")
-    def bu_pu(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("BuPu", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def bu_pu(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("BuPu", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "BuGn")
-    def bu_gn(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("BuGn", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def bu_gn(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("BuGn", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "YlOrBr")
-    def yl_or_br(self, *, no_of_colors: int = None,
-                 is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("YlOrBr", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def yl_or_br(self, *, n: int = None,
+                 discrete: bool = False, reverse=False):
+        return self._special_maps("YlOrBr", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "YlGn")
-    def yl_gn(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("YlGn", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def yl_gn(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("YlGn", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "RdPu")
-    def rd_pu(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("RdPu", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def rd_pu(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("RdPu", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "YlGnBu")
-    def yl_gn_bu(self, *, no_of_colors: int = None,
-                 is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("YlGnBu", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def yl_gn_bu(self, *, n: int = None,
+                 discrete: bool = False, reverse=False):
+        return self._special_maps("YlGnBu", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "GnBu")
-    def gn_bu(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("GnBu", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def gn_bu(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("GnBu", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "YlOrRd")
-    def yl_or_rd(self, *, no_of_colors: int = 8,
-                 is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("YlOrRd", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def yl_or_rd(self, *, n: int = 8,
+                 discrete: bool = False, reverse=False):
+        return self._special_maps("YlOrRd", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "PuRd")
-    def pu_rd(self, *, no_of_colors: int = None,
-              is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("PuRd", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def pu_rd(self, *, n: int = None,
+              discrete: bool = False, reverse=False):
+        return self._special_maps("PuRd", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)
 
+    @deprecated_aliases(no_of_colors='n', is_qualitative='discrete', is_reversed='reverse')
     @cmap_docs(MP_NAME, "PuBuGn")
-    def pu_bu_gn(self, *, no_of_colors: int = None,
-                 is_qualitative: bool = False, is_reversed=False):
-        return self._special_maps("PuBuGn", None, no_of_colors=no_of_colors,
-                                  is_qualitative=is_qualitative,
-                                  is_reversed=is_reversed)
+    def pu_bu_gn(self, *, n: int = None,
+                 discrete: bool = False, reverse=False):
+        return self._special_maps("PuBuGn", None, n=n,
+                                  discrete=discrete,
+                                  reverse=reverse)

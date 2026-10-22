@@ -536,3 +536,7 @@ BREWER_DATA = {'Spectral': {'3': ['#fc8d59', '#ffffbf', '#99d594'],
                           '9': ['#fff7fb', '#ece2f0', '#d0d1e6', '#a6bddb',
                                 '#67a9cf', '#3690c0', '#02818a', '#016c59',
                                 '#014636'], 'type': 'seq'}}
+
+
+from SecretColors.data._immutable import freeze as _freeze
+BREWER_DATA = _freeze(BREWER_DATA)

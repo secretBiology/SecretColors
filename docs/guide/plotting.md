@@ -34,7 +34,7 @@ p = Palette()
 plt.hist(a, color=p.magenta(), alpha=0.75)
 plt.hist(b, color=p.cyan(), alpha=0.75)
 plt.plot(x, y, color=p.blue(shade=70))
-plt.scatter(x, y, c=p.green(no_of_colors=len(x)))
+plt.scatter(x, y, c=p.green(n=len(x)))
 ```
 
 ## Other libraries

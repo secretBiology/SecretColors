@@ -1,4 +1,19 @@
 # Changelog
+
+## Unreleased
+* Correct alpha-first parsing, immutable color value representations, and transparent contrast checks.
+* Add `with_alpha()`, canonical hex serialization and alpha-aware, validated notebook swatches.
+* Fix RGB/RGBA colormap inputs and isolate shared source datasets from caller mutations.
+* Honor Lab/LCh interpolation for palette shades while preserving default RGB outputs.
+* Add distinctness thresholds and warn/raise/ignore policies; preserve selection ordering.
+* Cache candidate snapshots and incrementally extend selections; respect customized palettes.
+* Add `Palette.color()`, `sample()`, `resolve()`, palette-only lookup and source provenance.
+* Add `cmaps.from_colors()`, colormap metadata and gradient/grayscale/gamut diagnostics.
+* Standardize numeric validation and public argument names; old names and colormap classes
+  emit DeprecationWarning and will be removed in the next major release.
+* Ship typing metadata; exercise dependency-free installs, minimum dependencies and built wheels in CI.
+* See the upgrade guide for behavior changes, including immutable channels and alpha quantization.
+
 ## v2.1.1
 * Updated PyPI project description to match the current README.
 

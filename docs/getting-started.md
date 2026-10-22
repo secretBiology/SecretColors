@@ -46,7 +46,7 @@ p = Palette()                   # IBM palette (default)
 p.red()                         # '#fa4d56'
 p.red(shade=20)                 # '#ffd7d9'
 p.red(shade=80)                 # '#750e13'
-p.blue(no_of_colors=3, starting_shade=20, ending_shade=60)
+p.blue(n=3, start=20, end=60)
 # ['#d0e2ff', '#78a9ff', '#0f62fe']
 ```
 
@@ -74,7 +74,7 @@ notebooks. Lists are still regular Python lists.
 
 ```python
 Palette("spectrum")                 # all colors of the palette
-Palette().blue(no_of_colors=6)
+Palette().blue(n=6)
 ```
 
 ## Colormaps in one line

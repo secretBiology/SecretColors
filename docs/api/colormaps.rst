@@ -5,10 +5,10 @@ Functional API
 --------------
 
 .. automodule:: SecretColors.cmaps.maps
-   :members: available, colors, cmap, register
+   :members: available, colors, cmap, from_colors, info, register
 
-Colormap classes
-----------------
+Colormap classes (deprecated)
+-----------------------------
 
 .. autoclass:: SecretColors.cmaps.ColorMap
    :members:

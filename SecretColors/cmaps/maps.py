@@ -37,17 +37,22 @@ Colormap names come from following sources
 import difflib
 import warnings
 from functools import lru_cache
+from dataclasses import dataclass
 from typing import List, Optional, Union
+
+from SecretColors._color import ColorValue
+from SecretColors._validation import count, number
 
 from SecretColors.data.cmaps.brewer import BREWER_DATA
 from SecretColors.data.cmaps.colorblind import CB_DATA
 from SecretColors.data.cmaps.tableau import TABLEAU_DATA
 from SecretColors.data.constants import PALETTE_IBM
-from SecretColors.models.objects import ColorList, ColorString
+from SecretColors.models.objects import ColorList, ColorString, ColorOutput
 from SecretColors.models.palette import Palette, _linspace
 from SecretColors.utils import _check_space, _mix, hex_to_rgb, rgb_to_hex
 
-__all__ = ["available", "colors", "cmap", "register", "DEFAULT_PREFIX"]
+__all__ = ["available", "colors", "cmap", "from_colors", "info", "ColormapInfo",
+           "register", "DEFAULT_PREFIX"]
 
 DEFAULT_PREFIX = "sc"
 DEFAULT_NO_OF_COLORS = 10
@@ -133,18 +138,11 @@ def _get_palette(palette: Union[str, Palette]) -> Palette:
 
 def _validate(n, start, end):
     if n is not None:
-        if isinstance(n, bool) or not isinstance(n, int):
-            raise TypeError(f"'n' should be int, not {type(n)}")
-        if n < 1:
-            raise ValueError("'n' should be at least 1")
+        count(n)
     for label, value in (("start", start), ("end", end)):
         if value is None:
             continue
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise TypeError(f"'{label}' should be a number, not "
-                            f"{type(value)}")
-        if not 0 <= value <= 100:
-            raise ValueError(f"'{label}' should be between 0 and 100")
+        number(value, label, minimum=0, maximum=100)
 
 
 def _sample(hex_colors: List[str], n: int, start: float, end: float,
@@ -201,7 +199,7 @@ def _colors(name, palette, n, start, end, space="rgb"):
     pal = None if kind == "special" else _get_palette(palette)
     color = None
     if kind != "special":
-        color = pal._find(_STANDARD.get(key, key))
+        color = pal.find_color(_STANDARD.get(key, key))
     if color is None and kind == "color":
         matches = [k for k in _SPECIAL if k.lower() == key]
         if len(matches) != 1:
@@ -216,7 +214,7 @@ def _colors(name, palette, n, start, end, space="rgb"):
     start = min(shades) if start is None else start
     end = max(shades) if end is None else end
     n = DEFAULT_NO_OF_COLORS if n is None else n
-    return kind, key, [color.shade(s) for s in _linspace(start, end, n)]
+    return kind, key, [color.shade(s, space=space) for s in _linspace(start, end, n)]
 
 
 def colors(name: str, *, palette: Union[str, Palette] = PALETTE_IBM,
@@ -275,13 +273,54 @@ def _matplotlib_colors():
 
 def _build(color_list, name: str, discrete: bool, mpl_colors=None):
     mpl_colors = mpl_colors or _matplotlib_colors()
-    color_list = [str(c) for c in color_list]
+    color_list = [c.rgba if isinstance(c, ColorOutput) else c for c in color_list]
+    if not color_list:
+        raise ValueError("At least one color is required")
     if discrete:
         return mpl_colors.ListedColormap(color_list, name=name)
     if len(color_list) < 2:
         raise ValueError("At least 2 colors are required for a continuous "
                          "colormap. Use discrete=True for a single color.")
     return mpl_colors.LinearSegmentedColormap.from_list(name, color_list)
+
+
+def from_colors(color_list, *, name: str = "secret_color", discrete: bool = False,
+                reverse: bool = False, space: str = "rgb", _mpl_colors=None):
+    """Build a colormap from hex strings, color objects or RGB/RGBA tuples.
+
+    Alpha is retained. Lab/LCh interpolation currently requires opaque colors.
+    """
+    space = _check_space(space)
+    result = list(color_list)
+    if reverse:
+        result.reverse()
+    if not discrete and space != "rgb" and len(result) > 1:
+        values = [ColorValue.parse(c) for c in result]
+        if any(v.rgba[3] != 1 for v in values):
+            raise ValueError("Lab/LCh colormaps require opaque colors")
+        result = _sample([v.hex() for v in values], 256, 0, 1, space)
+    return _build(result, name, discrete, _mpl_colors)
+
+
+@dataclass(frozen=True)
+class ColormapInfo:
+    """Dataset metadata; does not imply perceptual or accessibility guarantees."""
+    name: str
+    source: str
+    kind: str
+    sizes: tuple[int, ...]
+
+
+def info(name: str, *, palette: Union[str, Palette] = PALETTE_IBM) -> ColormapInfo:
+    """Describe a map as sequential, diverging or qualitative, with native sizes."""
+    kind, key, _ = _colors(name, palette, None, None, None)
+    if kind == "special":
+        source, data = _SPECIAL[key]
+        category = {"seq": "sequential", "div": "diverging",
+                    "qual": "qualitative", "regular": "qualitative"}[data["type"]]
+        return ColormapInfo(key, source, category,
+                            tuple(sorted(int(k) for k in data if k != "type")))
+    return ColormapInfo(key, _get_palette(palette).name, "sequential", ())
 
 
 def cmap(name: str, *, palette: Union[str, Palette] = PALETTE_IBM,
@@ -312,6 +351,7 @@ def cmap(name: str, *, palette: Union[str, Palette] = PALETTE_IBM,
         space, which avoids dull middle colors.
     :return: Matplotlib colormap
     """
+    space = _check_space(space)
     kind, key, result = _colors(name, palette, n, start, end, space)
     if discrete is None:
         discrete = _is_qualitative(kind, key)

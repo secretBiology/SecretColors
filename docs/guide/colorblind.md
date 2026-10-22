@@ -1,7 +1,7 @@
 # Colorblind friendly
 
 :::{seealso}
-{doc}`distinct-colors` picks and checks colorblind-safe colors for you.
+{doc}`distinct-colors` optimizes and checks separation for normal vision, protanopia and deuteranopia.
 :::
 
 ```{image} ../images/colorblind-light.png

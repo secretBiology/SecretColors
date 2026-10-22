@@ -19,7 +19,7 @@ IBM, Material, Adobe Spectrum, ColorBrewer, Tableau and colorblind-safe schemes 
 - **Colormaps by name** - register once and write `cmap="sc.greens"` in
   matplotlib, pandas or seaborn.
 - **Works everywhere** - plain hex output for plotly, bokeh, altair or CSS.
-- **Colorblind friendly** - pick colors that stay distinct for everyone,
+- **Colorblind friendly** - pick colors optimized for normal vision, protanopia and deuteranopia,
   check your own, and use Okabe-Ito and Paul Tol schemes.
 - **Accessible** - WCAG contrast ratio and readability checks.
 - **Smoother gradients** - mix colors in perceptual L\*a\*b\* or LCh space.
@@ -54,7 +54,7 @@ p = Palette()                   # IBM palette (default)
 p.red()                         # '#fa4d56'
 p.red(shade=20)                 # '#ffd7d9'  lighter
 p.red(shade=80)                 # '#750e13'  darker
-p.blue(no_of_colors=5)          # ['#edf5ff', '#9bc0ff', '#2a75fe', '#0032a9', '#001141']
+p.blue(n=5)                     # ['#edf5ff', '#9bc0ff', '#2a75fe', '#0032a9', '#001141']
 
 Palette("material").red()       # '#f44336'
 ```
@@ -120,11 +120,11 @@ sns.heatmap(data, cmap="sc.RdBu")                   # seaborn
 cmaps.colors("Spectral", n=5)   # plain hex list, no matplotlib needed
 ```
 
-## Colors for everyone
+## Choosing distinguishable colors
 
 <img alt="Distinct colors under colorblindness" src="https://raw.githubusercontent.com/secretBiology/SecretColors/master/docs/images/distinct-light.png">
 
-`distinct_colors()` picks colors which stay apart for normal vision,
+`distinct_colors()` optimizes color separation for normal vision,
 protanopia and deuteranopia, and have enough contrast with the background.
 
 ```python
@@ -138,6 +138,11 @@ from SecretColors.utils import contrast_ratio, is_readable
 contrast_ratio("#0f62fe", "#ffffff")        # 5.0
 is_readable("#8d8d8d", "#ffffff")           # False (needs 4.5)
 ```
+
+Requests which miss `min_delta_e=10` emit `DistinctnessWarning`. Use
+`distinct_colors(8, on_failure="raise")` to enforce the threshold, or
+`on_failure="ignore"` for deliberate best-effort selection. The supported
+simulations are protanopia and deuteranopia; they do not cover every viewer.
 
 ## Smoother gradients
 

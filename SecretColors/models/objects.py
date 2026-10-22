@@ -6,7 +6,11 @@
 #
 # All objects related this project
 
-import html
+from SecretColors.helpers.decorators import deprecated_aliases
+from SecretColors._display import _swatch_html
+
+from SecretColors._color import ColorValue, ColorLike
+from SecretColors._validation import number
 from typing import Union
 
 from SecretColors.utils import (hex_to_rgb, rgb_to_hex, mix, text_color,
@@ -14,148 +18,146 @@ from SecretColors.utils import (hex_to_rgb, rgb_to_hex, mix, text_color,
                                 rgb_to_hsl)
 
 
-def _validate(color: tuple, base):
-    if len(color) not in [3, 4]:
-        raise ValueError(f"{base} is not a valid Hex or RGB/RGBA tuple")
-
-    if max(color) > 1 or min(color) < 0:
-        raise ValueError("RGB/RGBA tuple should have values between 0-1. If "
-                         "you have 255 based color, please convert it to 0-1 "
-                         "and then provide it as an input")
-
-    if len(color) == 3:
-        return color[0], color[1], color[2], 1
-
-    return color
-
-
 class ColorOutput:
-    def __init__(self, base: Union[str, tuple]):
-        self._base = base
-        if isinstance(base, str):
-            self.is_tuple = False
-            self._tuple = hex_to_rgb(base.strip())
-        elif isinstance(base, tuple):
-            self.is_tuple = True
-            self._tuple = base
-        else:
-            raise TypeError(f"Currently color object can only be "
-                            f"string or tuple. Your provided type "
-                            f"is {type(base)}")
+    """Immutable canonical color with builtin-compatible output wrappers.
 
-        # Validate and get rgba
-        self.r, self.g, self.b, self._a = _validate(self._tuple, base)
+    Use :meth:`with_alpha` to derive a new color instead of assigning channels.
+    """
+
+    def __init__(self, base: Union[str, tuple], *, alpha_first=False):
+        if not hasattr(self, "_value"):
+            if not isinstance(base, (str, tuple)):
+                raise TypeError("Expected a hex string or RGB/RGBA tuple")
+            object.__setattr__(self, "_value", ColorValue.parse(base, alpha_first=alpha_first))
+            object.__setattr__(self, "_alpha_first", alpha_first)
+            object.__setattr__(self, "_is_tuple", isinstance(base, tuple))
+
+    def __setattr__(self, name, value):
+        raise AttributeError("Colors are immutable; use with_alpha() or create a new color")
+
+    def __delattr__(self, name):
+        raise AttributeError("Colors are immutable; create a new color")
+
+    @property
+    def is_tuple(self):
+        return isinstance(self, tuple) or getattr(self, "_is_tuple", False)
+
+    @property
+    def r(self):
+        return self._value.rgba[0]
+
+    @property
+    def g(self):
+        return self._value.rgba[1]
+
+    @property
+    def b(self):
+        return self._value.rgba[2]
 
     @property
     def alpha(self):
-        return self._a
-
-    @alpha.setter
-    def alpha(self, value):
-        self._a = value
+        return self._value.rgba[3]
 
     @property
-    def rgba(self) -> tuple:
-        return self.r, self.g, self.b, self.alpha
+    def rgba(self) -> tuple[float, float, float, float]:
+        return self._value.rgba
 
     @property
-    def rgb(self) -> tuple:
-        return self.r, self.g, self.b
+    def rgb(self) -> tuple[float, float, float]:
+        return self._value.rgb
 
     @property
     def hsl(self) -> tuple:
-        return rgb_to_hsl(self.r, self.g, self.b)
+        return rgb_to_hsl(*self.rgb)
 
     @property
     def hsla(self) -> tuple:
-        h, s, l = rgb_to_hsl(self.r, self.g, self.b)
-        return h, s, l, self.alpha
+        return (*self.hsl, self.alpha)
 
     @property
     def rgb255(self) -> tuple:
-        return rgb_to_rgb255(self.r, self.g, self.b)
+        return rgb_to_rgb255(*self.rgb)
 
     @property
     def hex(self) -> str:
-        if self.is_tuple:
-            return rgb_to_hex(self.r, self.g, self.b)
+        return self._value.hex()
 
-        if self._base.startswith("#"):
-            if len(self._base) in [4, 7]:
-                return self._base
-            else:
-                return self._base[:7]
-        else:
-            if len(self._base) in [3, 6]:
-                return self._base
-            else:
-                return self._base[:6]
+    @property
+    def hexa(self) -> str:
+        return self._value.hex(alpha=True)
 
-    def blend(self, other, ratio: float = 0.5, *,
-              space: str = "rgb") -> "ColorString":
+    @property
+    def ahex(self) -> str:
+        return self._value.hex(alpha=True, alpha_first=True)
+
+    def with_alpha(self, alpha: float) -> "ColorString | ColorTuple":
+        value = self._value.with_alpha(alpha)
+        if isinstance(self, tuple):
+            return ColorTuple(value.rgba)
+        return ColorString(value.hex(alpha=True, alpha_first=self._alpha_first),
+                           alpha_first=self._alpha_first)
+
+    def blend(self, other, ratio: float = 0.5, *, space: str = "rgb") -> "ColorString":
+        """Blend RGB channels; alpha is interpolated separately.
+
+        For source-over transparency compositing use ``utils.composite``.
         """
-        Mixes this color with another color
-
-        >>> ColorString("#ff0000").blend("#0000ff") # '#800080'
-        >>> ColorString("#ff0000").blend("#0000ff", space="lab")
-
-        :param other: Hex string, RGB/RGBA tuple or color object
-        :param ratio: Amount of `other` color (0-1). Default: 0.5
-        :param space: 'rgb' (default), 'lab' or 'lch'. See
-            :func:`~SecretColors.utils.mix`
-        :return: Mixed color
-        """
-        if isinstance(other, ColorOutput):
-            other = other.hex
-        elif not isinstance(other, (str, tuple)):
-            raise TypeError(f"Expected ColorObject, str or tuple but got "
-                            f"{type(other)}")
-        return ColorString(mix(self.hex, other, ratio, space=space))
+        if not isinstance(other, (ColorOutput, str, tuple)):
+            raise TypeError("Expected a color object, hex string or RGB/RGBA tuple")
+        target = ColorValue.parse(other)
+        result = ColorString(mix(self.rgb, target.rgb, ratio, space=space))
+        alpha = self.alpha + (target.rgba[3] - self.alpha) * ratio
+        return result.with_alpha(alpha) if alpha < 1 else result
 
     def _repr_html_(self) -> str:
-        return _swatch_html([self.hex], [repr(self)])
+        return _swatch_html([self], [repr(self)])
+
+    def __reduce__(self):
+        return (_restore_color, (type(self), self.rgba, self._alpha_first,
+                                len(self) if isinstance(self, (str, tuple)) else None))
+
+
+def _restore_color(cls, rgba, alpha_first, length):
+    if issubclass(cls, tuple):
+        return cls(rgba[:length])
+    if issubclass(cls, str):
+        return cls(ColorValue.parse(rgba).hex(alpha=length == 9 or rgba[3] < 1,
+                                             alpha_first=alpha_first),
+                   alpha_first=alpha_first)
+    return cls(rgba)
 
 
 class ColorString(ColorOutput, str):
-    def __init__(self, base: Union[str, tuple]):
-        super().__init__(base)
+    def __new__(cls, base: Union[str, tuple], *, alpha_first=False):
+        value = ColorValue.parse(base, alpha_first=alpha_first)
+        raw = base.strip().removeprefix("#") if isinstance(base, str) else ""
+        alpha = len(raw) in (4, 8) or (isinstance(base, tuple) and len(base) == 4)
+        serialized = value.hex(alpha=alpha or value.rgba[3] < 1,
+                               alpha_first=alpha_first)
+        obj = str.__new__(cls, serialized)
+        object.__setattr__(obj, "_value", ColorValue.parse(serialized, alpha_first=alpha_first))
+        object.__setattr__(obj, "_alpha_first", alpha_first)
+        return obj
 
 
 class ColorTuple(ColorOutput, tuple):
-    def __init__(self, base: Union[str, tuple]):
-        super().__init__(base)
+    def __new__(cls, base: Union[str, tuple], *, alpha_first=False):
+        value = ColorValue.parse(base, alpha_first=alpha_first)
+        raw = base.strip().removeprefix("#") if isinstance(base, str) else ""
+        alpha = len(raw) in (4, 8) or (isinstance(base, tuple) and len(base) == 4)
+        obj = tuple.__new__(cls, value.rgba if alpha or value.rgba[3] < 1 else value.rgb)
+        object.__setattr__(obj, "_value", value)
+        object.__setattr__(obj, "_alpha_first", alpha_first)
+        return obj
 
 
-def _swatch_html(hex_colors: list, labels: list) -> str:
-    chips = []
-    for color, label in zip(hex_colors, labels):
-        chips.append(
-            f'<div style="display:inline-block;margin:0 6px 6px 0;'
-            f'text-align:center;font:11px monospace">'
-            f'<div title="{html.escape(label)}" style="width:56px;'
-            f'height:36px;border-radius:6px;background:{color};'
-            f'box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></div>'
-            f'{html.escape(color)}</div>')
-    return f'<div>{"".join(chips)}</div>'
 
 
-class ColorList(list):
-    """
-    Regular ``list`` of colors which shows color swatches in Jupyter
-    notebooks
-    """
+class ColorList(list[ColorLike]):
+    """Regular list of colors with validated, alpha-aware notebook swatches."""
 
     def _repr_html_(self) -> str:
-        hexes, labels = [], []
-        for c in self:
-            if isinstance(c, ColorOutput):
-                hexes.append(c.hex)
-            elif isinstance(c, str):
-                hexes.append(c)
-            else:
-                hexes.append(rgb_to_hex(*c[:3]))
-            labels.append(repr(c))
-        return _swatch_html(hexes, labels)
+        return _swatch_html(self, [repr(c) for c in self])
 
 
 class ColorWheel:
@@ -227,7 +229,7 @@ class ColorWheel:
             self._original_hex)
 
     @property
-    def color(self) -> str:
+    def color(self) -> ColorString:
         """Returns current color (which has all the manipulations)
         """
         return ColorString(hsl_to_hex(self.hue, self.saturation,
@@ -245,10 +247,12 @@ class ColorWheel:
 
     @staticmethod
     def _rotate(value: float, angle: float) -> float:
+        angle = number(angle, "angle")
         return ((value * 360 + angle) % 360) / 360
 
     @staticmethod
     def _shift(value: float, angle: float) -> float:
+        angle = number(angle, "angle")
         return min(1.0, max(0.0, value + angle / 360))
 
     def rotate_hue(self, angle: float):
@@ -285,6 +289,7 @@ class ColorWheel:
         :param percentage: Percentage change
         :type percentage: float
         """
+        percentage = number(percentage, "percentage", minimum=0, maximum=100)
         av = self.lightness * percentage / 100
         self.lightness -= av
 
@@ -295,53 +300,58 @@ class ColorWheel:
         :param percentage: Percentage change
         :type percentage: float
         """
+        percentage = number(percentage, "percentage", minimum=0, maximum=100)
         av = (1 - self.lightness) * percentage / 100
         self.lightness += av
 
-    def _make_color_list(self, *args, is_revered: bool) -> list:
+    def _make_color_list(self, *args, reverse: bool) -> list:
         color_list = ColorList([self.color])
         for angle in args:
             hue = self._rotate(self.hue, angle)
             color_list.append(ColorString(hsl_to_hex(hue, self.saturation,
                                                      self.lightness)))
-        if is_revered:
+        if reverse:
             color_list.reverse()
         return color_list
 
-    def complementary(self, is_reversed: bool = False) -> list:
+    @deprecated_aliases(is_reversed='reverse')
+    def complementary(self, reverse: bool = False) -> list:
         """
         Generates two complementary colors. Out of which, one will be your
         current color
 
-        :param is_reversed: If True, return list will be reversed
-        :type is_reversed: bool
+        :param reverse: If True, return list will be reversed
+        :type reverse: bool
         :return: List of two complementary colors
         """
-        return self._make_color_list(180, is_revered=is_reversed)
+        return self._make_color_list(180, reverse=reverse)
 
-    def triadic(self, is_reserved: bool = False) -> list:
+    @deprecated_aliases(is_reserved='reverse', is_reversed='reverse')
+    def triadic(self, reverse: bool = False) -> list:
         """
         Generate triadic colors. Out of which, one will be your current
         color
 
-        :param is_reserved: If True, return list will be reversed
-        :type is_reserved: bool
+        :param reverse: If True, return list will be reversed
+        :type reverse: bool
         :return: List of 3 triadic colors
         """
-        return self._make_color_list(120, 240, is_revered=is_reserved)
+        return self._make_color_list(120, 240, reverse=reverse)
 
-    def tetradic(self, is_reversed: bool = False) -> list:
+    @deprecated_aliases(is_reversed='reverse')
+    def tetradic(self, reverse: bool = False) -> list:
         """
         Generates tetradic colors. Out of which, one will be your current
         color.
 
-        :param is_reversed: If True, return list will be reversed
-        :type is_reversed: bool
+        :param reverse: If True, return list will be reversed
+        :type reverse: bool
         :return: List of 4 tetradic colors
         """
-        return self._make_color_list(90, 180, 270, is_revered=is_reversed)
+        return self._make_color_list(90, 180, 270, reverse=reverse)
 
-    def analogous(self, loc="first", is_reversed: bool = False) -> list:
+    @deprecated_aliases(is_reversed='reverse')
+    def analogous(self, loc="first", reverse: bool = False) -> list:
         """
         Generate list of analogous colors. Out of which, one will be your
         current color. Location of where current color should be in these 3
@@ -350,8 +360,8 @@ class ColorWheel:
         :param loc: Location of current color in the analogous colors.
             Available options: [first, middle, last]. (default: first)
         :type loc: str
-        :param is_reversed: If True, return list will be reversed.
-        :type is_reversed: bool
+        :param reverse: If True, return list will be reversed.
+        :type reverse: bool
         :return: List of 3 analogous colors
         """
         factor = 1
@@ -374,7 +384,7 @@ class ColorWheel:
             ]
 
         colors = ColorList(ColorString(c) for c in colors)
-        if is_reversed:
+        if reverse:
             colors.reverse()
         return colors
 

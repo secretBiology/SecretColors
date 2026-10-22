@@ -32,7 +32,7 @@ IBM, Material, Adobe Spectrum, ColorBrewer, Tableau and colorblind-safe schemes 
 - **Colormaps by name** - register once and write `cmap="sc.greens"` in
   matplotlib, pandas or seaborn.
 - **Works everywhere** - plain hex output for plotly, bokeh, altair or CSS.
-- **Colorblind friendly** - pick colors that stay distinct for everyone,
+- **Colorblind friendly** - pick colors optimized for normal vision, protanopia and deuteranopia,
   check your own, and use Okabe-Ito and Paul Tol schemes.
 - **Accessible** - WCAG contrast ratio and readability checks.
 - **Smoother gradients** - mix colors in perceptual L\*a\*b\* or LCh space.
@@ -69,12 +69,12 @@ p = Palette()                   # IBM palette (default)
 p.red()                         # '#fa4d56'
 p.red(shade=20)                 # '#ffd7d9'  lighter
 p.red(shade=80)                 # '#750e13'  darker
-p.blue(no_of_colors=5)          # ['#edf5ff', '#9bc0ff', '#2a75fe', '#0032a9', '#001141']
+p.blue(n=5)                     # ['#edf5ff', '#9bc0ff', '#2a75fe', '#0032a9', '#001141']
 
 Palette("material").red()       # '#f44336'
 ```
 
-Every color is a plain `str` (or `tuple`), so you can pass it straight to any
+Every color is compatible with `str` (or `tuple`), so you can pass it straight to any
 plotting library.
 
 ## Palettes
@@ -110,8 +110,8 @@ p.get("grey"), p.get("k")       # ('#8d8d8d', '#000000')  synonyms work too
 
 ```python
 p.blue(shade=37.5)                                          # any value from 0 to 100
-p.blue(no_of_colors=3, starting_shade=20, ending_shade=60)  # ['#d0e2ff', '#78a9ff', '#0f62fe']
-p.blue(no_of_colors=4, gradient=False)                      # random shades
+p.blue(n=3, start=20, end=60)  # ['#d0e2ff', '#78a9ff', '#0f62fe']
+p.blue(n=4, gradient=False)                      # random shades
 ```
 
 ## Use it in your plots
@@ -173,7 +173,7 @@ plt.imshow(data, cmap=cmaps.cmap("blues", start=20, end=80))
 plt.imshow(data, cmap=cmaps.cmap("Spectral", n=9, reverse=True))
 plt.scatter(x, y, c=labels, cmap=cmaps.cmap("Set2", n=4))     # discrete
 
-cmaps.register(palette="material")      # sc.greens, sc.blues ... from Material
+cmaps.register(palette="material", force=True)      # sc.greens, sc.blues ... from Material
 cmaps.available("brewer")               # list names by source
 ```
 
@@ -192,7 +192,7 @@ cmaps.colors("Spectral", n=5)   # ['#d7191c', '#fdae61', '#ffffbf', '#abdda4', '
 | bokeh | `figure.scatter(x, y, color=cmaps.colors("Tableau", n=3)[0])` |
 | altair | `alt.Scale(range=cmaps.colors("tol_sunset"))` |
 
-## Colors for everyone
+## Choosing distinguishable colors
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/distinct-dark.png">
@@ -200,7 +200,7 @@ cmaps.colors("Spectral", n=5)   # ['#d7191c', '#fdae61', '#ffffbf', '#abdda4', '
 </picture>
 
 Red and green collapse into the same muddy tones for about 1 in 12 men.
-`distinct_colors()` picks colors from a palette which stay apart for normal
+`distinct_colors()` optimizes separation among palette colors for normal
 vision, protanopia and deuteranopia, and have enough contrast with the
 background.
 
@@ -250,6 +250,11 @@ from SecretColors.utils import simulate_green_blindness, hex_to_rgb
 simulate_green_blindness(*hex_to_rgb("#fa4d56"))
 ```
 
+Requests which miss `min_delta_e=10` emit `DistinctnessWarning`. Use
+`distinct_colors(8, on_failure="raise")` to enforce the threshold, or
+`on_failure="ignore"` for deliberate best-effort selection. The supported
+simulations are protanopia and deuteranopia; they do not cover every viewer.
+
 ## Smoother gradients
 
 <picture>
@@ -258,7 +263,7 @@ simulate_green_blindness(*hex_to_rgb("#fa4d56"))
 </picture>
 
 Mixing colors in RGB makes the middle of a gradient dull and grayish. Mix in
-`"lab"` for perceptually even steps, or `"lch"` to keep colors vivid.
+`"lab"` for interpolation in CIE L*a*b*, or `"lch"` to keep colors vivid.
 
 ```python
 from SecretColors.utils import mix, color_in_between
@@ -286,7 +291,7 @@ from SecretColors.image import extract_palette
 
 extract_palette("sunset.jpg")                       # 5 dominant colors, most common first
 extract_palette("sunset.jpg", n=6, sort="lightness")
-ColorMap().from_list(extract_palette("sunset.jpg")) # turn it into a colormap
+cmaps.from_colors(extract_palette("sunset.jpg")) # turn it into a colormap
 ```
 
 ## Color harmonies
@@ -343,7 +348,7 @@ in Jupyter. Lists are still regular Python lists.
 
 ```python
 Palette("spectrum")                 # all colors of the palette
-Palette().blue(no_of_colors=6)      # six swatches
+Palette().blue(n=6)      # six swatches
 distinct_colors(8)
 ```
 
@@ -355,9 +360,9 @@ distinct_colors(8)
 ```python
 p = Palette(seed=42)                    # reproducible, never touches global random state
 p.random()                              # one random color
-p.random(no_of_colors=3, shade=30)      # ['#a6c8ff', '#ffb3b8', '#c6c6c6']
-p.random(no_of_colors=5, avoid=["gray"])
-p.random_gradient(no_of_colors=5)       # gradient between two complementary colors
+p.random(n=3, shade=30)      # ['#a6c8ff', '#ffb3b8', '#c6c6c6']
+p.random(n=5, avoid=["gray"])
+p.random_gradient(n=5)       # gradient between two complementary colors
 
 from itertools import islice
 list(islice(Palette().cycle(), 5))      # ['#8a3ffc', '#b3901f', '#9f1853', '#009d9a', '#993a1d']
@@ -425,6 +430,15 @@ noticeable are
 Read the [changelog](CHANGELOG.md) for the full list.
 
 </details>
+
+## Migration to the upcoming release
+
+Old argument names (`no_of_colors`, `starting_shade`, `ending_shade`,
+`is_qualitative`, `is_reversed`) and legacy colormap classes emit
+`DeprecationWarning` and will be removed in the next major release.
+Use `n`, `start`, `end`, `discrete`, `reverse` and the `cmaps` functions.
+Color objects are immutable; use `c.with_alpha(0.5)` to derive a new color.
+See [the upgrade guide](docs/upgrading.md) for corrected outputs and migration examples.
 
 ## Development
 

@@ -14,7 +14,7 @@ from SecretColors.models.objects import (ColorOutput, ColorString,
 test_data = [
     ("#ffffff", False, (1, 1, 1, 1), "#ffffff"),
     ((0, 0, 0), True, (0, 0, 0, 1), "#000000"),
-    ("101010", False, (16 / 255, 16 / 255, 16 / 255, 1), "101010"),
+    ("101010", False, (16 / 255, 16 / 255, 16 / 255, 1), "#101010"),
     (
         "#f1f1f1f1", False,
         (241 / 255, 241 / 255, 241 / 255, 241 / 255),

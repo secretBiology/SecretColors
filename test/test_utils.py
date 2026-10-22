@@ -96,7 +96,9 @@ def test_luminance_and_text_color():
     assert relative_luminance("#ff0000ff") == relative_luminance("#ff0000")
     assert text_color("#ffffff") == "#000000"
     assert text_color("#000000") == "#ffffff"
-    assert text_color("#00000080") == "#ffffff"
+    with pytest.raises(ValueError, match="opaque background"):
+        text_color("#00000080")
+    assert text_color("#00000080", background="#000000") == "#ffffff"
 
 
 @pytest.mark.parametrize("func", [simulate_red_blindness,
@@ -225,10 +227,10 @@ def test_contrast_ratio(c1, c2, expected):
 
 def test_contrast_inputs():
     assert contrast_ratio((0, 0, 0), "#ffffff") == pytest.approx(21)
-    assert contrast_ratio((0, 0, 0, 0.5), "#ffffffff") == pytest.approx(21)
+    assert contrast_ratio((0, 0, 0, 0.5), "#ffffffff") == pytest.approx(3.97665, abs=1e-5)
     with pytest.raises(ValueError):
         contrast_ratio((2, 0, 0), "#ffffff")
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         contrast_ratio(5, "#ffffff")
 
 

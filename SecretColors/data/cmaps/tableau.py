@@ -126,3 +126,7 @@ TABLEAU_DATA = {
                '#ffb2b6'], "type": "div"}
 
 }
+
+
+from SecretColors.data._immutable import freeze as _freeze
+TABLEAU_DATA = _freeze(TABLEAU_DATA)

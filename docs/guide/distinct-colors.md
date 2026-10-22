@@ -1,4 +1,4 @@
-# Colors for everyone
+# Choosing distinguishable colors
 
 ```{image} ../images/distinct-light.png
 :class: only-light
@@ -46,11 +46,19 @@ The first `k` colors of `distinct_colors(n)` are always the same as
 | Argument | Default | Meaning |
 |---|---|---|
 | `palette` | `"ibm"` | Palette name, `Palette` or your own list of colors |
-| `colorblind_safe` | `True` | Keep colors apart under protanopia and deuteranopia |
+| `colorblind_safe` | `True` | Include simulated protanopia and deuteranopia |
+| `min_delta_e` | `10` | Minimum requested separation |
+| `on_failure` | `"warn"` | `"warn"`, `"raise"`, or `"ignore"` when separation falls short |
 | `background` | `"#ffffff"` | Skip colors with too little contrast. `None` disables it |
 | `min_contrast` | `3.0` | Minimum WCAG contrast with the background |
 | `shade_range` | `(40, 70)` | Shades to choose from |
 | `include_grays` | `False` | Allow grays |
+
+The selected prefix is preserved even when separation falls short. The default
+emits `DistinctnessWarning`; use `on_failure="raise"` to reject that result.
+These checks cover normal vision, protanopia and deuteranopia, not every form
+or severity of color vision deficiency. Alpha is composited onto the opaque
+background before checking contrast and separation.
 
 ### How it works
 
@@ -62,8 +70,7 @@ hue which is already used.
 
 ## Check your colors
 
-{func}`~SecretColors.check_colors` reports how distinct a set of colors is,
-for everyone.
+{func}`~SecretColors.check_colors` reports separation under normal vision, protanopia and deuteranopia.
 
 ```python
 from SecretColors import check_colors

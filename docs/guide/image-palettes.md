@@ -45,9 +45,9 @@ Results are reproducible thanks to `seed`. Transparent pixels are ignored.
 ## Use the palette
 
 ```python
-from SecretColors.cmaps import ColorMap
+from SecretColors import cmaps
 
 colors = extract_palette("sunset.jpg", n=6, sort="lightness")
-plt.imshow(data, cmap=ColorMap().from_list(colors))     # colormap
+plt.imshow(data, cmap=cmaps.from_colors(colors))     # colormap
 plt.rcParams["axes.prop_cycle"] = plt.cycler(color=colors)  # color cycle
 ```

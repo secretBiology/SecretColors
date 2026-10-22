@@ -72,3 +72,7 @@ CB_DATA = {
         "type": "seq"
     }
 }
+
+
+from SecretColors.data._immutable import freeze as _freeze
+CB_DATA = _freeze(CB_DATA)

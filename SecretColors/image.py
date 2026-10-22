@@ -21,6 +21,8 @@ Requires `Pillow <https://python-pillow.org>`_ ::
     pip install "SecretColors[image]"
 """
 
+from SecretColors._validation import count
+
 import os
 import random
 from collections import Counter
@@ -143,10 +145,10 @@ def extract_palette(image, n: int = 5, *, sort: str = "frequency",
     :param min_alpha: Pixels with alpha below this (0-255) are ignored
     :return: List of hex colors
     """
-    if isinstance(n, bool) or not isinstance(n, int):
-        raise TypeError(f"'n' should be int, not {type(n)}")
-    if n < 1:
-        raise ValueError("'n' should be at least 1")
+    n = count(n)
+    min_alpha = count(min_alpha, "min_alpha", minimum=0)
+    if min_alpha > 255:
+        raise ValueError("min_alpha should be at most 255")
     sort = sort.strip().lower()
     if sort not in _SORTS:
         raise ValueError(f"'sort' should be one of {_SORTS}")

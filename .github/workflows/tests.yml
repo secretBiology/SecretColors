@@ -5,6 +5,9 @@ on:
     branches: [master]
   pull_request:
 
+env:
+  MPLBACKEND: Agg
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -27,10 +30,32 @@ jobs:
       - run: uv sync --locked --group test
       - run: uv run pytest --cov=SecretColors --cov-report=term-missing
 
+  minimum-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+      - run: uv venv
+      - run: uv pip install . 'matplotlib==3.10.0' 'pillow==13.0.0' 'pytest>=9.0'
+      - run: .venv/bin/python -m pytest
+
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
       - run: uv build
-      - run: uv run --isolated --no-project --with dist/*.whl python -c "import SecretColors; print(SecretColors.__version__)"
+      - name: Test the dependency-free wheel outside the checkout
+        run: |
+          uv venv "$RUNNER_TEMP/sc-core"
+          uv pip install --python "$RUNNER_TEMP/sc-core/bin/python" dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/sc-core/bin/python" -I "$GITHUB_WORKSPACE/scripts/check_install.py"
+      - name: Test the installed wheel with extras outside the checkout
+        run: |
+          uv pip install --python "$RUNNER_TEMP/sc-core/bin/python" 'matplotlib>=3.10' 'pillow>=13.0' 'pytest>=9.0'
+          cp -R test "$RUNNER_TEMP/sc-tests"
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/sc-core/bin/python" -I -m pytest "$RUNNER_TEMP/sc-tests"

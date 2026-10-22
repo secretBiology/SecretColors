@@ -7,10 +7,11 @@
 #  Main classes classes related to color and shades will go in this file
 
 import collections.abc
+from SecretColors._validation import number
 
 from SecretColors.helpers.logging import Log
 from SecretColors.models.objects import ColorString
-from SecretColors.utils import color_in_between
+from SecretColors.utils import color_in_between, mix, _check_space
 
 
 class _RawColor:
@@ -127,7 +128,9 @@ class Color:
             self._segments[index] = [left.hex, *colors, right.hex]
         return self._segments[index]
 
-    def shade(self, value: float) -> ColorString:
+    def shade(self, value: float, *, space: str = "rgb") -> ColorString:
+        value = number(value, "shade", minimum=0, maximum=100)
+        space = _check_space(space)
         self.log.debug(f"Extracting shade '{value}' from '{self.name}'")
 
         if value < 0 or value > 100:
@@ -139,6 +142,10 @@ class Color:
                 return ColorString(s.hex)
             if s.shade > value:
                 left = self.values[i - 1]
+                if space != "rgb":
+                    return ColorString(mix(left.hex, s.hex,
+                                           (value - left.shade) / (s.shade - left.shade),
+                                           space=space))
                 idx = (value - left.shade) * 100 / (s.shade - left.shade)
                 return ColorString(self._segment(i)[int(round(idx))])
 

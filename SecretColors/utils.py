@@ -13,8 +13,12 @@
 #
 # TODO: HSI conversions
 
+from SecretColors.helpers.decorators import deprecated_aliases
 import math
 from typing import Sequence, Tuple, Union
+
+from SecretColors._color import ColorValue
+from SecretColors._validation import count, number
 
 from SecretColors.data.rgb_xyz import RX_DATA, WHITE_POINTS
 from SecretColors.helpers.decorators import deprecated
@@ -23,6 +27,7 @@ from SecretColors.helpers.rxutils import convert_rgb_to_xyz, convert_xyz_to_rgb
 
 def _validate(*args):
     for a in args:
+        number(a, "channel", minimum=0, maximum=1)
         if a > 1:
             raise ValueError(
                 "Color Values can not be greater than 1. "
@@ -45,12 +50,14 @@ def _validate255(*args):
 
 
 def _sanitize_hex(hex_string: str):
+    if not isinstance(hex_string, str):
+        raise TypeError("Expected a hex string")
     hex_string = hex_string.strip().lower()
     if hex_string.startswith("#"):
         hex_string = hex_string[1:]
 
-    if len(hex_string) == 3:
-        hex_string = "{0}{0}{1}{1}{2}{2}".format(*hex_string)
+    if len(hex_string) in (3, 4):
+        hex_string = "".join(c * 2 for c in hex_string)
     if len(hex_string) % 2 != 0 or len(hex_string) < 6:
         raise ValueError(f"Invalid Hex code '{hex_string}' for conversion")
 
@@ -378,6 +385,9 @@ def hex_to_rgb(hex_string: str):
     :param hex_string: Hex string
     :return: Red, Green, Blue (between 0-1)
     """
+    if hasattr(hex_string, "_value"):
+        value = ColorValue.parse(hex_string)
+        return value.rgba if len(hex_string) in (5, 9) else value.rgb
     hex_string = _sanitize_hex(hex_string)
     c = []
     for x in range(0, len(hex_string), 2):
@@ -471,7 +481,7 @@ def linear_to_srgb(r, g, b):
 
 
 @deprecated("Its name is misleading as it converts sRGB to linear RGB. "
-            "Use 'srgb_to_linear' instead.")
+            "Use 'SecretColors.utils.srgb_to_linear(r, g, b)' instead.")
 def rgb_to_srgb(r, g, b):
     """
     Deprecated alias of :func:`srgb_to_linear`
@@ -480,7 +490,7 @@ def rgb_to_srgb(r, g, b):
 
 
 @deprecated("Its name is misleading as it converts linear RGB to sRGB. "
-            "Use 'linear_to_srgb' instead.")
+            "Use 'SecretColors.utils.linear_to_srgb(sr, sg, sb)' instead.")
 def srgb_to_rgb(sr, sg, sb):
     """
     Deprecated alias of :func:`linear_to_srgb`
@@ -667,7 +677,8 @@ def lab_to_rgb(l, a, b, *, clip=True) -> tuple:
     linear = xyz_to_rgb(x, y, z, clip=False)
     if clip:
         linear = tuple(min(1.0, max(0.0, v)) for v in linear)
-    elif any(v < -1e-9 or v > 1 + 1e-9 for v in linear):
+    # Published RGB/XYZ matrices are rounded; tolerate their round-trip error.
+    elif any(v < -1e-6 or v > 1 + 1e-6 for v in linear):
         raise ValueError(f"L*a*b* ({l}, {a}, {b}) is outside sRGB gamut")
     else:
         linear = tuple(min(1.0, max(0.0, v)) for v in linear)
@@ -803,13 +814,24 @@ def delta_e(color1: Union[str, Sequence[float]],
 
 
 def _as_rgb(color) -> tuple:
-    if isinstance(color, str):
-        return hex_to_rgb(color)[:3]
-    if isinstance(color, (tuple, list)) and len(color) in (3, 4):
-        _validate(*color[:3])
-        return tuple(color[:3])
-    raise ValueError(f"Expected hex string or RGB/RGBA tuple (0-1), got "
-                     f"{color!r}")
+    return ColorValue.parse(color).rgb
+
+
+def composite(foreground, background) -> tuple[float, float, float, float]:
+    """Source-over composite in sRGB; returns RGBA, including residual alpha."""
+    return ColorValue.parse(foreground).over(background).rgba
+
+
+def _display_rgb(color, background=None) -> tuple:
+    value = ColorValue.parse(color)
+    if background is not None:
+        bg = ColorValue.parse(background)
+        if bg.rgba[3] != 1:
+            raise ValueError("Background must be opaque; composite it onto a canvas first")
+        value = value.over(bg)
+    if value.rgba[3] != 1:
+        raise ValueError("Transparent colors require an opaque background")
+    return value.rgb
 
 
 def relative_luminance(color) -> float:
@@ -826,8 +848,8 @@ def relative_luminance(color) -> float:
 
 def contrast_ratio(color1, color2) -> float:
     """
-    WCAG 2.x contrast ratio between two colors. Order of colors does not
-    matter.
+    WCAG 2.x contrast ratio. ``color1`` is composited over the opaque
+    background ``color2``. Order does not matter for opaque colors.
 
     https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio
 
@@ -838,8 +860,10 @@ def contrast_ratio(color1, color2) -> float:
     :param color2: Hex color or RGB/RGBA tuple (0-1)
     :return: Contrast ratio between 1 and 21
     """
-    l1, l2 = sorted((relative_luminance(color1),
-                     relative_luminance(color2)), reverse=True)
+    foreground = _display_rgb(color1, color2)
+    background = _display_rgb(color2)
+    l1, l2 = sorted((relative_luminance(foreground),
+                     relative_luminance(background)), reverse=True)
     return (l1 + 0.05) / (l2 + 0.05)
 
 
@@ -878,18 +902,19 @@ def is_readable(foreground, background, *, level: str = "AA",
     return contrast_ratio(foreground, background) >= _WCAG_MINIMUM[key]
 
 
-def text_color(hex_color: str):
+def text_color(hex_color: str, *, background=None):
     """
     Provides black or white color which can be used for text on given
     background color (whichever has higher WCAG contrast ratio)
 
     >>> text_color("#ffffff") # '#000000'
 
-    :param hex_color: background color
+    :param hex_color: background color for the text
+    :param background: Opaque canvas required when hex_color is transparent
     :return: proper text color
     """
-    if contrast_ratio("#ffffff", hex_color) > contrast_ratio("#000000",
-                                                             hex_color):
+    visible = _display_rgb(hex_color, background)
+    if contrast_ratio("#ffffff", visible) > contrast_ratio("#000000", visible):
         return "#ffffff"
     return "#000000"
 
@@ -897,12 +922,12 @@ def text_color(hex_color: str):
 _SPACES = ("rgb", "lab", "lch")
 
 
-def _mix(rgb1, rgb2, t: float, space: str) -> tuple:
+def _mix(rgb1, rgb2, t: float, space: str, *, clip=True) -> tuple:
     if space == "rgb":
         return tuple(a + (b - a) * t for a, b in zip(rgb1, rgb2))
     lab1, lab2 = rgb_to_lab(*rgb1), rgb_to_lab(*rgb2)
     if space == "lab":
-        return lab_to_rgb(*(a + (b - a) * t for a, b in zip(lab1, lab2)))
+        return lab_to_rgb(*(a + (b - a) * t for a, b in zip(lab1, lab2)), clip=clip)
     l1, c1, h1 = lab_to_lch(*lab1)
     l2, c2, h2 = lab_to_lch(*lab2)
     if c1 < 1e-4:
@@ -911,7 +936,7 @@ def _mix(rgb1, rgb2, t: float, space: str) -> tuple:
         h2 = h1
     dh = (h2 - h1 + 180) % 360 - 180
     return lab_to_rgb(*lch_to_lab(l1 + (l2 - l1) * t, c1 + (c2 - c1) * t,
-                                  h1 + dh * t))
+                                  h1 + dh * t), clip=clip)
 
 
 def mix(color1, color2, ratio: float = 0.5, *, space: str = "rgb") -> str:
@@ -922,6 +947,9 @@ def mix(color1, color2, ratio: float = 0.5, *, space: str = "rgb") -> str:
     >>> mix("#fa4d56", "#4589ff", space="lab")     # '#c670a9'
     >>> mix("#fa4d56", "#4589ff", ratio=0.25)      # closer to first color
 
+    Alpha is interpolated separately from color channels; transparent results
+    use alpha-last hex. This is mixing, not source-over compositing.
+
     :param color1: Hex color or RGB/RGBA tuple (0-1)
     :param color2: Hex color or RGB/RGBA tuple (0-1)
     :param ratio: Amount of `color2` (0 gives `color1`, 1 gives `color2`)
@@ -930,10 +958,12 @@ def mix(color1, color2, ratio: float = 0.5, *, space: str = "rgb") -> str:
     :return: Hex color
     """
     space = _check_space(space)
-    if not 0 <= ratio <= 1:
-        raise ValueError("'ratio' should be between 0 and 1")
-    rgb = _mix(_as_rgb(color1), _as_rgb(color2), ratio, space)
-    return rgb_to_hex(*(min(1.0, max(0.0, v)) for v in rgb))
+    ratio = number(ratio, "ratio", minimum=0, maximum=1)
+    first, last = ColorValue.parse(color1), ColorValue.parse(color2)
+    rgb = _mix(first.rgb, last.rgb, ratio, space)
+    result = rgb_to_hex(*(min(1.0, max(0.0, v)) for v in rgb))
+    alpha = first.rgba[3] + (last.rgba[3] - first.rgba[3]) * ratio
+    return result + f"{round(alpha * 255):02x}" if alpha < 1 else result
 
 
 def _check_space(space: str) -> str:
@@ -943,7 +973,8 @@ def _check_space(space: str) -> str:
     return space
 
 
-def color_in_between(c1, c2, no_of_colors=1, *, space: str = "rgb") -> list:
+@deprecated_aliases(no_of_colors='n')
+def color_in_between(c1, c2, n=1, *, space: str = "rgb") -> list:
     """
     Creates evenly spaced colors between two colors
 
@@ -952,25 +983,30 @@ def color_in_between(c1, c2, no_of_colors=1, *, space: str = "rgb") -> list:
     >>> color_in_between("#fb4b53", "#408bfc", 3, space="lab") # ['#e4607c', '#c670a6', '#9a7ed0']
 
     RGB mixing is simple but its middle colors often look dull and grayish.
-    'lab' gives perceptually even steps and 'lch' keeps colors vivid by
-    going around the color wheel.
+    'lab' interpolates in CIE L*a*b*; 'lch' follows the shorter hue arc.
+    Both may require gamut clipping. Alpha is interpolated separately;
+    use composite() for source-over compositing.
 
     :param c1: Hex of first color
     :param c2: Hex of second color
-    :param no_of_colors: How many colors in between? [Default :1]
+    :param n: How many colors in between? [Default :1]
     :param space: Color space for interpolation - 'rgb' (default), 'lab' or
         'lch'
     :return: List of Colors between provided colors
     """
+    n = count(n, "n", minimum=0)
     space = _check_space(space)
-    steps = no_of_colors + 1
+    first, last = ColorValue.parse(c1), ColorValue.parse(c2)
+    if first.rgba[3] < 1 or last.rgba[3] < 1:
+        return [mix(c1, c2, i / (n + 1), space=space) for i in range(1, n + 1)]
+    steps = n + 1
     if space != "rgb":
         rgb1, rgb2 = _as_rgb(c1), _as_rgb(c2)
         return [rgb_to_hex(*_mix(rgb1, rgb2, i / steps, space))
                 for i in range(1, steps)]
     all_colors = []
-    r1, g1, b1 = hex_to_rgb(c1)
-    r2, g2, b2 = hex_to_rgb(c2)
+    r1, g1, b1 = first.rgb
+    r2, g2, b2 = last.rgb
     rdelta, gdelta, bdelta = (r2 - r1) / steps, (g2 - g1) / steps, (
             b2 - b1) / steps
     for step in range(steps - 1):
@@ -988,7 +1024,7 @@ def hex_to_hsl(hex_string):
     :param hex_string: Hex String
     :return: Heu, Saturation, Lightness (between 0-1)
     """
-    return rgb_to_hsl(*hex_to_rgb(hex_string))
+    return rgb_to_hsl(*hex_to_rgb(hex_string)[:3])
 
 
 def hsl_to_hex(h, s, l):
@@ -1013,7 +1049,7 @@ def get_complementary(hex_color: str):
     :return: Complementary Hex color
     """
 
-    r, g, b = hex_to_rgb(hex_color)
+    r, g, b = _as_rgb(hex_color)
     k = max([r, g, b]) + min([r, g, b])
     t = tuple(k - u for u in (r, g, b))
     return rgb_to_hex(t[0], t[1], t[2])

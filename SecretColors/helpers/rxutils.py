@@ -13,6 +13,7 @@
 #  All special RGB to XYZ conversions
 
 from SecretColors.data.rgb_xyz import RX_DATA
+from SecretColors._validation import number
 
 
 def _get_matrix(name: str, white: str = None):
@@ -34,6 +35,7 @@ def _get_matrix(name: str, white: str = None):
 
 def _validate(*args):
     for a in args:
+        number(a, "channel", minimum=0, maximum=1)
         if a > 1:
             raise ValueError(
                 "Color Values can not be greater than 1. "
@@ -44,6 +46,7 @@ def _validate(*args):
 
 def _validate_xyz(*args):
     for a in args:
+        number(a, "XYZ channel", minimum=0)
         if a < 0:
             raise ValueError("CIE-XYZ values can not be negative")
 

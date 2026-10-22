@@ -89,10 +89,10 @@ Every color is a smooth gradient. `shade` can be any number between 0 and
 ```python
 p.blue(shade=20)                # '#d0e2ff'
 p.blue(shade=37.5)              # any value works
-p.blue(no_of_colors=5)          # 5 evenly spaced shades
-p.blue(no_of_colors=3, starting_shade=20, ending_shade=60)
+p.blue(n=5)          # 5 evenly spaced shades
+p.blue(n=3, start=20, end=60)
 # ['#d0e2ff', '#78a9ff', '#0f62fe']
-p.blue(no_of_colors=4, gradient=False)    # random shades
+p.blue(n=4, gradient=False)    # random shades
 ```
 
 ## Color modes and transparency
@@ -117,9 +117,9 @@ Palette(color_mode="rgba").green(alpha=0.5)
 ```python
 p = Palette(seed=42)            # reproducible results
 p.random()                      # one random color
-p.random(no_of_colors=3, shade=30)     # ['#a6c8ff', '#ffb3b8', '#c6c6c6']
-p.random(no_of_colors=5, avoid=["gray"])
-p.random_gradient(no_of_colors=5)      # between two complementary colors
+p.random(n=3, shade=30)     # ['#a6c8ff', '#ffb3b8', '#c6c6c6']
+p.random(n=5, avoid=["gray"])
+p.random_gradient(n=5)      # between two complementary colors
 ```
 
 :::{note}

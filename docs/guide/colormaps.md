@@ -32,7 +32,7 @@ sns.heatmap(data, cmap="sc.RdBu")                            # seaborn
 {func}`~SecretColors.cmaps.maps.register` accepts a few options.
 
 ```python
-cmaps.register(palette="material")   # standard maps (sc.greens ...) from Material
+cmaps.register(palette="material", force=True)   # standard maps (sc.greens ...) from Material
 cmaps.register("mylib")              # use 'mylib.greens' instead of 'sc.greens'
 cmaps.register(force=True)           # replace already registered maps
 ```
@@ -86,14 +86,14 @@ palette's standard map, and `"spectral"` finds `"Spectral"`.
 
 ## Colormap classes
 
-The classes from earlier versions keep working. Passing matplotlib to them
-is optional now.
+The classes from earlier versions emit `DeprecationWarning` and will be
+removed in the next major release. Prefer the functional API shown above.
 
 ```python
 from SecretColors.cmaps import ColorMap, BrewerMap, TableauMap
 
-ColorMap().greens(starting_shade=20, ending_shade=80, no_of_colors=5)
-BrewerMap().spectral(no_of_colors=9)
-TableauMap().get("OrangeBlue", no_of_colors=13)
-ColorMap().from_list(["#fa4d56", "#ffffff", "#4589ff"])
+ColorMap().greens(start=20, end=80, n=5)
+BrewerMap().spectral(n=9)
+TableauMap().get("OrangeBlue", n=13)
+cmaps.from_colors(["#fa4d56", "#ffffff", "#4589ff"])
 ```

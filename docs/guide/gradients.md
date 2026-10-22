@@ -55,3 +55,25 @@ from SecretColors import cmaps
 cmaps.colors("Spectral", n=20, space="lab")
 cmaps.cmap("RdBu", space="lab")
 ```
+
+## Check visual properties
+
+Perceptual interpolation is not a guarantee of uniform visual appearance.
+Clipping to the sRGB gamut can change the intended trajectory.
+
+```python
+from SecretColors.diagnostics import check_gradient, check_interpolation
+
+report = check_gradient(cmaps.colors("blues", n=20))
+report.monotonic_lightness
+report.adjacent_delta_e
+report.min_grayscale_delta_l
+
+report = check_interpolation("#f1c21b", "#0f62fe", space="lch")
+report.clipped_positions
+cmaps.info("RdBu").kind  # 'diverging'
+```
+
+Diverging maps normally change lightness direction. Small grayscale differences
+are expected between densely sampled gradient colors; interpret the report in
+terms of your chart's purpose rather than as a universal pass/fail score.

@@ -7,10 +7,40 @@
 #  Decorator functions will go here
 
 import functools
+import inspect
 import warnings
+from typing import Callable, ParamSpec, TypeVar
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
-def deprecated(message: str = None):
+REMOVAL = "It will be removed in the next major release."
+
+
+def deprecated_aliases(**aliases: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    """Accept old keyword spellings without hiding the canonical signature."""
+    def decorate(func: Callable[P, R]) -> Callable[P, R]:
+        signature = inspect.signature(func)
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            supplied = signature.bind_partial(*args, **{
+                k: v for k, v in kwargs.items() if k not in aliases}).arguments
+            for old, new in aliases.items():
+                if old in kwargs:
+                    if new in supplied or new in kwargs:
+                        raise TypeError(f"Use either '{old}' or '{new}', not both")
+                    warnings.warn(f"'{old}' is deprecated; use '{new}' instead "
+                                  f"in {func.__qualname__}(..., {new}=...). {REMOVAL}",
+                                  DeprecationWarning, stacklevel=2)
+                    kwargs[new] = kwargs.pop(old)
+            return func(*args, **kwargs)
+        return wrapper
+    return decorate
+
+
+def deprecated(message: str = None) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Simple decorator to put deprecation warnings
     :param message: Message (if any)
@@ -25,6 +55,7 @@ def deprecated(message: str = None):
             m = "'{}' is deprecated. ".format(function.__name__)
             if message is not None:
                 m += str(message)
+            m += " " + REMOVAL
 
             warnings.warn(m, category=DeprecationWarning, stacklevel=2)
             return function(*args, **kwargs)
@@ -35,11 +66,11 @@ def deprecated(message: str = None):
 
 
 def _sample_color(shade: float = None,
-                  no_of_colors: int = 1,
+                  n: int = 1,
                   gradient=True,
                   alpha: float = None,
-                  starting_shade: float = None,
-                  ending_shade: float = None):
+                  start: float = None,
+                  end: float = None):
     """
     The main function for 'SECRET' color
 
@@ -47,23 +78,25 @@ def _sample_color(shade: float = None,
 
     :param shade: Color Shade (between 0-100). Default will be based on the
         Palette used. If that is not available 50 will be used.
-    :param no_of_colors: Number of colors (default: 1)
+    :param n: Number of colors (default: 1)
     :param gradient: If True, if number of colors are greater than 1,
         then will be arranged in ascending order of their shade value
     :param alpha: Transparency (between 0-1). Only works in selected
-        color_modes : hexa, ahex, rgba, hsla
-    :param starting_shade: If number of colors are more than 1, you can use
+        color_modes : hexa, ahex, rgba
+    :param start: If number of colors are more than 1, you can use
         this to define the starting shade of the color. This does not work when
         number of colors is 1
-    :param ending_shade: If number of colors are more than 1, you can use
+    :param end: If number of colors are more than 1, you can use
         this to define the ending shade of the color. This does not work when
         number of colors is 1
+    :param space: Interpolation space: 'rgb' (default), 'lab' or 'lch'.
+        RGB preserves the historical shade quantization.
     :return: ColorString (special string class)
     """
     pass
 
 
-def color_docs(func):
+def color_docs(func: Callable[P, R]) -> Callable[P, R]:
     doc = _sample_color.__doc__
     doc = doc.replace("SECRET", func.__name__)
     func.__doc__ = doc
@@ -75,8 +108,8 @@ def color_docs(func):
     return wrap
 
 
-def _sample_cmap(self, *, no_of_colors: int = None,
-                 is_qualitative: bool = False, is_reversed=False):
+def _sample_cmap(self, *, n: int = None,
+                 discrete: bool = False, reverse=False):
     """
     This is special method available for :class:`SecretColors.cmaps.SECRETMAP`
     class. This function provides easy access to `SNAME` colormap. You can
@@ -91,16 +124,16 @@ def _sample_cmap(self, *, no_of_colors: int = None,
         plt.imshow(data, cmap=cm.METHOD_NAME()) # Or cm.get('SNAME')
         plt.show()
 
-    :param no_of_colors: No of colors
-    :param is_qualitative: If True, ColorMap will be qualitative
-    :param is_reversed: If True, ColorMap will be reversed
+    :param n: No of colors
+    :param discrete: If True, ColorMap will be qualitative
+    :param reverse: If True, ColorMap will be reversed
     :return: Matplotlib `LinearSegmentedColormap` or `ListedColormap` based
         on the options provided. You can use this directly in the matplotlib
     """
     pass
 
 
-def cmap_docs(name, value):
+def cmap_docs(name, value) -> Callable[[Callable[P, R]], Callable[P, R]]:
     def decorator(func):
         doc = _sample_cmap.__doc__
         doc = doc.replace("SECRETMAP", name)
